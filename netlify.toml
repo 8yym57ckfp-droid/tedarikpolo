@@ -1,0 +1,10 @@
+[build]
+  publish = "."
+
+[functions]
+  directory = "netlify/functions"
+
+[[redirects]]
+  from = "/api/password-reset"
+  to = "/.netlify/functions/password-reset"
+  status = 200

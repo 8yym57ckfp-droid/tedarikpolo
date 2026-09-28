@@ -1,0 +1,4 @@
+{
+  "site": {"enabled": false, "until": null, "message": "Sitemiz güncelleniyor. Daha iyi bir deneyim için kısa bir bakım çalışması yapıyoruz."},
+  "panel": {"enabled": false, "until": null, "message": "Yönetim paneli güncelleniyor. Ekip erişimi bakım tamamlandığında yeniden açılacaktır."}
+}

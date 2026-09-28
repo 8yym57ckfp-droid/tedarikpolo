@@ -1,0 +1,134 @@
+<!doctype html><html lang="tr"><head><script>(function(){try{var p=location.pathname,s=p.includes('/admin/')?'admin':(p.includes('/owner/')?'owner':'member'),k='safepays-'+s+'-theme';if(localStorage.getItem(k)==='dark')document.documentElement.classList.add('dark-theme')}catch(e){}})();</script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Safepays — Profil ve Güvenlik</title><link rel="stylesheet" href="assets/styles.css"><link rel="stylesheet" href="assets/account.css"><script src="assets/app.js"></script><script src="assets/i18n.js"></script><link rel="stylesheet" href="assets/dark-theme.css"><link rel="stylesheet" href="assets/mobile-nav-unified.css"><link rel="stylesheet" href="assets/mobile-nav-final.css"><script src="assets/maintenance.js"></script><style id="profile-danger-zone-refresh">
+.account-grid .account-card.danger-zone{grid-column:1/-1!important;display:grid!important;grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr)!important;align-items:center;gap:24px!important;padding:22px 24px!important;border:1px solid rgba(239,90,119,.24)!important;border-radius:18px!important;background:linear-gradient(115deg,rgba(34,16,27,.94),rgba(11,15,24,.98))!important;box-shadow:0 12px 30px rgba(0,0,0,.16)}
+.account-grid .danger-zone h3{margin:0 0 7px!important;color:#f2b5c0!important;font-size:18px!important}
+.account-grid .danger-zone .profile-danger-copy p{max-width:580px;margin:0!important;color:#aab8c9!important;line-height:1.55}
+.account-grid .danger-zone .profile-danger-actions{display:flex!important;align-items:center;justify-content:flex-end;gap:10px!important;flex-wrap:wrap}
+.profile-close-disclosure{position:relative}
+.profile-close-disclosure>summary{list-style:none;display:flex;align-items:center;gap:10px;min-height:44px;padding:0 14px;border:1px solid rgba(226,105,131,.28);border-radius:11px;background:rgba(140,46,70,.12);color:#f0c2ca;font-size:13px;font-weight:700;cursor:pointer;user-select:none}
+.profile-close-disclosure>summary::-webkit-details-marker{display:none}
+.profile-close-disclosure>summary:after{content:"⌄";font-size:16px;color:#d99aa8;transition:transform .16s}
+.profile-close-disclosure[open]>summary:after{transform:rotate(180deg)}
+.profile-close-panel{position:absolute;z-index:40;right:0;top:calc(100% + 9px);width:min(360px,calc(100vw - 44px));padding:16px;border:1px solid rgba(226,105,131,.28);border-radius:14px;background:#11101a;box-shadow:0 18px 40px rgba(0,0,0,.42)}
+.profile-close-panel p{margin:0 0 13px;color:#c1c8d2;font-size:13px;line-height:1.55}
+.profile-close-panel .btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border-radius:10px;text-decoration:none;font-size:13px;font-weight:750}
+.account-grid .danger-zone .logout-btn{min-height:44px!important;padding:0 15px!important;border:1px solid #294a69!important;border-radius:11px!important;background:#10243a!important;color:#dceafa!important;font-weight:700}
+.account-grid .danger-zone .logout-btn:hover,.profile-close-panel .btn:hover{filter:brightness(1.08)}
+@media(max-width:700px){.account-grid .account-card.danger-zone{grid-template-columns:minmax(0,1fr)!important;gap:16px!important;padding:19px!important}.account-grid .danger-zone .profile-danger-actions{justify-content:flex-start}.profile-close-panel{left:0;right:auto}}
+</style></head><body><div class="app"><aside class="side"><a class="logo" href="dashboard.html">Safe<span>Pays</span></a><nav><a href="dashboard.html">Ana Sayfa</a><a href="wallet.html">Cüzdan</a><a href="deposit.html">Yatırım Yap</a><a href="withdraw.html">Çekim Yap</a><a href="balance-history.html">Bakiye Hareketleri</a><a href="transactions.html">İşlem Geçmişi</a><a href="referrals.html">Referanslar</a><a href="earnings.html">Kazanç Merkezi</a><a href="support.html">Canlı Destek</a><a href="notifications.html">Bildirimler</a><a class="active" href="profile.html">Profil & Güvenlik</a></nav></aside><main class="main"><header class="topbar"><div><span class="muted">Hesap yönetimi</span><h1>Profil & Güvenlik</h1></div><div class="profile" id="profilePill">Kullanıcı · Güvenli hesap</div></header><div class="account-grid"><section class="account-card"><div class="account-head"><div class="avatar-lg" id="profileAvatar">SP</div><div><h2 id="profileName">Kullanıcı</h2><p><span id="profileEmail">—</span> · Telefon doğrulandı</p></div></div><form onsubmit="return demoSubmit(event,'Profil bilgileriniz demo olarak güncellendi.')"><div class="field"><label>Kullanıcı Adı</label><input id="profileUsername" value="" readonly><small class="hint">Kayıt sırasında belirlenir ve sonradan değiştirilemez.</small></div><div class="field"><label>Ad Soyad</label><input id="profileFullName" value=""></div><div class="field"><label>E-posta</label><input id="profileEmailInput" value="" disabled></div><div class="field"><label>Telefon</label><input id="profilePhone" value=""></div><div class="field"><label>Para birimi</label><select><option>USDT</option><option>USD</option></select></div><div class="account-actions"><button class="btn">Değişiklikleri Kaydet</button><button type="button" class="btn secondary" onclick="toast('E-posta değiştirme akışı demo')">E-postayı Değiştir</button></div></form></section><section class="account-card profile-referral-card"><h2>Referans Kodun</h2><p class="muted">Arkadaşlarını davet etmek için sana özel kodun.</p><div class="profile-referral-box"><span id="profileReferralCode">—</span><button type="button" class="btn" id="profileReferralCopy">Kopyala</button></div></section><section class="account-card"><h2>Güvenlik</h2><p class="muted">Hesabınızın giriş ve oturum güvenliğini yönetin.</p><div class="security-list"><div class="security-row"><div><strong>2FA / Authenticator</strong><span>Google Authenticator ile iki adımlı doğrulama</span></div><button class="toggle" onclick="toast('Demo: 2FA kurulum ekranı')"></button></div><div class="security-row"><div><strong>Telefon doğrulama</strong><span>Telefon numaranız doğrulanmış durumda</span></div><span class="status">Doğrulandı</span></div><div class="security-row"><div><strong>Şifre</strong><span>Son güncelleme: 18.09.2026</span></div><button class="btn secondary" type="button" onclick="openChangePassword()">Değiştir</button></div><div class="security-row"><div><strong>Giriş bildirimleri</strong><span>Yeni cihaz girişlerinde uyarı al</span></div><button class="toggle" onclick="toast('Demo: Bildirim ayarı değiştirildi')"></button></div></div></section><section class="account-card"><h2>Aktif oturumlar</h2><p class="muted">Tanımadığınız bir oturum görürseniz hemen sonlandırın.</p><div class="session"><div><b>iPhone · Safepays App</b><span>Şimdi · Türkiye · Bu cihaz</span></div><span class="status">Aktif</span></div><div class="session"><div><b>Safari · macOS</b><span>Bugün 09:42 · Son erişim</span></div><button class="btn secondary" onclick="toast('Oturum sonlandırıldı (demo)')">Sonlandır</button></div><div class="session"><div><b>Chrome · Windows</b><span>Dün 22:17 · Son erişim</span></div><button class="btn secondary" onclick="toast('Oturum sonlandırıldı (demo)')">Sonlandır</button></div></section><section class="account-card danger-zone" aria-labelledby="profileSensitiveTitle"><div class="profile-danger-copy"><h3 id="profileSensitiveTitle">Hassas işlemler</h3><p class="muted">Hesap kapatma talebi için destek ekibimize ulaşın. İşlem güvenlik doğrulamasıyla ilerler.</p></div><div class="profile-danger-actions"><details class="profile-close-disclosure"><summary>Hesap kapatma seçenekleri</summary><div class="profile-close-panel"><p>Hesabınızı kapatmadan önce yaşadığınız sorunu destek ekibimizle paylaşabilirsiniz. Kapatma talepleri kimlik doğrulamasıyla değerlendirilir.</p><a class="btn secondary" href="support.html">Destek ekibine danış</a></div></details><button type="button" class="btn logout-btn" onclick="safepaysLogout()">Hesaptan Çıkış Yap</button></div></section></div></main></div>
+<style>
+.sp-password-backdrop{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.74);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.sp-password-backdrop.open{display:flex}
+.sp-password-modal{width:min(100%,460px);box-sizing:border-box;background:linear-gradient(180deg,#0c1d31 0%,#081525 100%);border:1px solid #294b6d;border-radius:24px;box-shadow:0 28px 90px rgba(0,0,0,.62);padding:28px;color:#fff;position:relative}
+.sp-password-close{position:absolute;right:14px;top:13px;width:38px;height:38px;border-radius:50%;border:1px solid #294b6d;background:#102945;color:#a9bfd5;font-size:25px;cursor:pointer}
+.sp-password-kicker{font-size:11px;letter-spacing:4px;color:#35a7ff;font-weight:900;margin-top:5px}
+.sp-password-modal h3{font-size:26px;margin:9px 0 7px;letter-spacing:-.02em}
+.sp-password-modal>p{color:#9fb4ca;line-height:1.55;margin:0 0 20px;font-size:14px}
+.sp-password-field{margin-top:13px}
+.sp-password-field label{display:block;color:#d9e6f2;font-size:12px;font-weight:800;margin:0 0 7px}
+.sp-password-input{position:relative}
+.sp-password-input input{width:100%;height:48px;box-sizing:border-box;border:1px solid #294b6d;background:#07182b;color:#fff;border-radius:12px;padding:0 48px 0 14px;font-size:15px;outline:none}
+.sp-password-input input:focus{border-color:#2997ff;box-shadow:0 0 0 3px rgba(41,151,255,.13)}
+.sp-password-eye{position:absolute;right:7px;top:7px;width:34px;height:34px;border:0;border-radius:9px;background:#102945;color:#9fb4ca;cursor:pointer}
+.sp-password-error{min-height:20px;color:#ff7181;font-size:12px;font-weight:800;margin:9px 0 0}
+.sp-password-actions{display:flex;gap:10px;margin-top:17px}
+.sp-password-actions button{flex:1;min-height:48px;border-radius:12px;font-size:14px;font-weight:850;cursor:pointer}
+.sp-password-cancel{background:#102945;color:#c5d7e8;border:1px solid #294b6d}
+.sp-password-submit{border:0;background:linear-gradient(135deg,#168cff,#5a50ee);color:#fff;box-shadow:0 10px 26px rgba(38,120,255,.2)}
+@media(max-width:600px){.sp-password-backdrop{align-items:flex-end;padding:10px}.sp-password-modal{border-radius:24px 24px 18px 18px;padding:25px 18px 17px}.sp-password-modal h3{font-size:23px}.sp-password-actions{flex-direction:column-reverse}.sp-password-actions button{width:100%}}
+</style>
+<div id="spPasswordBackdrop" class="sp-password-backdrop" aria-hidden="true">
+  <div class="sp-password-modal" role="dialog" aria-modal="true" aria-labelledby="spPasswordTitle">
+    <button class="sp-password-close" type="button" onclick="closeChangePassword()" aria-label="Kapat">×</button>
+    <div class="sp-password-kicker">SAFEPAYS</div>
+    <h3 id="spPasswordTitle">Şifre değiştir</h3>
+    <p>Hesabınızın güvenliği için mevcut şifrenizi ve yeni şifrenizi girin.</p>
+    <div class="sp-password-field"><label for="currentPassword">Mevcut şifre</label><div class="sp-password-input"><input id="currentPassword" type="password" autocomplete="current-password" placeholder="Mevcut şifreniz"><button class="sp-password-eye" type="button" onclick="togglePasswordField('currentPassword',this)">◉</button></div></div>
+    <div class="sp-password-field"><label for="newPassword">Yeni şifre</label><div class="sp-password-input"><input id="newPassword" type="password" autocomplete="new-password" placeholder="En az 8 karakter"><button class="sp-password-eye" type="button" onclick="togglePasswordField('newPassword',this)">◉</button></div></div>
+    <div class="sp-password-field"><label for="confirmPassword">Yeni şifre tekrar</label><div class="sp-password-input"><input id="confirmPassword" type="password" autocomplete="new-password" placeholder="Yeni şifrenizi tekrar girin"><button class="sp-password-eye" type="button" onclick="togglePasswordField('confirmPassword',this)">◉</button></div></div>
+    <div id="spPasswordError" class="sp-password-error"></div>
+    <div class="sp-password-actions"><button class="sp-password-cancel" type="button" onclick="closeChangePassword()">Vazgeç</button><button class="sp-password-submit" type="button" onclick="saveChangedPassword()">Şifreyi Güncelle</button></div>
+  </div>
+</div>
+<script>
+async function safepaysLogout(){
+  try{
+    const token=localStorage.getItem('safepays_api_token');
+    if(token && token !== 'demo-token'){
+      await fetch('/api/auth/logout',{method:'POST',headers:{Authorization:'Bearer '+token}}).catch(()=>{});
+    }
+  }catch(e){}
+  try{
+    localStorage.removeItem('safepays_api_token');
+    localStorage.removeItem('safepays_demo_auth');
+    localStorage.removeItem('safepays_demo_current_user');
+  }catch(e){}
+  window.location.href='login.html';
+}
+</script><script>
+(function(){
+  function getUser(){
+    try{
+      const raw=localStorage.getItem('safepays_demo_current_user');
+      if(raw){ const u=JSON.parse(raw); if(u && (u.email||u.firstName||u.lastName)) return u; }
+    }catch(e){}
+    return null;
+  }
+  const u=getUser();
+  if(!u) return;
+  const username=String(u.username||'').trim(); const pu=document.getElementById('profileUsername'); if(pu)pu.value=username?'@'+username:'—'; const first=String(u.firstName||'').trim();
+  const last=String(u.lastName||'').trim();
+  const name=[first,last].filter(Boolean).join(' ')||'Kullanıcı';
+  const initials=((first[0]||'')+(last[0]||'')).toUpperCase()||'SP';
+  const email=String(u.email||'—');
+  const phone=String(u.phone||'');
+  const maskedPhone=phone ? (phone.startsWith('+90') ? '+90 '+phone.slice(3,4)+'•• ••• •• '+phone.slice(-2) : phone) : 'Telefon eklenmemiş';
+  const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val};
+  const text=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val};
+  text('profilePill',name+' · Güvenli hesap');
+  text('profileAvatar',initials);
+  text('profileName',name);
+  text('profileEmail',email);
+  set('profileFullName',name);
+  set('profileEmailInput',email);
+  set('profilePhone',maskedPhone);
+  const referral=window.ensureSafepaysReferralCode?.(u)||String(u.referralCode||'—');
+  text('profileReferralCode',referral);
+  const copyBtn=document.getElementById('profileReferralCopy');
+  if(copyBtn) copyBtn.onclick=()=>window.copyText(referral);
+})();
+</script>
+<script>
+function openChangePassword(){
+  const b=document.getElementById('spPasswordBackdrop');
+  ['currentPassword','newPassword','confirmPassword'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+  const e=document.getElementById('spPasswordError');if(e)e.textContent='';
+  b.classList.add('open');b.setAttribute('aria-hidden','false');document.body.classList.add('sp-modal-open');
+  setTimeout(()=>document.getElementById('currentPassword')?.focus(),50);
+}
+function closeChangePassword(){const b=document.getElementById('spPasswordBackdrop');if(b){b.classList.remove('open');b.setAttribute('aria-hidden','true');document.body.classList.remove('sp-modal-open')}}
+function togglePasswordField(id,btn){const input=document.getElementById(id);if(!input)return;input.type=input.type==='password'?'text':'password';btn.textContent=input.type==='password'?'◉':'◌'}
+function saveChangedPassword(){
+  const current=String(document.getElementById('currentPassword')?.value||'');
+  const next=String(document.getElementById('newPassword')?.value||'');
+  const confirm=String(document.getElementById('confirmPassword')?.value||'');
+  const err=document.getElementById('spPasswordError');
+  if(!current){err.textContent='Mevcut şifrenizi girin.';return}
+  if(next.length<8){err.textContent='Yeni şifre en az 8 karakter olmalı.';return}
+  if(next!==confirm){err.textContent='Yeni şifreler eşleşmiyor.';return}
+  let user=null;try{user=JSON.parse(localStorage.getItem('safepays_demo_current_user')||'null')}catch(e){}
+  const expected=String(user?.password||localStorage.getItem('safepays_demo_reset_password')||'12345678');
+  if(user?.email==='test@safepays.local' && localStorage.getItem('safepays_demo_reset_password')){
+    if(current!==expected){err.textContent='Mevcut şifreniz hatalı.';return}
+  }else if(user?.password && current!==String(user.password)){
+    err.textContent='Mevcut şifreniz hatalı.';return
+  }
+  let changed=false;
+  const keys=['safepays_demo_registered_users_v113','safepays_demo_registered_users_v112','safepays_demo_registered_users_v111','safepays_demo_registered_users_v110','safepays_demo_registered_users_v109'];
+  for(const key of keys){try{const users=JSON.parse(localStorage.getItem(key)||'[]');if(!Array.isArray(users))continue;let hit=false;for(let i=0;i<users.length;i++){if(user&&String(users[i].email||'').toLowerCase()===String(user.email||'').toLowerCase()){users[i]={...users[i],password:next};hit=true;changed=true}}if(hit)localStorage.setItem(key,JSON.stringify(users))}catch(e){}}
+  if(user?.email==='test@safepays.local'){localStorage.setItem('safepays_demo_reset_password',next);changed=true}
+  if(user){const updated={...user,password:next};localStorage.setItem('safepays_demo_current_user',JSON.stringify(updated))}
+  if(!changed){err.textContent='Bu hesap için şifre değişikliği servisi henüz bağlanmadı.';return}
+  closeChangePassword();showAppModal('Şifre güncellendi','Yeni şifreniz başarıyla güncellendi. Bir sonraki girişinizde yeni şifrenizi kullanabilirsiniz.','info');
+}
+</script>
+<nav class="mobile-nav"><a class="active" href="dashboard.html"><b class="nav-svg"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.8 12 3l9 7.8v9.2a1 1 0 0 1-1 1h-5.2v-6h-5.6v6H4a1 1 0 0 1-1-1z"/></svg></b><span>Ana Sayfa</span></a><a href="wallet.html"><b class="nav-svg"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h14a3 3 0 0 1 3 3V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12"/><path d="M3 8h15.5a2.5 2.5 0 0 1 2.5 2.5V13h-5a2.5 2.5 0 0 1 0-5H21"/><circle cx="16" cy="10.5" r=".8"/></svg></b><span>Cüzdan</span></a><a href="events.html"><b class="nav-svg"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 14 10 21 12 14 14 12 21 10 14 3 12 10 10z"/></svg></b><span>Etkinlik</span></a><a href="finance.html"><b class="nav-svg"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16"/><path d="m6.5 9.5 5.5-5.5 5.5 5.5"/><path d="m17.5 14.5-5.5 5.5-5.5-5.5"/></svg></b><span>Yatır / Çek</span></a><a href="support.html"><b class="nav-svg"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13v-1a8 8 0 0 1 16 0v1"/><path d="M4 13h2.5A1.5 1.5 0 0 1 8 14.5v3A1.5 1.5 0 0 1 6.5 19H4z"/><path d="M20 13h-2.5a1.5 1.5 0 0 0-1.5 1.5v3a1.5 1.5 0 0 0 1.5 1.5H20z"/><path d="M9 20h5"/></svg></b><span>Canlı Destek</span></a></nav></body></html>

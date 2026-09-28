@@ -1,0 +1,2562 @@
+<!doctype html>
+<html lang="tr">
+<head>
+
+<script>
+(function(){
+  try{
+    var p=location.pathname,
+        s=p.includes('/admin/')?'admin':
+          (p.includes('/owner/')?'owner':'member'),
+        k='safepays-'+s+'-theme';
+
+    if(localStorage.getItem(k)==='dark'){
+      document.documentElement.classList.add('dark-theme');
+    }
+  }catch(e){}
+})();
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Safepays — Yatırım</title>
+
+<link rel="stylesheet" href="assets/styles.css">
+<link rel="stylesheet" href="assets/finance.css">
+<link rel="stylesheet" href="assets/rates.css">
+
+<script src="assets/app.js"></script>
+<script src="assets/demo-store.js?v=20260925-2"></script>
+<script src="assets/i18n.js"></script>
+
+<link rel="stylesheet" href="assets/dark-theme.css">
+<link rel="stylesheet" href="assets/mobile-nav-unified.css">
+<link rel="stylesheet" href="assets/mobile-nav-final.css">
+<link rel="stylesheet" href="assets/network-icons.css">
+
+<script>
+document.documentElement.classList.add('member-finance');
+</script>
+
+<script src="assets/maintenance.js"></script>
+
+</head>
+
+<body>
+
+<div class="app">
+
+<aside class="side">
+
+<a class="logo" href="dashboard.html">
+Safe<span>Pays</span>
+</a>
+
+<nav>
+
+<a href="dashboard.html">
+Ana Sayfa
+</a>
+
+<a href="wallet.html">
+Cüzdan
+</a>
+
+<a class="active" href="deposit.html">
+Yatırım Yap
+</a>
+
+<a href="withdraw.html">
+Çekim Yap
+</a>
+
+<a href="transactions.html">
+İşlem Geçmişi
+</a>
+
+<a href="referrals.html">
+Referanslar
+</a>
+
+<a href="earnings.html">
+Kazanç Merkezi
+</a>
+
+<a href="support.html">
+Canlı Destek
+</a>
+
+</nav>
+
+</aside>
+
+
+<main class="main">
+
+<div class="finance-page">
+
+<div class="finance-title">
+
+<p>USDT</p>
+
+<h1>Yatırım Yap</h1>
+
+<p>
+Önce tutarı ve ağı seçin.
+Ödeme adresi yalnızca sonraki adımda gösterilir.
+</p>
+
+</div>
+
+
+<div class="stepbar">
+
+<div
+class="step active"
+id="step1dot">
+</div>
+
+<div
+class="step"
+id="step2dot">
+</div>
+
+<div
+class="step"
+id="step3dot">
+</div>
+
+</div>
+
+
+<div class="finance-grid">
+
+<div>
+
+
+<section
+class="finance-card"
+id="setupCard"
+>
+
+<h3>
+1. Yatırım bilgileri
+</h3>
+
+
+<div class="field">
+
+<label>
+Yatırım Tutarı (USDT)
+</label>
+
+
+<div class="amount-row">
+
+<button
+type="button"
+class="amount"
+onclick="setAmount(50)"
+>
+50
+</button>
+
+<button
+type="button"
+class="amount"
+onclick="setAmount(100)"
+>
+100
+</button>
+
+<button
+type="button"
+class="amount"
+onclick="setAmount(250)"
+>
+250
+</button>
+
+<button
+type="button"
+class="amount"
+onclick="setAmount(500)"
+>
+500
+</button>
+
+</div>
+
+
+<input
+id="amount"
+type="number"
+min="10"
+step=".01"
+placeholder="Tutar girin"
+style="margin-top:8px"
+>
+
+</div>
+
+
+<div class="field">
+
+<label>
+Ödeme ağı
+</label>
+
+
+<div class="network-tabs">
+
+
+<button
+type="button"
+class="network-tab active"
+data-network="TRC20"
+onclick="chooseNetwork('TRC20')"
+>
+
+<span class="network-label">
+
+<span
+class="network-icon trc"
+aria-hidden="true"
+>
+
+<svg
+viewBox="0 0 24 24"
+fill="none"
+>
+
+<path
+d="M4 5h16l-8 14L4 5Z"
+fill="currentColor"
+opacity=".9"
+/>
+
+<path
+d="M7 7h10l-5 8.8L7 7Z"
+fill="currentColor"
+opacity=".34"
+/>
+
+</svg>
+
+</span>
+
+USDT TRC20
+
+</span>
+
+</button>
+
+
+<button
+type="button"
+class="network-tab"
+data-network="ERC20"
+onclick="chooseNetwork('ERC20')"
+>
+
+<span class="network-label">
+
+<span
+class="network-icon erc"
+aria-hidden="true"
+>
+
+<svg
+viewBox="0 0 24 24"
+fill="none"
+>
+
+<path
+d="M12 2.5 17.1 12 12 9.1 6.9 12 12 2.5Z"
+fill="currentColor"
+opacity=".95"
+/>
+
+<path
+d="m12 10.2 5.1 2.9-5.1 8.4-5.1-8.4 5.1-2.9Z"
+fill="currentColor"
+opacity=".58"
+/>
+
+</svg>
+
+</span>
+
+USDT ERC20
+
+</span>
+
+</button>
+
+</div>
+
+</div>
+
+
+<button
+class="btn full"
+type="button"
+onclick="showPaymentAddress()"
+>
+
+Ödeme Adresini Göster
+
+</button>
+
+</section>
+
+
+
+<section
+class="finance-card"
+id="paymentCard"
+style="display:none"
+>
+
+<h3>
+2. Ödeme
+</h3>
+
+
+<div class="address-box">
+
+<div
+class="muted"
+style="text-align:center"
+>
+
+Ödeme Adresi ·
+<b id="net">
+TRC20
+</b>
+
+</div>
+
+
+<div
+class="address"
+id="addr"
+>
+—
+</div>
+
+
+<div class="copy-row">
+
+<button
+type="button"
+onclick="copyText(document.getElementById('addr').innerText)"
+>
+Adresi Kopyala
+</button>
+
+</div>
+
+</div>
+
+
+<div class="timer-card">
+
+<span>
+Kalan süre
+</span>
+
+<strong id="countdown">
+20:00
+</strong>
+
+</div>
+
+
+<p
+class="muted"
+id="timerNote"
+>
+
+Bu adres için 20 dakikanız var.
+Süre dolmadan transferinizi yapın.
+
+</p>
+
+<div class="field" style="margin-top:14px">
+<label for="txHashInput">İşlem Hash'i (TX Hash)</label>
+<input id="txHashInput" placeholder="Gönderdiğiniz transferin TX hash'ini yapıştırın" autocomplete="off" inputmode="text">
+<small class="muted" id="txHashHint" style="display:block;margin-top:6px">Cüzdanınızdaki/borsadaki gönderim işleminin TX hash'ini (en az 16 karakter) buraya yapıştırın. Bu, ekibimizin ödemenizi doğrulamasını sağlar.</small>
+</div>
+
+<button
+class="btn full"
+type="button"
+id="paidBtn"
+onclick="confirmPaid()"
+>
+
+Ödemeyi Yaptım
+
+</button>
+
+</section>
+
+
+
+<section
+class="finance-card"
+id="submittedCard"
+style="display:none"
+>
+
+<h3>
+3. Talep oluşturuldu
+</h3>
+
+
+<div class="info-list">
+
+
+<div class="info">
+
+<span class="info-icon">
+✓
+</span>
+
+<div>
+
+<b>
+Ödeme bildiriminiz alındı.
+</b>
+
+<span>
+Talebiniz kontrol paneline gönderildi.
+</span>
+
+</div>
+
+</div>
+
+
+<div class="info">
+
+<span class="info-icon">
+#
+</span>
+
+<div>
+
+<b>
+İşlem ID
+</b>
+
+<span id="submittedId">
+—
+</span>
+
+</div>
+
+</div>
+
+
+</div>
+
+
+<p
+id="depositCooldownNote"
+class="muted"
+style="margin:14px 0 0;text-align:center"
+>
+
+Yeni yatırım veya çekim talebi için
+2 dakika bekleme uygulanır.
+
+</p>
+
+
+<a
+class="btn full submitted-history-btn"
+href="transactions.html"
+>
+
+İşlem Geçmişine Git
+
+</a>
+
+</section>
+
+</div>
+
+
+
+<div class="finance-card">
+
+<h3>
+Yatırım Kuralları
+</h3>
+
+
+<div class="info-list">
+
+
+<div class="info">
+
+<span class="info-icon">
+✓
+</span>
+
+<div>
+
+<b>
+Minimum 10 USDT
+</b>
+
+<span>
+Minimum yatırım tutarı.
+</span>
+
+</div>
+
+</div>
+
+
+<div class="info">
+
+<span class="info-icon">
+⌁
+</span>
+
+<div>
+
+<b>
+Ağ seçimi
+</b>
+
+<span>
+TRC20 veya ERC20 seçiminizi
+ödeme adresi açılmadan önce yapın.
+</span>
+
+</div>
+
+</div>
+
+
+<div class="info">
+
+<span class="info-icon">
+◷
+</span>
+
+<div>
+
+<b>
+20 dakika
+</b>
+
+<span>
+Adres gösterildiğinde geri sayım başlar.
+</span>
+
+</div>
+
+</div>
+
+
+<div class="info">
+
+<span class="info-icon">
+✓
+</span>
+
+<div>
+
+<b>
+Manuel kontrol
+</b>
+
+<span>
+Ödemeyi yaptım bildirimi
+kontrol paneline düşer.
+</span>
+
+</div>
+
+</div>
+
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</main>
+
+</div>
+
+
+
+<!-- MOBİL MENÜ -->
+
+<nav class="mobile-nav">
+
+<a href="dashboard.html">
+
+<b class="nav-svg">
+
+<svg
+viewBox="0 0 24 24"
+aria-hidden="true"
+>
+
+<path
+d="M3 10.8 12 3l9 7.8v9.2a1 1 0 0 1-1 1h-5.2v-6h-5.6v6H4a1 1 0 0 1-1-1z"
+/>
+
+</svg>
+
+</b>
+
+<span>
+Ana Sayfa
+</span>
+
+</a>
+
+
+<a href="wallet.html">
+
+<b class="nav-svg">
+
+<svg
+viewBox="0 0 24 24"
+aria-hidden="true"
+>
+
+<path
+d="M4 6.5h14a3 3 0 0 1 3 3V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12"
+/>
+
+<path
+d="M3 8h15.5a2.5 2.5 0 0 1 2.5 2.5V13h-5a2.5 2.5 0 0 1 0-5H21"
+/>
+
+<circle
+cx="16"
+cy="10.5"
+r=".8"
+/>
+
+</svg>
+
+</b>
+
+<span>
+Cüzdan
+</span>
+
+</a>
+
+
+<a href="events.html">
+
+<b class="nav-svg">
+
+<svg
+viewBox="0 0 24 24"
+aria-hidden="true"
+>
+
+<path
+d="M12 3 14 10 21 12 14 14 12 21 10 14 3 12 10 10z"
+/>
+
+</svg>
+
+</b>
+
+<span>
+Etkinlik
+</span>
+
+</a>
+
+
+<a
+class="active"
+href="finance.html"
+>
+
+<b class="nav-svg">
+
+<svg
+viewBox="0 0 24 24"
+aria-hidden="true"
+>
+
+<path d="M12 4v16"/>
+
+<path
+d="m6.5 9.5 5.5-5.5 5.5 5.5"
+/>
+
+<path
+d="m17.5 14.5-5.5 5.5-5.5-5.5"
+/>
+
+</svg>
+
+</b>
+
+<span>
+Yatır / Çek
+</span>
+
+</a>
+
+
+<a href="support.html">
+
+<b class="nav-svg">
+
+<svg
+viewBox="0 0 24 24"
+aria-hidden="true"
+>
+
+<path
+d="M4 13v-1a8 8 0 0 1 16 0v1"
+/>
+
+<path
+d="M4 13h2.5A1.5 1.5 0 0 1 8 14.5v3A1.5 1.5 0 0 1 6.5 19H4z"
+/>
+
+<path
+d="M20 13h-2.5a1.5 1.5 0 0 0-1.5 1.5v3a1.5 1.5 0 0 0 1.5 1.5H20z"
+/>
+
+<path d="M9 20h5"/>
+
+</svg>
+
+</b>
+
+<span>
+Canlı Destek
+</span>
+
+</a>
+
+</nav>
+
+
+
+<!-- YATIRIM ONAY MODALI -->
+
+<div
+id="depositConfirmModal"
+class="sp-wallet-backdrop"
+aria-hidden="true"
+>
+
+<div
+class="sp-wallet-modal sp-confirm-modal"
+role="dialog"
+aria-modal="true"
+aria-labelledby="depositConfirmTitle"
+>
+
+<button
+type="button"
+class="sp-wallet-close"
+onclick="closeDepositConfirm()"
+aria-label="Kapat"
+>
+×
+</button>
+
+
+<div class="sp-confirm-icon">
+?
+</div>
+
+
+<div class="sp-confirm-kicker">
+SAFE PAYS · YATIRIM ONAYI
+</div>
+
+
+<h3 id="depositConfirmTitle">
+Yatırıma devam edilsin mi?
+</h3>
+
+
+<p id="depositConfirmText">
+Seçtiğiniz ağ ve tutarı kontrol edin.
+Ödeme adresi gösterildikten sonra
+20 dakikalık süre başlayacaktır.
+</p>
+
+
+<div class="sp-confirm-summary">
+
+<span>
+Tutar
+</span>
+
+<b id="confirmAmount">
+—
+</b>
+
+<span>
+Ağ
+</span>
+
+<b id="confirmNetwork">
+—
+</b>
+
+</div>
+
+
+<div
+class="sp-wallet-actions sp-confirm-actions"
+>
+
+<button
+type="button"
+class="btn secondary"
+onclick="closeDepositConfirm()"
+>
+Vazgeç
+</button>
+
+
+<button
+type="button"
+class="btn"
+onclick="confirmDepositStart()"
+>
+Evet, devam et
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+<!-- GENEL ÜYE HATA MODALI -->
+
+<div
+id="noWalletModal"
+class="sp-wallet-backdrop"
+aria-hidden="true"
+>
+
+<div
+class="sp-wallet-modal"
+role="dialog"
+aria-modal="true"
+aria-labelledby="noWalletTitle"
+>
+
+<button
+type="button"
+class="sp-wallet-close"
+onclick="closeNoWalletModal()"
+aria-label="Kapat"
+>
+×
+</button>
+
+
+<div class="sp-wallet-icon">
+!
+</div>
+
+
+<h3 id="noWalletTitle">
+Yatırım işlemi
+</h3>
+
+
+<p id="noWalletText">
+Yatırım talebiniz şu anda oluşturulamadı.
+Lütfen biraz sonra tekrar deneyin veya
+Canlı Destek ile iletişime geçin.
+</p>
+
+
+<div class="sp-wallet-actions">
+
+<button
+type="button"
+class="btn full"
+onclick="closeNoWalletModal()"
+>
+Tamam
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+<style>
+
+/* MODAL */
+
+.sp-wallet-backdrop{
+
+position:fixed !important;
+inset:0 !important;
+z-index:2147483647 !important;
+display:none !important;
+align-items:center !important;
+justify-content:center !important;
+width:100vw !important;
+height:100dvh !important;
+min-height:100vh !important;
+box-sizing:border-box !important;
+
+padding:
+18px
+14px
+calc(
+128px +
+env(safe-area-inset-bottom)
+)
+!important;
+
+background:
+rgba(0,0,0,.90)
+!important;
+
+backdrop-filter:
+blur(10px)
+!important;
+
+-webkit-backdrop-filter:
+blur(10px)
+!important;
+
+}
+
+
+.sp-wallet-backdrop.open{
+display:flex !important;
+}
+
+
+.sp-wallet-modal{
+
+position:relative !important;
+z-index:2147483647 !important;
+
+width:min(100%,430px) !important;
+
+max-height:
+calc(100dvh - 160px)
+!important;
+
+overflow:auto !important;
+
+box-sizing:border-box !important;
+
+padding:
+26px 22px 24px
+!important;
+
+border:
+1px solid
+#173b61
+!important;
+
+border-radius:
+22px
+!important;
+
+background:
+#050b12
+!important;
+
+color:
+#f4f8fc
+!important;
+
+box-shadow:
+0 24px 90px
+rgba(0,0,0,.9)
+!important;
+
+}
+
+
+.sp-wallet-modal h3{
+
+margin:
+0 0 10px
+!important;
+
+color:
+#f4f8fc
+!important;
+
+font-size:
+22px
+!important;
+
+}
+
+
+.sp-wallet-modal p{
+
+margin:0 !important;
+
+color:
+#9fb2c5
+!important;
+
+line-height:
+1.55
+!important;
+
+}
+
+
+.sp-wallet-close{
+
+position:absolute !important;
+
+right:14px !important;
+
+top:12px !important;
+
+z-index:20 !important;
+
+width:38px !important;
+
+height:38px !important;
+
+border-radius:50% !important;
+
+border:
+1px solid
+#214b75
+!important;
+
+background:
+#081522
+!important;
+
+color:
+#d7e7f5
+!important;
+
+font-size:
+24px
+!important;
+
+line-height:
+1
+!important;
+
+cursor:pointer !important;
+
+}
+
+
+.sp-wallet-icon{
+
+width:42px !important;
+
+height:42px !important;
+
+border-radius:14px !important;
+
+display:grid !important;
+
+place-items:center !important;
+
+background:
+#071d31
+!important;
+
+color:
+#61b6ff
+!important;
+
+border:
+1px solid
+#174e7d
+!important;
+
+font-size:
+22px !important;
+
+font-weight:
+900 !important;
+
+margin-bottom:
+12px
+!important;
+
+}
+
+
+.sp-confirm-icon{
+
+width:46px !important;
+
+height:46px !important;
+
+border-radius:15px !important;
+
+display:grid !important;
+
+place-items:center !important;
+
+background:
+#071d31
+!important;
+
+color:
+#61b6ff
+!important;
+
+border:
+1px solid
+#174e7d
+!important;
+
+font-size:
+22px !important;
+
+font-weight:
+900 !important;
+
+margin-bottom:
+12px
+!important;
+
+}
+
+
+.sp-confirm-kicker{
+
+font-size:
+10px
+!important;
+
+letter-spacing:
+.18em
+!important;
+
+font-weight:
+900
+!important;
+
+color:
+#55aef5
+!important;
+
+margin-bottom:
+8px
+!important;
+
+}
+
+
+.sp-confirm-summary{
+
+display:grid
+!important;
+
+grid-template-columns:
+1fr auto
+!important;
+
+gap:
+8px 14px
+!important;
+
+margin-top:
+18px
+!important;
+
+padding:
+14px
+!important;
+
+border:
+1px solid
+#173b61
+!important;
+
+border-radius:
+14px
+!important;
+
+background:
+#06131f
+!important;
+
+}
+
+
+.sp-confirm-summary span{
+
+color:
+#8ea8bf
+!important;
+
+font-size:
+12px
+!important;
+
+}
+
+
+.sp-confirm-summary b{
+
+color:
+#eef6fb
+!important;
+
+font-size:
+13px
+!important;
+
+}
+
+
+.sp-wallet-actions{
+
+position:relative !important;
+
+z-index:20 !important;
+
+margin-top:
+24px
+!important;
+
+}
+
+
+.sp-confirm-actions{
+
+display:grid
+!important;
+
+grid-template-columns:
+1fr 1fr
+!important;
+
+gap:
+10px
+!important;
+
+}
+
+
+.sp-wallet-modal .btn{
+
+position:relative !important;
+
+z-index:21 !important;
+
+min-height:
+48px
+!important;
+
+border-radius:
+12px
+!important;
+
+}
+
+
+.sp-wallet-modal
+.btn:not(.secondary){
+
+background:
+#087fe8
+!important;
+
+background-image:none
+!important;
+
+color:#fff
+!important;
+
+border:
+1px solid
+#1594ff
+!important;
+
+box-shadow:
+0 8px 24px
+rgba(8,127,232,.22)
+!important;
+
+}
+
+
+.sp-wallet-modal
+.btn.secondary{
+
+background:
+#0a1622
+!important;
+
+background-image:none
+!important;
+
+color:
+#c7d8e8
+!important;
+
+border:
+1px solid
+#234764
+!important;
+
+}
+
+
+.mobile-nav{
+
+z-index:
+9999
+!important;
+
+}
+
+
+@media(max-width:600px){
+
+.sp-wallet-backdrop{
+
+padding:
+18px
+14px
+calc(
+128px +
+env(safe-area-inset-bottom)
+)
+!important;
+
+}
+
+
+.sp-wallet-modal{
+
+width:
+100%
+!important;
+
+max-width:
+430px
+!important;
+
+max-height:
+calc(100dvh - 160px)
+!important;
+
+padding:
+24px 20px 22px
+!important;
+
+border-radius:
+20px
+!important;
+
+}
+
+}
+
+</style>
+
+
+
+<script>
+
+/*
+====================================================
+KULLANICIYA ÖZEL DEPOSIT SESSION
+====================================================
+
+Eski sistem:
+
+safepays_deposit_session_v94
+
+tek anahtar kullanıyordu.
+
+Bu nedenle:
+
+Üye A
+↓
+adres aldı
+↓
+20 dakika başladı
+↓
+çıkış yaptı
+↓
+Üye B giriş yaptı
+↓
+Üye A'nın adresi/süresi geldi.
+
+Yeni sistem:
+
+safepays_deposit_session_v95_KULLANICI_ID
+
+Her kullanıcı ayrı session kullanır.
+*/
+
+
+function getDepositUserId(){
+
+try{
+
+if(
+window.SafepaysDemo &&
+typeof SafepaysDemo.currentUserId === 'function'
+){
+
+const id=
+SafepaysDemo.currentUserId();
+
+if(id){
+return String(id);
+}
+
+}
+
+}catch(e){}
+
+
+try{
+
+const u=
+JSON.parse(
+localStorage.getItem(
+'safepays_demo_current_user'
+)||'null'
+);
+
+if(
+u &&
+u.id
+){
+
+return String(u.id);
+
+}
+
+}catch(e){}
+
+
+try{
+
+const keys=[
+'safepays_current_user',
+'safepays_user',
+'currentUser',
+'loggedInUser',
+'safepays_session'
+];
+
+for(
+const key of keys
+){
+
+const raw=
+localStorage.getItem(key);
+
+if(!raw)
+continue;
+
+try{
+
+const u=
+JSON.parse(raw);
+
+if(
+u &&
+u.id
+){
+
+return String(u.id);
+
+}
+
+if(
+u &&
+u.userId
+){
+
+return String(u.userId);
+
+}
+
+}catch(e){}
+
+}
+
+}catch(e){}
+
+return 'guest';
+
+}
+
+
+const DEPOSIT_USER_ID=
+getDepositUserId();
+
+
+const SESSION_KEY=
+'safepays_deposit_session_v95_' +
+DEPOSIT_USER_ID;
+
+
+try{
+
+localStorage.removeItem(
+'safepays_deposit_session_v94'
+);
+
+}catch(e){}
+
+
+let selectedNetwork='TRC20';
+
+let timerHandle=null;
+
+
+function setAmount(v){
+
+document.getElementById(
+'amount'
+).value=v;
+
+}
+
+
+function chooseNetwork(n){
+
+selectedNetwork=n;
+
+document
+.querySelectorAll(
+'.network-tab'
+)
+.forEach(
+b=>
+b.classList.toggle(
+'active',
+b.dataset.network===n
+)
+);
+
+}
+
+
+function session(){
+
+try{
+
+return JSON.parse(
+localStorage.getItem(
+SESSION_KEY
+)||'null'
+);
+
+}catch(e){
+
+return null;
+
+}
+
+}
+
+
+function saveSession(v){
+
+localStorage.setItem(
+SESSION_KEY,
+JSON.stringify(v)
+);
+
+}
+
+
+function clearSession(){
+
+localStorage.removeItem(
+SESSION_KEY
+);
+
+if(timerHandle){
+
+clearInterval(
+timerHandle
+);
+
+timerHandle=null;
+
+}
+
+}
+
+
+/*
+====================================================
+STORE ERİŞİMİ
+====================================================
+*/
+
+function getSafePaysStore(){
+
+try{
+
+if(
+window.SafepaysDemo &&
+typeof window.SafepaysDemo === 'object'
+){
+
+return window.SafepaysDemo;
+
+}
+
+
+if(
+window.SafePaysStore &&
+typeof window.SafePaysStore === 'object'
+){
+
+return window.SafePaysStore;
+
+}
+
+}catch(e){}
+
+return null;
+
+}
+
+
+/*
+====================================================
+ÖDEME ADRESİNİ GÖSTER
+====================================================
+*/
+
+function showPaymentAddress(){
+
+try{
+
+const amount=
+Number(
+document.getElementById(
+'amount'
+).value
+);
+
+
+if(
+!(amount>=10)
+){
+
+alert(
+'Minimum yatırım 10 USDT.'
+);
+
+return;
+
+}
+
+
+const store=
+getSafePaysStore();
+
+
+const remaining=
+store &&
+typeof store.requestCooldownRemaining === 'function'
+?
+store.requestCooldownRemaining()
+:
+0;
+
+
+if(
+remaining>0
+){
+
+alert(
+'Yeni yatırım veya çekim talebi için '+
+Math.ceil(
+remaining/1000
+)+
+' saniye beklemelisiniz.'
+);
+
+return;
+
+}
+
+
+const confirmAmount=
+document.getElementById(
+'confirmAmount'
+);
+
+
+if(confirmAmount){
+
+confirmAmount.textContent=
+amount.toLocaleString(
+'tr-TR',
+{
+minimumFractionDigits:2,
+maximumFractionDigits:8
+}
+)+
+' USDT';
+
+}
+
+
+const confirmNetwork=
+document.getElementById(
+'confirmNetwork'
+);
+
+
+if(confirmNetwork){
+
+confirmNetwork.textContent=
+selectedNetwork;
+
+}
+
+
+const m=
+document.getElementById(
+'depositConfirmModal'
+);
+
+
+if(!m){
+
+alert(
+'Yatırım onay penceresi yüklenemedi.'
+);
+
+return;
+
+}
+
+
+m.classList.add(
+'open'
+);
+
+
+m.setAttribute(
+'aria-hidden',
+'false'
+);
+
+}catch(e){
+
+console.error(
+'[SafePays] showPaymentAddress error:',
+e
+);
+
+alert(
+e &&
+e.message
+?
+e.message
+:
+'Ödeme adresi şu anda gösterilemiyor. Lütfen sayfayı yenileyip tekrar deneyin.'
+);
+
+}
+
+}
+
+
+/*
+====================================================
+YATIRIM ONAY MODALI
+====================================================
+*/
+
+function closeDepositConfirm(){
+
+const m=
+document.getElementById(
+'depositConfirmModal'
+);
+
+
+if(m){
+
+m.classList.remove(
+'open'
+);
+
+m.setAttribute(
+'aria-hidden',
+'true'
+);
+
+}
+
+}
+
+
+/*
+====================================================
+CÜZDAN ADRESİNİ OLUŞTUR
+====================================================
+*/
+
+function confirmDepositStart(){
+
+closeDepositConfirm();
+
+
+const amount=
+Number(
+document.getElementById(
+'amount'
+).value
+);
+
+
+if(!(amount>=10)){
+
+alert(
+'Minimum yatırım 10 USDT.'
+);
+
+return;
+
+}
+
+
+let wallet;
+
+
+try{
+
+const store=
+getSafePaysStore();
+
+
+if(
+!store ||
+typeof store.reserveNextWalletAddress !== 'function'
+){
+
+throw new Error(
+'Yatırım servisi yüklenemedi. Sayfayı yenileyip tekrar deneyin.'
+);
+
+}
+
+
+wallet=
+store.reserveNextWalletAddress(
+selectedNetwork,
+amount
+);
+
+}catch(e){
+
+console.error(
+'[SafePays] reserve wallet error:',
+e
+);
+
+openNoWalletModal(
+e &&
+e.message
+?
+e.message
+:
+'Yatırım talebiniz şu anda oluşturulamadı. Lütfen daha sonra tekrar deneyin veya Canlı Destek ile iletişime geçin.'
+);
+
+return;
+
+}
+
+
+if(!wallet){
+
+openNoWalletModal(
+'Bu ağ için kullanılabilir ödeme adresi bulunamadı. Lütfen daha sonra tekrar deneyin veya Canlı Destek ile iletişime geçin.'
+);
+
+return;
+
+}
+
+
+const now=
+Date.now();
+
+
+const s={
+
+userId:
+DEPOSIT_USER_ID,
+
+amount:
+amount,
+
+network:
+selectedNetwork,
+
+address:
+wallet.address,
+
+walletId:
+wallet.id || null,
+
+createdAt:
+now,
+
+expiresAt:
+now+
+20*60*1000
+
+};
+
+
+saveSession(
+s
+);
+
+
+document.getElementById(
+'net'
+).textContent=
+s.network;
+
+
+document.getElementById(
+'addr'
+).textContent=
+s.address;
+
+
+document.getElementById(
+'setupCard'
+).style.display=
+'none';
+
+
+document.getElementById(
+'paymentCard'
+).style.display=
+'block';
+
+
+document.getElementById(
+'step1dot'
+).classList.add(
+'active'
+);
+
+
+document.getElementById(
+'step2dot'
+).classList.add(
+'active'
+);
+
+
+startTimer(
+s
+);
+
+}
+
+
+/*
+====================================================
+ZAMANLAYICI
+====================================================
+*/
+
+function startTimer(s){
+
+if(timerHandle){
+
+clearInterval(
+timerHandle
+);
+
+}
+
+
+const tick=()=>{
+
+const sec=
+Math.max(
+0,
+Math.ceil(
+(
+s.expiresAt-
+Date.now()
+)/
+1000
+)
+);
+
+
+const m=
+Math.floor(
+sec/60
+);
+
+
+const ss=
+sec%60;
+
+
+const countdown=
+document.getElementById(
+'countdown'
+);
+
+
+if(countdown){
+
+countdown.textContent=
+String(
+m
+).padStart(
+2,
+'0'
+)+
+':'+
+String(
+ss
+).padStart(
+2,
+'0'
+);
+
+}
+
+
+if(
+sec<=0
+){
+
+clearInterval(
+timerHandle
+);
+
+timerHandle=null;
+
+
+const paidBtn=
+document.getElementById(
+'paidBtn'
+);
+
+
+if(paidBtn){
+
+paidBtn.disabled=
+true;
+
+paidBtn.textContent=
+'Süre Doldu';
+
+}
+
+
+const timerNote=
+document.getElementById(
+'timerNote'
+);
+
+
+if(timerNote){
+
+timerNote.textContent=
+'20 dakikalık ödeme süresi doldu. Yeni bir ödeme adresi oluşturun.';
+
+}
+
+}
+
+};
+
+
+tick();
+
+
+timerHandle=
+setInterval(
+tick,
+1000
+);
+
+}
+
+
+/*
+====================================================
+ÖDEME YAPTIM
+====================================================
+*/
+
+// Wired to the real backend (server/server.js POST /api/deposits). Previously this only called
+// store.createDepositRequest(), which wrote to a browser-local demo store that no admin screen backed by the
+// real ledger could ever see — the deposit would look "submitted" to the member but never reach anyone.
+async function confirmPaid(){
+
+const s=
+session();
+
+
+if(!s){
+
+alert(
+'Aktif ödeme oturumu bulunamadı. Lütfen önce ödeme adresini gösterin.'
+);
+
+return;
+
+}
+
+
+if(
+String(
+s.userId
+)!==
+String(
+DEPOSIT_USER_ID
+)
+){
+
+clearSession();
+
+location.reload();
+
+return;
+
+}
+
+
+if(
+Date.now()>=
+s.expiresAt
+){
+
+alert(
+'Ödeme süresi doldu.'
+);
+
+return;
+
+}
+
+const txHash=String(document.getElementById('txHashInput')?.value||'').trim();
+if(txHash.length<16){
+alert('Lütfen geçerli bir TX hash girin (en az 16 karakter).');
+return;
+}
+
+const apiToken=localStorage.getItem('safepays_api_token')||'';
+if(!apiToken){
+alert('Oturumunuz bulunamadı. Lütfen tekrar giriş yapın.');
+location.href='login.html';
+return;
+}
+
+const paidBtn=document.getElementById('paidBtn');
+if(paidBtn) paidBtn.disabled=true;
+
+try{
+
+const r=await fetch('/api/deposits',{
+method:'POST',
+headers:{'Content-Type':'application/json',Authorization:'Bearer '+apiToken},
+body:JSON.stringify({amount:s.amount,network:s.network,txHash})
+});
+const d=await r.json().catch(()=>({}));
+if(!r.ok){
+const messages={
+invalid_amount:'Girilen tutar geçersiz. Minimum yatırım 10 USDT.',
+invalid_network:'Ağ bilgisi geçersiz.',
+invalid_tx_hash:'TX hash geçersiz. En az 16 karakter olmalı.',
+duplicate_tx_hash:'Bu TX hash daha önce başka bir işlem için kullanılmış.',
+deposits_blocked:'Yatırım talepleri güvenlik nedeniyle geçici olarak dondurulmuş. Destek ile iletişime geçin.',
+request_cooldown:'Yeni bir talep oluşturmadan önce lütfen bekleyin: '+(d.cooldownSeconds||0)+' saniye.',
+unauthorized:'Oturumunuz sona ermiş. Lütfen tekrar giriş yapın.'
+};
+throw new Error(d.message||messages[d.error]||'İşlem şu anda tamamlanamadı. Lütfen daha sonra tekrar deneyin veya Canlı Destek ile iletişime geçin.');
+}
+
+const tx=d.transaction;
+
+document.getElementById(
+'paymentCard'
+).style.display=
+'none';
+
+
+document.getElementById(
+'submittedCard'
+).style.display=
+'block';
+
+
+document.getElementById(
+'submittedId'
+).textContent=
+tx.id;
+
+
+document.getElementById(
+'step3dot'
+).classList.add(
+'active'
+);
+
+
+clearSession();
+
+
+}catch(e){
+
+console.error(
+'[SafePays] Ödeme bildirimi hatası:',
+e
+);
+
+alert(
+e &&
+e.message
+?
+e.message
+:
+'İşlem şu anda tamamlanamadı. Lütfen daha sonra tekrar deneyin veya Canlı Destek ile iletişime geçin.'
+);
+
+}finally{
+if(paidBtn) paidBtn.disabled=false;
+}
+
+}
+
+
+/*
+====================================================
+MODAL KAPATMA
+====================================================
+*/
+
+function openNoWalletModal(message){
+
+const modal=
+document.getElementById(
+'noWalletModal'
+);
+
+const text=
+document.getElementById(
+'noWalletText'
+);
+
+
+if(text){
+
+text.textContent=
+message ||
+'Yatırım işlemi şu anda gerçekleştirilemiyor.';
+
+}
+
+
+if(modal){
+
+modal.classList.add(
+'open'
+);
+
+modal.setAttribute(
+'aria-hidden',
+'false'
+);
+
+}
+
+}
+
+
+function closeNoWalletModal(){
+
+const modal=
+document.getElementById(
+'noWalletModal'
+);
+
+
+if(modal){
+
+modal.classList.remove(
+'open'
+);
+
+modal.setAttribute(
+'aria-hidden',
+'true'
+);
+
+}
+
+}
+
+
+/*
+====================================================
+MOBİL DOKUNMA + GLOBAL FONKSİYONLAR
+====================================================
+*/
+
+window.setAmount=
+setAmount;
+
+window.chooseNetwork=
+chooseNetwork;
+
+window.showPaymentAddress=
+showPaymentAddress;
+
+window.closeDepositConfirm=
+closeDepositConfirm;
+
+window.confirmDepositStart=
+confirmDepositStart;
+
+window.confirmPaid=
+confirmPaid;
+
+window.openNoWalletModal=
+openNoWalletModal;
+
+window.closeNoWalletModal=
+closeNoWalletModal;
+
+
+document.addEventListener(
+'DOMContentLoaded',
+function(){
+
+const showBtn=
+document.querySelector(
+'button[onclick="showPaymentAddress()"]'
+);
+
+
+if(showBtn){
+
+showBtn.addEventListener(
+'touchend',
+function(e){
+
+e.preventDefault();
+
+showPaymentAddress();
+
+},
+{
+passive:false
+}
+);
+
+}
+
+
+const paidBtn=
+document.getElementById(
+'paidBtn'
+);
+
+
+if(paidBtn){
+
+paidBtn.addEventListener(
+'touchend',
+function(e){
+
+e.preventDefault();
+
+confirmPaid();
+
+},
+{
+passive:false
+}
+);
+
+}
+
+},
+{
+once:true
+}
+);
+
+
+/*
+====================================================
+SESSION RESTORE
+====================================================
+*/
+
+(function restore(){
+
+const s=
+session();
+
+
+if(!s){
+
+return;
+
+}
+
+
+if(
+String(
+s.userId || ''
+)!==
+String(
+DEPOSIT_USER_ID
+)
+){
+
+clearSession();
+
+return;
+
+}
+
+
+if(
+Date.now()>=
+s.expiresAt
+){
+
+clearSession();
+
+return;
+
+}
+
+
+selectedNetwork=
+s.network;
+
+
+const amount=
+document.getElementById(
+'amount'
+);
+
+
+if(amount){
+
+amount.value=
+s.amount;
+
+}
+
+
+chooseNetwork(
+s.network
+);
+
+
+const net=
+document.getElementById(
+'net'
+);
+
+
+if(net){
+
+net.textContent=
+s.network;
+
+}
+
+
+const addr=
+document.getElementById(
+'addr'
+);
+
+
+if(addr){
+
+addr.textContent=
+s.address;
+
+}
+
+
+document.getElementById(
+'setupCard'
+).style.display=
+'none';
+
+
+document.getElementById(
+'paymentCard'
+).style.display=
+'block';
+
+
+document.getElementById(
+'step2dot'
+).classList.add(
+'active'
+);
+
+
+startTimer(
+s
+);
+
+})();
+
+</script>
+
+</body>
+</html>

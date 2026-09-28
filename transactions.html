@@ -1,0 +1,1857 @@
+<!doctype html>
+<html lang="tr">
+
+<head>
+
+<meta charset="utf-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1"
+>
+
+<title>Safepays — İşlemler</title>
+
+<link rel="stylesheet" href="assets/styles.css">
+<link rel="stylesheet" href="assets/activity.css">
+
+
+<script src="assets/app.js"></script>
+<script src="assets/i18n.js"></script>
+
+<link rel="stylesheet" href="assets/dark-theme.css">
+<link rel="stylesheet" href="assets/mobile-nav-unified.css">
+<link rel="stylesheet" href="assets/mobile-nav-final.css">
+<link rel="stylesheet" href="assets/network-icons.css">
+
+<script src="assets/maintenance.js"></script>
+
+
+<style>
+
+/* =====================================================
+   TEMEL
+===================================================== */
+
+html,
+body{
+  margin:0!important;
+  padding:0!important;
+  width:100%!important;
+  min-width:100%!important;
+  min-height:100vh!important;
+  background:#000!important;
+  color:#fff!important;
+}
+
+*{
+  box-sizing:border-box;
+}
+
+body{
+  overflow-x:hidden;
+}
+
+
+/* =====================================================
+   ESKİ SIDEBAR TAMAMEN KAPALI
+===================================================== */
+
+.side{
+  display:none!important;
+  visibility:hidden!important;
+  width:0!important;
+  min-width:0!important;
+  max-width:0!important;
+  position:absolute!important;
+  left:-99999px!important;
+}
+
+
+/* =====================================================
+   APP
+===================================================== */
+
+.app{
+  display:block!important;
+  width:100%!important;
+  min-width:100%!important;
+  min-height:100vh!important;
+  margin:0!important;
+  padding:0!important;
+  background:#000!important;
+}
+
+
+/* =====================================================
+   ÜST HEADER
+===================================================== */
+
+.member-header{
+  width:100%!important;
+  height:66px!important;
+
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+
+  padding:0 28px!important;
+
+  background:#07182b!important;
+
+  border-bottom:1px solid #173754!important;
+
+  position:relative!important;
+  z-index:1000!important;
+}
+
+
+.member-logo{
+  display:flex!important;
+  align-items:center!important;
+  gap:9px!important;
+
+  color:#fff!important;
+  text-decoration:none!important;
+}
+
+
+.member-logo img{
+  width:28px!important;
+  height:28px!important;
+
+  object-fit:contain!important;
+
+  display:block!important;
+}
+
+
+.member-logo-text{
+  display:flex!important;
+
+  font-size:19px!important;
+  font-weight:800!important;
+
+  line-height:1!important;
+}
+
+
+.member-logo-text .safe{
+  color:#fff!important;
+}
+
+
+.member-logo-text .pays{
+  color:#4da3ff!important;
+  margin-left:4px!important;
+}
+
+
+.member-header-right{
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+}
+
+
+.member-balance{
+  height:41px!important;
+  min-width:137px!important;
+
+  display:flex!important;
+  align-items:center!important;
+
+  gap:8px!important;
+
+  padding:0 11px!important;
+
+  background:#091e34!important;
+
+  border:1px solid #20496b!important;
+
+  border-radius:11px!important;
+
+  color:#fff!important;
+
+  text-decoration:none!important;
+}
+
+
+.member-balance-icon{
+  width:19px!important;
+  height:19px!important;
+
+  color:#4da7ff!important;
+
+  flex:0 0 auto!important;
+}
+
+
+.member-balance-text small{
+  display:block!important;
+
+  color:#7896b0!important;
+
+  font-size:8px!important;
+
+  line-height:1!important;
+
+  margin-bottom:3px!important;
+}
+
+
+.member-balance-text strong{
+  display:block!important;
+
+  color:#fff!important;
+
+  font-size:10px!important;
+
+  line-height:1!important;
+
+  white-space:nowrap!important;
+}
+
+
+.member-balance-text em{
+  color:#9bbbd5!important;
+  font-style:normal!important;
+}
+
+
+.member-avatar{
+  width:38px!important;
+  height:38px!important;
+
+  display:grid!important;
+  place-items:center!important;
+
+  border-radius:50%!important;
+
+  background:#153b61!important;
+
+  border:1px solid #2b70a9!important;
+
+  color:#fff!important;
+
+  font-size:10px!important;
+
+  font-weight:800!important;
+
+  text-decoration:none!important;
+}
+
+
+/* =====================================================
+   MAIN
+===================================================== */
+
+.main{
+  display:block!important;
+
+  width:100%!important;
+  min-width:100%!important;
+  max-width:none!important;
+
+  margin:0!important;
+
+  padding:
+    25px 25px 110px!important;
+
+  background:#000!important;
+
+  color:#fff!important;
+}
+
+
+.ref-page{
+  width:min(1140px,100%)!important;
+
+  margin:0 auto!important;
+
+  padding:0!important;
+}
+
+
+/* =====================================================
+   BAŞLIK
+===================================================== */
+
+.page-title{
+  margin-bottom:18px!important;
+}
+
+
+.page-title .eyebrow{
+  display:inline-block!important;
+
+  margin:0 0 7px!important;
+
+  padding:5px 10px!important;
+
+  border:1px solid #17466b!important;
+
+  border-radius:999px!important;
+
+  background:#07182b!important;
+
+  color:#5aaeff!important;
+
+  font-size:8px!important;
+
+  font-weight:700!important;
+
+  text-transform:uppercase!important;
+
+  letter-spacing:1px!important;
+}
+
+
+.page-title h1{
+  margin:0!important;
+
+  color:#fff!important;
+
+  font-size:28px!important;
+
+  line-height:1.1!important;
+
+  letter-spacing:-.7px!important;
+}
+
+
+.page-description{
+  margin:6px 0 0!important;
+
+  color:#7291aa!important;
+
+  font-size:10px!important;
+}
+
+
+/* =====================================================
+   ÖZET KUTULARI
+===================================================== */
+
+.tx-summary{
+  width:100%!important;
+
+  display:grid!important;
+
+  grid-template-columns:
+    repeat(4,minmax(0,1fr))!important;
+
+  gap:10px!important;
+}
+
+
+.tx-summary .ref-stat{
+  min-width:0!important;
+
+  min-height:76px!important;
+
+  padding:14px!important;
+
+  background:#07182b!important;
+
+  border:1px solid #1b4668!important;
+
+  border-radius:14px!important;
+
+  color:#fff!important;
+}
+
+
+.tx-summary .ref-stat .lbl{
+  color:#7898b2!important;
+
+  font-size:9px!important;
+
+  margin-bottom:8px!important;
+}
+
+
+.tx-summary .ref-stat .num{
+  color:#fff!important;
+
+  font-size:18px!important;
+
+  line-height:1!important;
+
+  font-weight:800!important;
+}
+
+
+/* =====================================================
+   BEKLEYEN KUTUSU
+===================================================== */
+
+.ref-card{
+  background:#07182b!important;
+
+  border:1px solid #1b4668!important;
+
+  border-radius:15px!important;
+
+  color:#fff!important;
+}
+
+
+.pending-card{
+  margin-top:12px!important;
+
+  padding:14px!important;
+
+  overflow:hidden!important;
+}
+
+
+.pending-head{
+  display:flex!important;
+
+  align-items:center!important;
+
+  justify-content:space-between!important;
+
+  gap:15px!important;
+
+  margin-bottom:12px!important;
+}
+
+
+.pending-head .muted{
+  color:#7898b2!important;
+
+  font-size:9px!important;
+}
+
+
+.pending-head h3{
+  margin:3px 0 0!important;
+
+  color:#fff!important;
+
+  font-size:12px!important;
+}
+
+
+.pending-note{
+  color:#6e879e!important;
+
+  font-size:9px!important;
+
+  white-space:nowrap!important;
+}
+
+
+.pending-list{
+  display:grid!important;
+
+  gap:8px!important;
+}
+
+
+.pending-item{
+  display:flex!important;
+
+  align-items:center!important;
+
+  justify-content:space-between!important;
+
+  gap:15px!important;
+
+  min-height:53px!important;
+
+  padding:10px 12px!important;
+
+  background:#0a1d31!important;
+
+  border:1px solid #214a6b!important;
+
+  border-radius:10px!important;
+}
+
+
+.pending-info{
+  display:grid!important;
+
+  gap:4px!important;
+
+  min-width:0!important;
+}
+
+
+.pending-info b{
+  color:#fff!important;
+
+  font-size:10px!important;
+}
+
+
+.pending-meta{
+  color:#7594ae!important;
+
+  font-size:8px!important;
+}
+
+
+.dot-separator{
+  color:#526b83!important;
+}
+
+
+.pending-right{
+  display:grid!important;
+
+  gap:2px!important;
+
+  text-align:right!important;
+
+  flex:0 0 auto!important;
+}
+
+
+.pending-right small{
+  color:#67839c!important;
+
+  font-size:8px!important;
+}
+
+
+.user-countdown{
+  font-size:13px!important;
+
+  font-weight:900!important;
+
+  font-variant-numeric:tabular-nums!important;
+}
+
+
+.user-countdown.green{
+  color:#39d98a!important;
+}
+
+
+.user-countdown.yellow{
+  color:#ffc857!important;
+}
+
+
+.user-countdown.red{
+  color:#ff5966!important;
+}
+
+
+.pending-empty{
+  padding:14px!important;
+
+  text-align:center!important;
+
+  background:#0a1d31!important;
+
+  border:1px dashed #294c6b!important;
+
+  border-radius:10px!important;
+
+  color:#6d879f!important;
+
+  font-size:9px!important;
+}
+
+
+/* =====================================================
+   İŞLEM GEÇMİŞİ KUTUSU
+===================================================== */
+
+.transactions-card{
+  margin-top:12px!important;
+
+  padding:16px!important;
+
+  background:#07182b!important;
+
+  border:1px solid #1b4668!important;
+
+  border-radius:15px!important;
+}
+
+
+/* =====================================================
+   FİLTRE
+===================================================== */
+
+.filter-row{
+  display:grid!important;
+
+  grid-template-columns:
+    minmax(0,1fr)
+    150px
+    170px!important;
+
+  gap:8px!important;
+
+  margin-bottom:16px!important;
+}
+
+
+.filter-row input,
+.filter-row select{
+  width:100%!important;
+
+  height:36px!important;
+
+  min-width:0!important;
+
+  padding:0 10px!important;
+
+  background:#030d18!important;
+
+  color:#fff!important;
+
+  border:1px solid #234d70!important;
+
+  border-radius:8px!important;
+
+  outline:none!important;
+
+  font-size:9px!important;
+}
+
+
+.filter-row input::placeholder{
+  color:#607b93!important;
+}
+
+
+.filter-row input:focus,
+.filter-row select:focus{
+  border-color:#318fe5!important;
+
+  box-shadow:
+    0 0 0 2px
+    rgba(49,143,229,.12)!important;
+}
+
+
+.filter-row select option{
+  background:#07182b!important;
+
+  color:#fff!important;
+}
+
+
+/* =====================================================
+   TABLO
+===================================================== */
+
+.transaction-table-wrapper{
+  width:100%!important;
+
+  max-width:100%!important;
+
+  overflow-x:auto!important;
+
+  overflow-y:hidden!important;
+
+  -webkit-overflow-scrolling:touch!important;
+
+  background:#07182b!important;
+
+  border-radius:9px!important;
+}
+
+
+.ref-table{
+  width:100%!important;
+
+  min-width:1050px!important;
+
+  border-collapse:collapse!important;
+
+  background:#07182b!important;
+
+  color:#fff!important;
+}
+
+
+.ref-table thead{
+  background:#0b2137!important;
+}
+
+
+.ref-table th{
+  padding:11px 7px!important;
+
+  background:#0b2137!important;
+
+  color:#79a5c9!important;
+
+  border-bottom:1px solid #214561!important;
+
+  font-size:8px!important;
+
+  font-weight:700!important;
+
+  text-align:left!important;
+
+  white-space:nowrap!important;
+}
+
+
+.ref-table td{
+  padding:10px 7px!important;
+
+  background:#07182b!important;
+
+  color:#dce7f2!important;
+
+  border-bottom:1px solid #193950!important;
+
+  font-size:8px!important;
+
+  white-space:nowrap!important;
+}
+
+
+.ref-table tbody tr:nth-child(even) td{
+  background:#091d31!important;
+}
+
+
+.ref-table tbody tr:hover td{
+  background:#0d2942!important;
+}
+
+
+.ref-table td b{
+  color:#fff!important;
+}
+
+
+.ref-table td:nth-child(2){
+  color:#8fa9bf!important;
+}
+
+
+.ref-table td.address{
+  max-width:350px!important;
+
+  overflow:hidden!important;
+
+  text-overflow:ellipsis!important;
+
+  color:#8ba7bf!important;
+}
+
+
+.ref-table .amount-cell{
+  color:#fff!important;
+
+  font-weight:800!important;
+}
+
+
+/* =====================================================
+   AĞ
+===================================================== */
+
+.network-inline.trc{
+  color:#ff6b6b!important;
+
+  font-weight:800!important;
+}
+
+
+.network-inline.erc{
+  color:#819cff!important;
+
+  font-weight:800!important;
+}
+
+
+/* =====================================================
+   DURUM
+===================================================== */
+
+.badge{
+  display:inline-block!important;
+
+  padding:5px 9px!important;
+
+  border-radius:999px!important;
+
+  font-size:8px!important;
+
+  font-weight:700!important;
+}
+
+
+.badge.approved{
+  background:#e4f8ed!important;
+
+  color:#16834e!important;
+}
+
+
+.badge.pending{
+  background:#fff1d2!important;
+
+  color:#a66b00!important;
+}
+
+
+.badge.rejected{
+  background:#ffe4e7!important;
+
+  color:#d23c48!important;
+}
+
+
+/* =====================================================
+   ALT MENÜ
+===================================================== */
+
+.mobile-nav{
+  position:fixed!important;
+
+  left:50%!important;
+
+  right:auto!important;
+
+  bottom:12px!important;
+
+  transform:
+    translateX(-50%)!important;
+
+  width:
+    min(590px,calc(100vw - 24px))!important;
+
+  max-width:590px!important;
+
+  height:53px!important;
+
+  min-height:53px!important;
+
+  margin:0!important;
+
+  padding:0 6px!important;
+
+  display:flex!important;
+
+  align-items:stretch!important;
+
+  justify-content:space-around!important;
+
+  z-index:3000!important;
+
+  background:#061523!important;
+
+  border:1px solid #1b4567!important;
+
+  border-radius:17px!important;
+
+  box-shadow:
+    0 12px 40px
+    rgba(0,0,0,.5)!important;
+}
+
+
+.mobile-nav>a{
+  flex:1!important;
+
+  min-width:0!important;
+
+  height:100%!important;
+
+  display:flex!important;
+
+  flex-direction:column!important;
+
+  align-items:center!important;
+
+  justify-content:center!important;
+
+  gap:3px!important;
+
+  color:#8096aa!important;
+
+  text-decoration:none!important;
+
+  border-radius:11px!important;
+}
+
+
+.mobile-nav>a:hover{
+  color:#b6d7f2!important;
+}
+
+
+.mobile-nav .nav-svg{
+  width:19px!important;
+
+  height:19px!important;
+
+  display:flex!important;
+
+  align-items:center!important;
+
+  justify-content:center!important;
+}
+
+
+.mobile-nav .nav-svg svg{
+  width:17px!important;
+
+  height:17px!important;
+
+  fill:none!important;
+
+  stroke:currentColor!important;
+
+  stroke-width:1.7!important;
+
+  stroke-linecap:round!important;
+
+  stroke-linejoin:round!important;
+}
+
+
+.mobile-nav>a span{
+  font-size:8px!important;
+
+  line-height:1!important;
+
+  white-space:nowrap!important;
+}
+
+
+/* =====================================================
+   MASAÜSTÜ
+===================================================== */
+
+@media(min-width:701px){
+
+  .main{
+    width:100%!important;
+
+    min-width:100%!important;
+
+    max-width:none!important;
+
+    margin:0!important;
+  }
+
+
+  .ref-page{
+    width:min(1140px,100%)!important;
+
+    max-width:1140px!important;
+
+    margin-left:auto!important;
+
+    margin-right:auto!important;
+  }
+
+
+  .mobile-nav{
+    display:flex!important;
+
+    visibility:visible!important;
+
+    opacity:1!important;
+  }
+
+}
+
+
+/* =====================================================
+   TABLET
+===================================================== */
+
+@media(max-width:850px){
+
+  .tx-summary{
+    grid-template-columns:
+      repeat(2,minmax(0,1fr))!important;
+  }
+
+}
+
+
+/* =====================================================
+   MOBİL
+===================================================== */
+
+@media(max-width:700px){
+
+  .member-header{
+    height:60px!important;
+
+    padding:0 12px!important;
+  }
+
+
+  .member-logo img{
+    width:25px!important;
+
+    height:25px!important;
+  }
+
+
+  .member-logo-text{
+    font-size:17px!important;
+  }
+
+
+  .member-balance{
+    min-width:0!important;
+
+    height:37px!important;
+
+    padding:0 9px!important;
+  }
+
+
+  .member-balance-icon{
+    display:none!important;
+  }
+
+
+  .member-balance-text small{
+    font-size:7px!important;
+  }
+
+
+  .member-balance-text strong{
+    font-size:9px!important;
+  }
+
+
+  .member-avatar{
+    width:35px!important;
+
+    height:35px!important;
+  }
+
+
+  .main{
+    width:100%!important;
+
+    min-width:100%!important;
+
+    padding:
+      18px 10px 95px!important;
+  }
+
+
+  .ref-page{
+    width:100%!important;
+
+    max-width:100%!important;
+
+    margin:0!important;
+  }
+
+
+  .page-title h1{
+    font-size:23px!important;
+  }
+
+
+  .tx-summary{
+    grid-template-columns:
+      repeat(2,minmax(0,1fr))!important;
+
+    gap:8px!important;
+  }
+
+
+  .tx-summary .ref-stat{
+    min-height:70px!important;
+
+    padding:12px!important;
+  }
+
+
+  .tx-summary .ref-stat .num{
+    font-size:16px!important;
+  }
+
+
+  .filter-row{
+    grid-template-columns:1fr!important;
+
+    gap:7px!important;
+  }
+
+
+  .pending-head{
+    align-items:flex-start!important;
+
+    flex-direction:column!important;
+
+    gap:6px!important;
+  }
+
+
+  .pending-note{
+    white-space:normal!important;
+  }
+
+
+  .pending-item{
+    align-items:flex-start!important;
+  }
+
+
+  .pending-right{
+    text-align:left!important;
+  }
+
+
+  .transactions-card{
+    padding:10px!important;
+  }
+
+
+  .transaction-table-wrapper{
+    overflow-x:auto!important;
+  }
+
+
+  .mobile-nav{
+    width:
+      calc(100vw - 18px)!important;
+
+    max-width:none!important;
+
+    height:58px!important;
+
+    min-height:58px!important;
+
+    bottom:8px!important;
+  }
+
+}
+
+
+/* =====================================================
+   ÇOK DAR
+===================================================== */
+
+@media(max-width:380px){
+
+  .member-balance{
+    display:none!important;
+  }
+
+
+  .tx-summary{
+    grid-template-columns:1fr!important;
+  }
+
+}
+
+
+/* =====================================================
+   SCROLLBAR
+===================================================== */
+
+.transaction-table-wrapper::-webkit-scrollbar{
+  height:7px!important;
+}
+
+
+.transaction-table-wrapper::-webkit-scrollbar-track{
+  background:#030b14!important;
+}
+
+
+.transaction-table-wrapper::-webkit-scrollbar-thumb{
+  background:#234866!important;
+
+  border-radius:10px!important;
+}
+
+
+.transaction-table-wrapper::-webkit-scrollbar-thumb:hover{
+  background:#315675!important;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+<div class="app">
+
+
+<header class="member-header">
+
+
+<a
+  class="member-logo"
+  href="dashboard.html"
+>
+
+<img
+  src="assets/safepays-mark.png"
+  alt="Safe Pays"
+>
+
+<span class="member-logo-text">
+
+<span class="safe">
+Safe
+</span>
+
+<span class="pays">
+Pays
+</span>
+
+</span>
+
+</a>
+
+
+<div class="member-header-right">
+
+
+<a
+  class="member-balance"
+  href="wallet.html"
+>
+
+<svg
+  class="member-balance-icon"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.9"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+
+<path
+  d="M3.5 7.5A2.5 2.5 0 0 1 6 5h12.5A2.5 2.5 0 0 1 21 7.5v9A2.5 2.5 0 0 1 18.5 19H6a2.5 2.5 0 0 1-2.5-2.5z"
+/>
+
+<path
+  d="M3.5 8h14.2a3.3 3.3 0 0 1 3.3 3.3v1.2h-5.5a2.5 2.5 0 0 1 0-5H21"
+/>
+
+<circle
+  cx="15.6"
+  cy="10"
+  r=".65"
+  fill="currentColor"
+  stroke="none"
+/>
+
+</svg>
+
+
+<span class="member-balance-text">
+
+<small>
+Cüzdan Bakiyesi
+</small>
+
+<strong id="headerBalance">
+0.00 <em>USDT</em>
+</strong>
+
+</span>
+
+</a>
+
+
+<a
+  class="member-avatar"
+  href="profile.html"
+>
+SP
+</a>
+
+
+</div>
+
+</header>
+
+
+<main class="main">
+
+<div class="ref-page">
+
+
+<div class="page-title">
+
+<p class="eyebrow">
+Transaction History
+</p>
+
+<h1>
+İşlem Geçmişi
+</h1>
+
+<p class="page-description">
+Tüm yatırma ve çekim hareketlerinizi detaylarıyla görüntüleyin.
+</p>
+
+</div>
+
+
+<div class="tx-summary">
+
+
+<div class="ref-stat">
+
+<div class="lbl">
+Toplam İşlem
+</div>
+
+<div
+  class="num"
+  id="sumTotal"
+>
+0
+</div>
+
+</div>
+
+
+<div class="ref-stat">
+
+<div class="lbl">
+Yatırım
+</div>
+
+<div
+  class="num"
+  id="sumDeposit"
+>
+0
+</div>
+
+</div>
+
+
+<div class="ref-stat">
+
+<div class="lbl">
+Çekim
+</div>
+
+<div
+  class="num"
+  id="sumWithdraw"
+>
+0
+</div>
+
+</div>
+
+
+<div class="ref-stat">
+
+<div class="lbl">
+Bekleyen
+</div>
+
+<div
+  class="num"
+  id="sumPending"
+>
+0
+</div>
+
+</div>
+
+
+</div>
+
+
+<div class="ref-card pending-card">
+
+
+<div class="pending-head">
+
+<div>
+
+<div class="muted">
+Bekleyen işlemler
+</div>
+
+<h3>
+30 dakikalık işlem süresi
+</h3>
+
+</div>
+
+
+<span class="pending-note">
+Süre dolunca otomatik reddedilir
+</span>
+
+</div>
+
+
+<div
+  id="pendingList"
+  class="pending-list"
+></div>
+
+
+</div>
+
+
+<div class="ref-card transactions-card">
+
+
+<div class="filter-row">
+
+
+<input
+  id="transactionSearch"
+  type="text"
+  autocomplete="off"
+  placeholder="İşlem ID, TX hash veya tutar ara..."
+>
+
+
+<select id="transactionType">
+
+<option value="all">
+Tüm İşlemler
+</option>
+
+<option value="deposit">
+Yatırımlar
+</option>
+
+<option value="withdrawal">
+Çekimler
+</option>
+
+</select>
+
+
+<select id="transactionStatus">
+
+<option value="all">
+Tüm Durumlar
+</option>
+
+<option value="approved">
+Onaylandı
+</option>
+
+<option value="pending">
+Bekliyor
+</option>
+
+<option value="rejected">
+Reddedildi
+</option>
+
+<option value="auto-rejected">
+Otomatik Reddedildi
+</option>
+
+</select>
+
+
+</div>
+
+
+<div class="transaction-table-wrapper">
+
+
+<table class="ref-table">
+
+
+<thead>
+
+<tr>
+
+<th>
+İşlem ID
+</th>
+
+<th>
+Tarih / Saat
+</th>
+
+<th>
+Tür
+</th>
+
+<th>
+Ağ
+</th>
+
+<th>
+Tutar
+</th>
+
+<th>
+TX Hash
+</th>
+
+<th>
+İnceleme Süresi
+</th>
+
+<th>
+Durum
+</th>
+
+</tr>
+
+</thead>
+
+
+<tbody id="txRows">
+
+<tr>
+
+<td
+  colspan="8"
+  class="muted"
+>
+İşlemler yükleniyor...
+</td>
+
+</tr>
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+</div>
+
+
+</div>
+
+</main>
+
+
+<nav class="mobile-nav">
+
+
+<a href="dashboard.html">
+
+<b class="nav-svg">
+
+<svg
+  viewBox="0 0 24 24"
+>
+
+<path
+  d="M3 10.8 12 3l9 7.8v9.2a1 1 0 0 1-1 1h-5.2v-6h-5.6v6H4a1 1 0 0 1-1-1z"
+/>
+
+</svg>
+
+</b>
+
+<span>
+Ana Sayfa
+</span>
+
+</a>
+
+
+<a href="wallet.html">
+
+<b class="nav-svg">
+
+<svg
+  viewBox="0 0 24 24"
+>
+
+<path
+  d="M4 6.5h14a3 3 0 0 1 3 3V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12"
+/>
+
+<path
+  d="M3 8h15.5a2.5 2.5 0 0 1 2.5 2.5V13h-5a2.5 2.5 0 0 1 0-5H21"
+/>
+
+<circle
+  cx="16"
+  cy="10.5"
+  r=".8"
+/>
+
+</svg>
+
+</b>
+
+<span>
+Cüzdan
+</span>
+
+</a>
+
+
+<a href="events.html">
+
+<b class="nav-svg">
+
+<svg
+  viewBox="0 0 24 24"
+>
+
+<path
+  d="M12 3 14 10 21 12 14 14 12 21 10 14 3 12 10 10z"
+/>
+
+</svg>
+
+</b>
+
+<span>
+Etkinlik
+</span>
+
+</a>
+
+
+<a href="finance.html">
+
+<b class="nav-svg">
+
+<svg
+  viewBox="0 0 24 24"
+>
+
+<path
+  d="M12 4v16"
+/>
+
+<path
+  d="m6.5 9.5 5.5-5.5 5.5 5.5"
+/>
+
+<path
+  d="m17.5 14.5-5.5 5.5-5.5-5.5"
+/>
+
+</svg>
+
+</b>
+
+<span>
+Yatır / Çek
+</span>
+
+</a>
+
+
+<a href="support.html">
+
+<b class="nav-svg">
+
+<svg
+  viewBox="0 0 24 24"
+>
+
+<path
+  d="M4 13v-1a8 8 0 0 1 16 0v1"
+/>
+
+<path
+  d="M4 13h2.5A1.5 1.5 0 0 1 8 14.5v3A1.5 1.5 0 0 1 6.5 19H4z"
+/>
+
+<path
+  d="M20 13h-2.5a1.5 1.5 0 0 0-1.5 1.5v3a1.5 1.5 0 0 0 1.5 1.5H20z"
+/>
+
+<path
+  d="M9 20h5"
+/>
+
+</svg>
+
+</b>
+
+<span>
+Canlı Destek
+</span>
+
+</a>
+
+
+</nav>
+
+
+<script>
+/* =====================================================
+   GERÇEK BACKEND'E BAĞLANDI (server/server.js)
+   Önceden bu sayfa SafepaysDemo (localStorage demo mağazası) kullanıyordu;
+   yatırım/çekim işlemleri artık /api/transactions ve /api/auth/me üzerinden
+   gerçek sunucudan okunuyor.
+===================================================== */
+function apiToken(){return localStorage.getItem('safepays_api_token')||'';}
+async function apiGet(path){
+  const r=await fetch(path,{headers:{Authorization:'Bearer '+apiToken()}});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok) throw Object.assign(new Error(d.error||'request_failed'),{status:r.status,data:d});
+  return d;
+}
+
+let txCache=[];
+
+function money(n){
+  return Number(n || 0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:8}) + ' USDT';
+}
+
+function statusLabel(status){
+  if(status==='approved') return 'Onaylandı';
+  if(status==='pending') return 'Bekliyor';
+  if(status==='auto-rejected') return 'Oto-Reddedildi';
+  return 'Reddedildi';
+}
+
+function countdown(x){
+  const ms = x.expiresAt ? (new Date(x.expiresAt).getTime()-Date.now()) : 0;
+  const sec = Math.max(0, Math.ceil(ms/1000));
+  const m = Math.floor(sec/60);
+  const s = sec%60;
+  let cls='green';
+  if(sec<=300) cls='red'; else if(sec<=600) cls='yellow';
+  return `<span class="user-countdown ${cls}" data-countdown="${x.id}">${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</span>`;
+}
+
+function renderPending(){
+  const tx = txCache.filter(x=>x.status==='pending');
+  const el = document.getElementById('pendingList');
+  if(!el) return;
+  if(!tx.length){
+    el.innerHTML = `<div class="pending-empty">Şu anda bekleyen yatırım veya çekim işleminiz yok.</div>`;
+    return;
+  }
+  el.innerHTML = tx.map(x=>`
+<div class="pending-item">
+<div class="pending-info">
+<b>${x.type==='deposit'?'Yatırım':'Çekim'}<span class="dot-separator">·</span><span class="network-inline ${x.network==='TRC20'?'trc':'erc'}">${x.network}</span></b>
+<span class="pending-meta">${x.id} · ${money(x.amount)}</span>
+</div>
+<div class="pending-right">${countdown(x)}<small>İnceleme süresi</small></div>
+</div>`).join('');
+}
+
+function renderTx(){
+  const tx = txCache;
+  const rows = document.getElementById('txRows');
+  if(!rows) return;
+  const set=(id,value)=>{const element=document.getElementById(id); if(element) element.textContent=value;};
+  set('sumTotal', tx.length);
+  const depositTotal = tx.filter(x=>x.type==='deposit').reduce((sum,x)=>sum+Number(x.amount||0),0);
+  set('sumDeposit', money(depositTotal).replace(' USDT',''));
+  const withdrawTotal = tx.filter(x=>x.type==='withdrawal').reduce((sum,x)=>sum+Number(x.amount||0),0);
+  set('sumWithdraw', money(withdrawTotal).replace(' USDT',''));
+  set('sumPending', tx.filter(x=>x.status==='pending').length);
+  if(!tx.length){
+    rows.innerHTML = `<tr><td colspan="8" class="muted">Henüz işlem bulunmuyor.</td></tr>`;
+    return;
+  }
+  rows.innerHTML = tx.slice().sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).map(x=>{
+    const date = new Date(x.createdAt).toLocaleString('tr-TR');
+    const type = x.type==='deposit' ? 'Yatırım' : 'Çekim';
+    const sign = x.type==='deposit' ? '+' : '-';
+    const cls = x.status==='approved' ? 'approved' : x.status==='pending' ? 'pending' : 'rejected';
+    const label = statusLabel(x.status);
+    const timer = x.status==='pending' ? countdown(x) : '—';
+    return `
+<tr data-type="${x.type}" data-status="${x.status}">
+<td><b>${x.id}</b></td>
+<td>${date}</td>
+<td>${type}</td>
+<td><span class="network-inline ${x.network==='TRC20'?'trc':'erc'}">${x.network}</span></td>
+<td class="amount-cell">${sign}${Number(x.amount).toLocaleString('tr-TR',{maximumFractionDigits:8})}</td>
+<td class="address">${x.txHash||x.address||'Bekleniyor'}</td>
+<td>${timer}</td>
+<td><span class="badge ${cls}">${label}</span></td>
+</tr>`;
+  }).join('');
+}
+
+function applyFilters(){
+  const searchInput = document.getElementById('transactionSearch');
+  const typeSelect = document.getElementById('transactionType');
+  const statusSelect = document.getElementById('transactionStatus');
+  if(!searchInput || !typeSelect || !statusSelect) return;
+  const search = searchInput.value.trim().toLowerCase();
+  const type = typeSelect.value;
+  const status = statusSelect.value;
+  const rows = document.querySelectorAll('#txRows tr');
+  rows.forEach(row=>{
+    const text = row.textContent.toLowerCase();
+    let visible=true;
+    if(search && !text.includes(search)) visible=false;
+    if(type!=='all' && row.dataset.type && row.dataset.type!==type) visible=false;
+    if(status!=='all' && row.dataset.status && row.dataset.status!==status) visible=false;
+    row.style.display = visible ? '' : 'none';
+  });
+}
+
+async function refreshHeaderBalance(){
+  try{
+    const d = await apiGet('/api/auth/me');
+    const el = document.getElementById('headerBalance');
+    if(el) el.innerHTML = Number(d.user.balance||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' <em>USDT</em>';
+  }catch(e){
+    if(e.status===401){ location.href='login.html'; }
+  }
+}
+
+async function loadTransactions(){
+  if(!apiToken()){ location.href='login.html'; return; }
+  try{
+    const d = await apiGet('/api/transactions');
+    txCache = d.transactions || [];
+  }catch(e){
+    if(e.status===401){ location.href='login.html'; return; }
+    const rows=document.getElementById('txRows');
+    if(rows) rows.innerHTML = `<tr><td colspan="8" class="muted">İşlemler yüklenemedi: ${e.message}</td></tr>`;
+    return;
+  }
+  renderPending();
+  renderTx();
+  applyFilters();
+}
+
+async function tick(){
+  renderPending();
+  renderTx();
+  applyFilters();
+}
+
+loadTransactions();
+refreshHeaderBalance();
+setInterval(tick,1000);
+setInterval(loadTransactions,15000); // re-sync with server periodically so new/approved transactions show up
+
+document.addEventListener('DOMContentLoaded', function(){
+  const search = document.getElementById('transactionSearch');
+  const type = document.getElementById('transactionType');
+  const status = document.getElementById('transactionStatus');
+  if(search) search.addEventListener('input', applyFilters);
+  if(type) type.addEventListener('change', applyFilters);
+  if(status) status.addEventListener('change', applyFilters);
+});
+
+</script>
+
+
+</body>
+</html>

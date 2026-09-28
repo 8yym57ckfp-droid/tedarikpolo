@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<script>(function(){try{var p=location.pathname,s=p.includes('/admin/')?'admin':(p.includes('/owner/')?'owner':'member'),k='safepays-'+s+'-theme';if(localStorage.getItem(k)==='dark')document.documentElement.classList.add('dark-theme')}catch(e){}})();</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Safepays — Hesabınızı Oluşturun</title>
+<meta name="theme-color" content="#02060e">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+<script src="assets/app.js"></script>
+<script src="assets/i18n.js"></script>
+<link rel="stylesheet" href="assets/dark-theme.css">
+<style>
+.terms-row{margin-top:4px}
+.terms-label{display:flex;align-items:center;gap:8px;cursor:pointer}
+.terms-label input{width:18px;height:18px;accent-color:#168cff}
+.terms-row.field-invalid .terms-label{color:#ff5b70}
+.terms-row .field-error{margin:6px 0 0 26px}
+.field.field-invalid input{border-color:#ff4d68!important;box-shadow:0 0 0 2px rgba(255,77,104,.12)!important}
+.field.field-invalid .field-error{color:#ff4d68!important}
+</style>
+<script src="assets/maintenance.js"></script>
+</head>
+<body class="auth-public">
+<div class="pl-ambient-bg" aria-hidden="true">
+  <span class="pl-ambient-orb pl-ambient-orb-a"></span>
+  <span class="pl-ambient-orb pl-ambient-orb-b"></span>
+  <span class="pl-ambient-orb pl-ambient-orb-c"></span>
+  <span class="pl-ambient-stars pl-ambient-stars-a"></span>
+  <span class="pl-ambient-stars pl-ambient-stars-b"></span>
+</div>
+<div class="auth-page">
+  <section class="auth-wrap">
+    <div class="auth">
+      <a class="logo public-logo auth-logo" href="index.html">
+        <img src="assets/safepays-mark.png" alt="Safe Pays">
+        <span class="logo-words"><b>Safe</b><b>Pays</b></span>
+      </a>
+      <h1>Hesabınızı Oluşturun</h1>
+      <p>Safepays'e katılın ve dijital finans işlemlerinizi tek panelden yönetin.</p>
+      <div class="social">
+        <button type="button" class="oauth-pill oauth-google" onclick="toast('Google kayıt demo')">
+          <svg class="oauth-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          <span>Google ile devam et</span>
+        </button>
+        <button type="button" class="oauth-pill oauth-apple" onclick="toast('Apple kayıt demo')">
+          <svg class="oauth-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path fill="#000" d="M16.365 1.43c0 1.14-.465 2.21-1.247 3.01-.81.83-2.17 1.47-3.32 1.38-.14-1.1.4-2.25 1.17-3.04.81-.84 2.22-1.45 3.4-1.35zM20.82 17.37c-.53 1.22-.78 1.76-1.46 2.84-.95 1.5-2.29 3.37-3.95 3.39-1.47.02-1.85-.96-3.85-.95-2 0-2.42.96-3.89.97-1.66.02-2.93-1.7-3.88-3.19C1.67 17.5.4 12.9 2.48 9.74c1.03-1.57 2.66-2.56 4.25-2.56 1.58 0 2.57.97 3.88.97 1.27 0 2.05-.98 3.87-.98 1.38 0 2.84.75 3.87 2.05-3.4 1.86-2.85 6.72.47 8.15z"/>
+          </svg>
+          <span>Apple ile devam et</span>
+        </button>
+      </div>
+      <div class="auth-divider" role="separator"><span>veya</span></div>
+      <form id="registerForm" novalidate>
+        <div class="auth-name-grid">
+          <div class="field"><label for="firstName">Ad</label><input id="firstName" required autocomplete="given-name"></div>
+          <div class="field"><label for="lastName">Soyad</label><input id="lastName" required autocomplete="family-name"></div>
+        </div>
+        <div class="field" id="usernameField">
+          <label for="username">Kullanıcı Adı</label>
+          <input id="username" required autocomplete="username" maxlength="20" placeholder="kullaniciadi" aria-describedby="usernameError">
+          <p id="usernameError" class="field-error" role="alert"></p>
+        </div>
+        <div class="field" id="phoneField">
+          <label for="phone">Telefon</label>
+          <div class="phone-input-wrap">
+            <span class="phone-prefix">+90</span>
+            <input id="phone" required inputmode="numeric" pattern="[0-9]*" type="tel" autocomplete="tel" maxlength="10" placeholder="5xx xxx xx xx" aria-label="Telefon numarası" aria-describedby="phoneError">
+          </div>
+          <p id="phoneError" class="field-error" role="alert"></p>
+        </div>
+        <div class="field" id="emailField">
+          <label for="email">E-posta</label>
+          <input id="email" type="email" required autocomplete="email" aria-describedby="emailError">
+          <p id="emailError" class="field-error" role="alert"></p>
+        </div>
+        <div class="field">
+          <label for="password">Şifre</label>
+          <input id="password" type="password" minlength="8" required autocomplete="new-password">
+          <small class="hint">En az 8 karakter.</small>
+        </div>
+        <div class="field">
+          <label for="referralCode">Referans kodu <span class="hint">(opsiyonel)</span></label>
+          <input id="referralCode" placeholder="SAFE-XXXX" autocomplete="off">
+        </div>
+        <div class="terms-row" id="termsField">
+          <label class="hint terms-label"><input id="terms" type="checkbox" aria-describedby="termsError"> Kullanım şartlarını kabul ediyorum.</label>
+          <p id="termsError" class="field-error" role="alert"></p>
+        </div>
+        <button class="btn full auth-submit" id="registerBtn">Hesap Oluştur</button>
+        <p id="registerStatus" class="hint center" style="margin-top:12px"></p>
+      </form>
+      <p class="center auth-switch">Zaten hesabın var mı? <a href="login.html">Giriş Yap</a></p>
+      <p class="hint center auth-version">v113 · Kayıt sistemi aktif</p>
+    </div>
+  </section>
+</div>
+<script>
+(function(){
+  const form=document.getElementById('registerForm');
+  const btn=document.getElementById('registerBtn');
+  const status=document.getElementById('registerStatus');
+  const val=id=>document.getElementById(id).value.trim();
+  const phoneInput=document.getElementById('phone');
+  const usernameInput=document.getElementById('username');
+  const usernameField=document.getElementById('usernameField');
+  const usernameError=document.getElementById('usernameError');
+  const emailInput=document.getElementById('email');
+  const phoneField=document.getElementById('phoneField');
+  const emailField=document.getElementById('emailField');
+  const phoneError=document.getElementById('phoneError');
+  const emailError=document.getElementById('emailError');
+  const termsInput=document.getElementById('terms');
+  const termsField=document.getElementById('termsField');
+  const termsError=document.getElementById('termsError');
+  function setFieldError(field, errorEl, message){
+    const input=field.querySelector('input');
+    const hasError=!!message;
+    field.classList.toggle('field-invalid',hasError);
+    if(input) input.classList.toggle('field-invalid',hasError);
+    errorEl.textContent=message||'';
+  }
+  function validPhone(raw){
+    const d=String(raw||'').replace(/\D/g,'');
+    return /^5\d{9}$/.test(d);
+  }
+  function validEmail(raw){
+    const v=String(raw||'').trim();
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+  }
+  function normalizeUsername(raw){ return String(raw||'').trim().toLowerCase().replace(/^@/,''); }
+  function validUsername(raw){ return /^[a-z0-9_]{3,20}$/.test(normalizeUsername(raw)); }
+  function setUsernameError(message){ usernameField.classList.toggle('field-invalid',!!message); usernameInput.classList.toggle('field-invalid',!!message); usernameError.textContent=message||''; }
+  function localUsernameTaken(name){ try{ const users=JSON.parse(localStorage.getItem('safepays_demo_registered_users_v113')||'[]'); return Array.isArray(users)&&users.some(u=>normalizeUsername(u.username)===name); }catch(e){return false;} }
+  function validateUsername(){ const n=normalizeUsername(usernameInput.value); if(!n){setUsernameError('Kullanıcı adı gerekli.');return false;} if(!validUsername(n)){setUsernameError('3–20 karakter kullanın: sadece harf, rakam ve alt çizgi.');return false;} if(localUsernameTaken(n)){setUsernameError('Bu kullanıcı adı zaten kullanılıyor.');return false;} setUsernameError(''); return true; }
+  let usernameCheckTimer=null;
+  usernameInput.addEventListener('blur',async()=>{ if(!validateUsername())return; const n=normalizeUsername(usernameInput.value); clearTimeout(usernameCheckTimer); usernameCheckTimer=setTimeout(async()=>{ try{const r=await fetch('/api/auth/check-username?username='+encodeURIComponent(n)); const d=await r.json(); if(d.valid && !d.available)setUsernameError('Bu kullanıcı adı zaten kullanılıyor.');}catch(e){} },120); });
+  function validatePhone(){
+    const d=formatPhoneDigits(phoneInput.value);
+    if(!d){ setFieldError(phoneField,phoneError,'Telefon numarası gerekli.'); return false; }
+    if(!validPhone(d)){ setFieldError(phoneField,phoneError,'Geçerli bir telefon numarası girin.'); return false; }
+    setFieldError(phoneField,phoneError,''); return true;
+  }
+  function validateTerms(){
+    const ok=!!termsInput.checked;
+    termsField.classList.toggle('field-invalid',!ok);
+    termsError.textContent=ok?'':'Kayıt olmak için kullanım şartlarını kabul etmelisiniz.';
+    return ok;
+  }
+  termsInput.addEventListener('change',validateTerms);
+  function validateEmail(){
+    if(!emailInput.value.trim()){ setFieldError(emailField,emailError,'E-posta adresi gerekli.'); return false; }
+    if(!validEmail(emailInput.value)){ setFieldError(emailField,emailError,'Geçerli bir e-posta girin. Örn: ad@ornek.com'); return false; }
+    setFieldError(emailField,emailError,''); return true;
+  }
+  phoneInput.addEventListener('blur',validatePhone);
+  emailInput.addEventListener('blur',validateEmail);
+  usernameInput.addEventListener('input',()=>{ usernameInput.value=usernameInput.value.replace(/^@/,'').toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,20); if(usernameField.classList.contains('field-invalid')) validateUsername(); });
+  phoneInput.addEventListener('input',()=>{ if(phoneField.classList.contains('field-invalid')) validatePhone(); });
+  emailInput.addEventListener('input',()=>{ if(emailInput.value.trim()) validateEmail(); else setFieldError(emailField,emailError,''); });
+  function formatPhoneDigits(raw){
+    let digits=String(raw||'').replace(/\D/g,'');
+    // The +90 prefix is fixed; a leading 0 is never accepted.
+    if(digits.startsWith('90')) digits=digits.slice(2);
+    if(digits.startsWith('0')) digits=digits.slice(1);
+    digits=digits.slice(0,10);
+    return digits;
+  }
+  phoneInput.addEventListener('beforeinput',e=>{
+    if(e.inputType==='insertText' && e.data && /\D/.test(e.data)){ e.preventDefault(); }
+  });
+  phoneInput.addEventListener('input',()=>{
+    const digits=formatPhoneDigits(phoneInput.value);
+    phoneInput.value=digits;
+  });
+  function normalizePhone(raw){
+    let v=String(raw||'').replace(/[^0-9+]/g,'');
+    if(v.startsWith('00')) v='+'+v.slice(2);
+    if(/^0?5\d{9}$/.test(v)) return '+90'+v.replace(/^0/,'');
+    if(/^5\d{9}$/.test(v)) return '+90'+v;
+    if(/^90\d{10}$/.test(v)) return '+'+v;
+    return v;
+  }
+  function localRegister(payload){
+    const KEY='safepays_demo_registered_users_v113';
+    let users=[]; try{users=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){}
+    if(users.some(u=>u.email===payload.email)) throw new Error('Bu e-posta zaten kayıtlı.');
+    if(users.some(u=>u.phone===payload.phone)) throw new Error('Bu telefon zaten kayıtlı.');
+    if(users.some(u=>normalizeUsername(u.username)===normalizeUsername(payload.username))) throw new Error('Bu kullanıcı adı zaten kullanılıyor.');
+    const user={...payload,id:String(Math.floor(10000000+Math.random()*90000000)),balance:0,referralCode:'SAFE-'+Math.random().toString(36).slice(2,6).toUpperCase()};
+    users.push(user); localStorage.setItem(KEY,JSON.stringify(users));
+    localStorage.setItem('safepays_demo_auth','1');
+    localStorage.setItem('safepays_api_token','demo-'+user.id);
+    localStorage.setItem('safepays_demo_current_user',JSON.stringify(user));
+  }
+  form.addEventListener('submit',async e=>{
+    e.preventDefault();
+    status.textContent=''; status.style.color=''; btn.disabled=true; btn.textContent='Hesap oluşturuluyor…';
+    const payload={firstName:val('firstName'),lastName:val('lastName'),username:normalizeUsername(usernameInput.value),phone:normalizePhone(phoneInput.value),email:val('email').toLowerCase(),password:document.getElementById('password').value,referralCode:val('referralCode').toUpperCase()};
+    if(payload.firstName.length<2||payload.lastName.length<2){status.textContent='Ad ve soyad en az 2 karakter olmalı.';status.style.color='#d34b63';btn.disabled=false;btn.textContent='Hesap Oluştur';return;}
+    const usernameOk=validateUsername();
+    const phoneOk=validatePhone();
+    const emailOk=validateEmail();
+    const termsOk=validateTerms();
+    if(!usernameOk || !phoneOk || !emailOk || !termsOk){
+      status.textContent='Lütfen kırmızı ile işaretlenen alanları düzeltin.';
+      status.style.color='#ff5b70';
+      btn.disabled=false;
+      btn.textContent='Hesap Oluştur';
+      return;
+    }
+    if(payload.password.length<8){status.textContent='Şifre en az 8 karakter olmalı.';status.style.color='#d34b63';btn.disabled=false;btn.textContent='Hesap Oluştur';return;}
+    try{
+      let usedApi=false;
+      try{
+        const r=await fetch(new URL('/api/auth/register',window.location.origin).toString(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        const text=await r.text(); let d={}; try{d=JSON.parse(text)}catch(e){}
+        if(r.ok && d.token){
+          localStorage.setItem('safepays_api_token',d.token);
+          localStorage.setItem('safepays_demo_auth','1');
+          const apiUser=d.user||d.account||null;
+          const user=apiUser?{...apiUser,password:payload.password}:{...payload,id:String(Math.floor(10000000+Math.random()*90000000)),balance:0,referralCode:'SAFE-'+Math.random().toString(36).slice(2,6).toUpperCase()};
+          localStorage.setItem('safepays_demo_current_user',JSON.stringify(user));
+          usedApi=true;
+        }
+        else if(r.status===409) throw new Error(d.message||({email_exists:'Bu e-posta zaten kayıtlı.',phone_exists:'Bu telefon zaten kayıtlı.',username_exists:'Bu kullanıcı adı zaten kullanılıyor.'}[d.error]||'Bu bilgilerle daha önce kayıt oluşturulmuş.'));
+        else if(r.status===400) throw new Error(({invalid_username:'Kullanıcı adı geçersiz.',invalid_email:'Geçerli bir e-posta girin. Örn: ad@ornek.com',invalid_phone:'Geçerli bir telefon numarası girin.',weak_password:'Şifre en az 8 karakter olmalı.'}[d.error]||'Kayıt bilgilerini kontrol edin.'));
+      }catch(apiErr){
+        if(apiErr && apiErr.message && /zaten kayıtlı|daha önce/i.test(apiErr.message)) throw apiErr;
+        // Static Netlify deployment: use the same demo persistence used by the rest of the site.
+        localRegister(payload);
+      }
+      if(usedApi===false && !localStorage.getItem('safepays_demo_auth')) localRegister(payload);
+      window.location.href='dashboard.html';
+    }catch(err){status.textContent=err.message||'Kayıt sırasında bir hata oluştu.';status.style.color='#d34b63';btn.disabled=false;btn.textContent='Hesap Oluştur';}
+  });
+})();
+</script>
+</body>
+</html>

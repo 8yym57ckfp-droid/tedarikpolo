@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<script>(function(){try{var p=location.pathname,s=p.includes('/admin/')?'admin':(p.includes('/owner/')?'owner':'member'),k='safepays-'+s+'-theme';if(localStorage.getItem(k)==='dark')document.documentElement.classList.add('dark-theme')}catch(e){}})();</script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Safepays — Yatır / Çek</title>
+<link rel="stylesheet" href="assets/styles.css"><link rel="stylesheet" href="assets/finance.css"><link rel="stylesheet" href="assets/rates.css">
+<script src="assets/app.js"></script><script src="assets/demo-store.js"></script><script src="assets/i18n.js"></script>
+<link rel="stylesheet" href="assets/dark-theme.css">
+<style>
+/* v101: Yatır / Çek overview redesign — no wallet addresses exposed here */
+.finance-v101{width:100%;max-width:980px;margin:0 auto;padding-bottom:110px;position:relative;overflow:visible;box-sizing:border-box;background:transparent!important}
+/* v105: background watermark must sit behind content without a solid black panel */
+.finance-v101:before{content:"";position:absolute;z-index:0;pointer-events:none;width:620px;height:620px;right:-190px;top:-90px;background:url("assets/safepays-mark.png") center/contain no-repeat;opacity:.012;filter:brightness(.07) saturate(.10) grayscale(.82) blur(1.8px);transform:rotate(8deg)}
+.finance-v101:after{content:"";position:absolute;z-index:-1;pointer-events:none;left:-220px;top:520px;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(0,98,190,.055),transparent 68%);filter:blur(12px)}
+.finance-v101 .finance-title{margin-bottom:18px;position:relative;z-index:1}.finance-v101 .finance-title h1,.finance-v101 .finance-title p,.finance-v101 .section-title,.finance-v101 .recent-head{position:relative;z-index:1}
+.finance-v101 .finance-title p:first-child{margin-bottom:4px}
+.finance-v101 .finance-title h1{font-size:42px;letter-spacing:-1.7px;margin:0 0 8px}
+.finance-v101 .finance-title>p:last-child{font-size:18px;color:#91a6bd;max-width:760px}
+.finance-v101 .finance-switch{display:flex;gap:8px;padding:6px;background:#07182d;border:1px solid #183957;border-radius:18px;margin:20px 0 28px;position:static;box-shadow:none}
+.finance-v101 .finance-switch button{flex:1;border:0;background:transparent;border-radius:13px;padding:14px 12px;font-size:18px;font-weight:900;color:#9db0c7;cursor:pointer}
+.finance-v101 .finance-switch button.active{background:#167cff;color:#fff;box-shadow:0 8px 24px rgba(22,124,255,.22)}
+.finance-v101 .overview-hero{position:relative;overflow:hidden;border:1px solid #17426a;border-radius:22px;background:linear-gradient(135deg,#061a31,#062b4c 60%,#07345b);padding:28px;margin-bottom:28px;min-height:210px}
+.finance-v101 .overview-hero:before,.finance-v101 .overview-hero:after{content:"";position:absolute;border-radius:50%;border:1px solid rgba(39,151,255,.22);pointer-events:none}
+.finance-v101 .overview-hero:before{width:290px;height:290px;right:-60px;top:-100px;box-shadow:0 0 70px rgba(0,151,255,.14)}
+.finance-v101 .overview-hero:after{width:190px;height:190px;right:40px;bottom:-120px}
+.finance-v101 .hero-copy{position:relative;z-index:1;max-width:650px}
+.finance-v101 .hero-copy h2{font-size:28px;margin:0 0 8px;letter-spacing:-.8px}
+.finance-v101 .hero-copy p{color:#9db2c9;font-size:16px;line-height:1.55;margin:0 0 20px}
+.finance-v101 .hero-features{display:flex;gap:18px;flex-wrap:wrap}
+.finance-v101 .hero-feature{display:flex;align-items:center;gap:8px;color:#c8d6e6;font-size:13px;font-weight:800}
+.finance-v101 .hero-feature i{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#073d72;color:#1598ff;font-style:normal}
+.finance-v101 .section-title{font-size:24px;margin:26px 0 12px;letter-spacing:-.6px}
+.finance-v101 .quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.finance-v101 .quick-action{display:flex;align-items:center;gap:14px;padding:20px;border:1px solid #173a5c;border-radius:18px;background:#06182c;color:#fff;text-decoration:none;transition:.18s ease}
+.finance-v101 .quick-action:hover{transform:translateY(-1px);border-color:#1a8cff}
+.finance-v101 .quick-icon{width:52px;height:52px;flex:0 0 52px;border-radius:15px;background:#07345e;color:#1598ff;display:grid;place-items:center}
+.finance-v101 .quick-icon svg{width:27px;height:27px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.finance-v101 .quick-action strong{display:block;font-size:16px;margin-bottom:4px}.finance-v101 .quick-action span{display:block;color:#8fa5bc;font-size:13px;line-height:1.35}.finance-v101 .quick-arrow{margin-left:auto;color:#58adff;font-size:24px}
+.finance-v101 .campaign{margin-top:18px;display:flex;align-items:center;gap:14px;padding:17px 20px;border:1px solid #1265bc;border-radius:18px;background:linear-gradient(100deg,#063d83,#082d62 60%,#064ca0)}
+.finance-v101 .campaign-reward{position:relative;overflow:hidden;min-height:104px;padding:18px 20px;background:linear-gradient(110deg,#0755b7 0%,#0878ee 45%,#1460d8 100%);box-shadow:0 12px 30px rgba(0,92,220,.16)}
+.finance-v101 .campaign-reward:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 84% 50%,rgba(54,205,255,.24),transparent 35%),linear-gradient(120deg,transparent 45%,rgba(255,255,255,.06) 46%,transparent 62%);pointer-events:none}
+.finance-v101 .campaign-reward .campaign-icon{position:relative;z-index:1;width:60px;height:60px;flex:0 0 60px;border-radius:18px;background:rgba(7,47,105,.72);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.finance-v101 .campaign-reward .campaign-icon svg{width:31px;height:31px;fill:none;stroke:#fff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.finance-v101 .campaign-reward .campaign-copy{position:relative;z-index:1}.finance-v101 .campaign-reward .campaign-copy strong{font-size:22px;letter-spacing:-.4px}.finance-v101 .campaign-reward .campaign-copy strong em{font-style:normal;color:#62d7ff}.finance-v101 .campaign-reward .campaign-copy span{color:#d0e6ff;font-size:13px}
+.finance-v101 .campaign-reward>a{position:relative;z-index:2;background:linear-gradient(135deg,#1aa8ff,#5d55f5);border:1px solid rgba(255,255,255,.18);box-shadow:0 7px 18px rgba(0,0,0,.16);padding:12px 17px;border-radius:13px}.finance-v101 .campaign-reward>a span{font-size:18px;margin-left:4px}
+.finance-v101 .campaign-orbit{position:absolute;z-index:0;color:rgba(255,255,255,.07);font-size:82px;font-weight:900;line-height:1}.finance-v101 .orbit-one{right:112px;top:-10px;transform:rotate(-12deg)}.finance-v101 .orbit-two{right:35px;bottom:-30px;font-size:58px;transform:rotate(18deg)}
+
+.finance-v101 .campaign-icon{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;background:#0750a4;font-size:24px}
+.finance-v101 .campaign-copy{flex:1}.finance-v101 .campaign-copy strong{font-size:17px}.finance-v101 .campaign-copy span{display:block;color:#9eb5cd;font-size:13px;margin-top:3px}
+.finance-v101 .campaign a{background:#1598ff;color:#fff;text-decoration:none;border-radius:12px;padding:11px 15px;font-weight:900;white-space:nowrap}
+.finance-v101 .recent-head{display:flex;align-items:center;justify-content:space-between;margin:28px 0 10px}.finance-v101 .recent-head h2{margin:0;font-size:24px}.finance-v101 .recent-head a{color:#1598ff;text-decoration:none;font-weight:900}
+.finance-v101 .recent-card{border:1px solid #173a5c;border-radius:18px;background:#050505;overflow:hidden}
+.finance-v101 .recent-row{display:grid;grid-template-columns:48px 1fr auto auto;gap:12px;align-items:center;padding:15px 17px;border-bottom:1px solid #122c45}.finance-v101 .recent-row:last-child{border-bottom:0}
+.finance-v101 .recent-icon{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:22px;font-weight:900}.finance-v101 .recent-icon.deposit{background:rgba(15,201,154,.16);color:#13d7a4}.finance-v101 .recent-icon.withdraw{background:rgba(255,61,75,.14);color:#ff6872}
+.finance-v101 .recent-copy strong{display:block;font-size:14px}.finance-v101 .recent-copy span{display:block;color:#8fa4bb;font-size:12px;margin-top:3px}.finance-v101 .recent-amount{text-align:right;font-weight:900;font-size:14px}.finance-v101 .recent-amount.plus{color:#13d7a4}.finance-v101 .recent-amount.minus{color:#ff6872}
+.finance-v101 .status{font-size:11px;font-weight:900;padding:7px 10px;border-radius:999px;background:#10283f;color:#a8bdd1;white-space:nowrap}.finance-v101 .status.approved{background:rgba(15,201,154,.13);color:#13d7a4}.finance-v101 .status.pending{background:rgba(32,132,255,.13);color:#58adff}.finance-v101 .status.rejected{background:rgba(255,61,75,.12);color:#ff6872}
+.finance-v101 .note{margin-top:22px;padding:15px 17px;border:1px solid #173a5c;border-radius:16px;background:#050505;color:#8fa5bc;font-size:13px;line-height:1.5}
+.finance-v101{background:transparent!important}
+.finance-v101>*,.finance-v101 .finance-title,.finance-v101 .finance-switch,.finance-v101 .overview-hero,.finance-v101 .section-title,.finance-v101 .quick-actions,.finance-v101 .campaign,.finance-v101 .recent-head,.finance-v101 .recent-card,.finance-v101 .note{position:relative;z-index:1}
+@media(max-width:760px){.dash-header{display:none!important}.finance-v101:before{width:520px;height:520px;right:-220px;top:-55px;opacity:.012;filter:brightness(.07) saturate(.10) grayscale(.82) blur(1.8px)}.finance-v101{padding:0 0 110px}.finance-v101 .finance-title h1{font-size:34px}.finance-v101 .finance-title>p:last-child{font-size:16px}.finance-v101 .overview-hero{padding:23px;min-height:190px}.finance-v101 .hero-copy h2{font-size:24px}.finance-v101 .quick-actions{grid-template-columns:1fr}.finance-v101 .campaign{align-items:center;flex-wrap:nowrap}.finance-v101 .campaign-reward{min-height:96px;padding:14px 15px;gap:10px}.finance-v101 .campaign-reward .campaign-icon{width:48px;height:48px;flex-basis:48px;border-radius:14px}.finance-v101 .campaign-reward .campaign-icon svg{width:25px;height:25px}.finance-v101 .campaign-reward .campaign-copy strong{font-size:17px}.finance-v101 .campaign-reward .campaign-copy span{font-size:11px;line-height:1.3}.finance-v101 .campaign-reward>a{padding:10px 11px;font-size:12px}.finance-v101 .campaign-orbit{display:none}.finance-v101 .recent-row{grid-template-columns:44px 1fr auto;}.finance-v101 .recent-row .status{grid-column:2/4;justify-self:start}.finance-v101 .recent-amount{grid-column:3;grid-row:1;text-align:right}}
+.finance-header-hidden{display:none!important}
+</style>
+<style>
+/* V150 — Yatır / Çek compact visual balance */
+html.dark-theme .finance-v101.finance-v150{
+  max-width:760px!important;
+  padding-bottom:100px!important;
+}
+html.dark-theme .finance-v150 .finance-title{margin-bottom:14px!important}
+html.dark-theme .finance-v150 .finance-title p:first-child{
+  font-size:11px!important;letter-spacing:.4px!important;margin-bottom:2px!important;color:#82a8c9!important
+}
+html.dark-theme .finance-v150 .finance-title h1{
+  font-size:31px!important;line-height:1.08!important;letter-spacing:-1.1px!important;margin:0 0 5px!important
+}
+html.dark-theme .finance-v150 .finance-title>p:last-child{
+  font-size:14px!important;line-height:1.45!important;max-width:520px!important;color:#8fa5bb!important
+}
+html.dark-theme .finance-v150 .finance-switch{
+  height:58px!important;padding:4px!important;gap:4px!important;border-radius:16px!important;margin:14px 0 18px!important;box-sizing:border-box!important
+}
+html.dark-theme .finance-v150 .finance-switch button{
+  padding:10px 12px!important;font-size:16px!important;border-radius:12px!important;line-height:1!important
+}
+html.dark-theme .finance-v150 .finance-switch button.active{box-shadow:0 5px 15px rgba(22,124,255,.16)!important}
+html.dark-theme .finance-v150 .finance-switch #tabWithdraw.active{
+  background:linear-gradient(135deg,#b93649,#d95462)!important;color:#fff!important;box-shadow:0 5px 15px rgba(190,55,73,.18)!important
+}
+html.dark-theme .finance-v150 .overview-hero{
+  padding:20px!important;min-height:0!important;margin-bottom:20px!important;border-radius:17px!important;background:linear-gradient(135deg,#061a31,#092d4c 70%,#0a3154)!important
+}
+html.dark-theme .finance-v150 .overview-hero:before{width:230px!important;height:230px!important;right:-80px!important;top:-100px!important}
+html.dark-theme .finance-v150 .overview-hero:after{width:150px!important;height:150px!important;right:20px!important;bottom:-100px!important}
+html.dark-theme .finance-v150 .hero-copy h2{font-size:21px!important;line-height:1.15!important;margin-bottom:7px!important;letter-spacing:-.4px!important}
+html.dark-theme .finance-v150 .hero-copy p{font-size:13px!important;line-height:1.5!important;margin-bottom:14px!important;max-width:540px!important}
+html.dark-theme .finance-v150 .hero-features{gap:7px 14px!important}
+html.dark-theme .finance-v150 .hero-feature{font-size:11px!important;gap:6px!important}
+html.dark-theme .finance-v150 .hero-feature i{width:28px!important;height:28px!important;font-size:13px!important}
+html.dark-theme .finance-v150 .section-title{
+  font-size:19px!important;line-height:1.2!important;margin:20px 0 10px!important;letter-spacing:-.3px!important
+}
+html.dark-theme .finance-v150 .quick-actions{gap:9px!important}
+html.dark-theme .finance-v150 .quick-action{
+  min-height:0!important;padding:13px 14px!important;gap:11px!important;border-radius:14px!important;box-sizing:border-box!important
+}
+html.dark-theme .finance-v150 .quick-icon{
+  width:42px!important;height:42px!important;flex:0 0 42px!important;border-radius:12px!important
+}
+html.dark-theme .finance-v150 .quick-icon svg{width:21px!important;height:21px!important}
+html.dark-theme .finance-v150 .quick-action strong{font-size:13px!important;margin-bottom:3px!important}
+html.dark-theme .finance-v150 .quick-action span{font-size:10.5px!important;line-height:1.35!important}
+html.dark-theme .finance-v150 .quick-arrow{font-size:21px!important}
+html.dark-theme .finance-v150 .campaign-reward{
+  min-height:76px!important;padding:12px 13px!important;margin-top:12px!important;border-radius:14px!important;gap:9px!important
+}
+html.dark-theme .finance-v150 .campaign-reward .campaign-icon{
+  width:42px!important;height:42px!important;flex-basis:42px!important;border-radius:12px!important
+}
+html.dark-theme .finance-v150 .campaign-reward .campaign-icon svg{width:22px!important;height:22px!important}
+html.dark-theme .finance-v150 .campaign-reward .campaign-copy strong{font-size:14px!important}
+html.dark-theme .finance-v150 .campaign-reward .campaign-copy span{font-size:10px!important;line-height:1.3!important}
+html.dark-theme .finance-v150 .campaign-reward>a{
+  padding:8px 10px!important;border-radius:10px!important;font-size:10.5px!important;white-space:nowrap!important
+}
+html.dark-theme .finance-v150 .campaign-reward>a span{font-size:13px!important}
+html.dark-theme .finance-v150 .recent-head{margin:20px 0 9px!important}
+html.dark-theme .finance-v150 .recent-head h2{font-size:19px!important}
+html.dark-theme .finance-v150 .recent-head a{font-size:11px!important}
+html.dark-theme .finance-v150 .recent-card{border-radius:14px!important}
+html.dark-theme .finance-v150 .recent-row{padding:12px 13px!important;gap:9px!important}
+html.dark-theme .finance-v150 .recent-icon{width:36px!important;height:36px!important;font-size:18px!important}
+html.dark-theme .finance-v150 .recent-copy strong{font-size:12px!important}
+html.dark-theme .finance-v150 .recent-copy span{font-size:10px!important;margin-top:2px!important}
+html.dark-theme .finance-v150 .recent-amount{font-size:11px!important}
+html.dark-theme .finance-v150 .note{
+  margin-top:14px!important;padding:12px 13px!important;border-radius:13px!important;font-size:10px!important;line-height:1.45!important
+}
+@media(max-width:760px){
+  html.dark-theme .finance-v150{padding-left:0!important;padding-right:0!important}
+  html.dark-theme .finance-v150 .finance-title h1{font-size:29px!important}
+  html.dark-theme .finance-v150 .finance-title>p:last-child{font-size:13px!important}
+  html.dark-theme .finance-v150 .overview-hero{padding:17px!important;margin-bottom:17px!important}
+  html.dark-theme .finance-v150 .hero-copy h2{font-size:19px!important}
+  html.dark-theme .finance-v150 .hero-copy p{font-size:12px!important;margin-bottom:11px!important}
+  html.dark-theme .finance-v150 .hero-features{gap:6px 11px!important}
+  html.dark-theme .finance-v150 .hero-feature{font-size:10px!important}
+  html.dark-theme .finance-v150 .hero-feature i{width:26px!important;height:26px!important}
+  html.dark-theme .finance-v150 .quick-action{padding:12px!important}
+  html.dark-theme .finance-v150 .campaign-reward{min-height:70px!important}
+}
+@media(max-width:430px){
+  html.dark-theme .finance-v150 .finance-title h1{font-size:27px!important}
+  html.dark-theme .finance-v150 .finance-switch{height:54px!important}
+  html.dark-theme .finance-v150 .finance-switch button{font-size:14px!important}
+  html.dark-theme .finance-v150 .hero-copy h2{font-size:18px!important}
+  html.dark-theme .finance-v150 .hero-features{display:grid!important;grid-template-columns:1fr 1fr!important}
+  html.dark-theme .finance-v150 .hero-feature:last-child{grid-column:1/-1}
+  html.dark-theme .finance-v150 .campaign-reward .campaign-copy span{display:none!important}
+}
+</style>
+<link rel="stylesheet" href="assets/mobile-nav-unified.css"><link rel="stylesheet" href="assets/mobile-nav-final.css"><script>document.documentElement.classList.add('member-finance');</script><script src="assets/maintenance.js"></script></head>
+<body>
+<div class="app">
+<aside class="side"><a class="logo" href="dashboard.html">Safe<span>Pays</span></a><nav><a href="dashboard.html">Ana Sayfa</a><a href="wallet.html">Cüzdan</a><a class="active" href="finance.html">Yatır / Çek</a><a href="transactions.html">İşlem Geçmişi</a><a href="referrals.html">Referanslar</a><a href="events.html">Etkinlikler</a><a href="earnings.html">Kazanç Merkezi</a><a href="support.html">Canlı Destek</a></nav></aside>
+<main class="main">
+<header class="dash-header finance-header-hidden">
+  <div class="dash-brand-mobile"><a class="mobile-inline-logo" href="dashboard.html" aria-label="Safe Pays"><img src="assets/safepays-mark.png" alt=""><span class="inline-brand"><b>Safe</b><b>Pays</b></span></a></div>
+  <div class="desktop-label"><span class="muted">Güvenli finans paneli</span></div>
+  <div class="header-actions">
+    <a class="wallet-balance-pill" href="wallet.html" aria-label="Cüzdan bakiyesi"><span class="wallet-mini-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5A2.5 2.5 0 0 1 6 5h12.5A2.5 2.5 0 0 1 21 7.5v9A2.5 2.5 0 0 1 18.5 19H6a2.5 2.5 0 0 1-2.5-2.5z"/><path d="M3.5 8h14.2a3.3 3.3 0 0 1 3.3 3.3v1.2h-5.5a2.5 2.5 0 0 1 0-5H21"/><circle cx="15.6" cy="10" r=".65" fill="currentColor" stroke="none"/></svg></span><span><small>Cüzdan Bakiyesi</small><b>0.00 <em>USDT</em></b></span></a>
+    <a class="user-pill" href="profile.html" aria-label="Profil"><div class="avatar-sm">SP</div></a>
+  </div>
+</header>
+<div class="finance-page finance-v101 finance-v150">
+<div class="finance-title"><p>USDT</p><h1>Yatır / Çek</h1><p>Kripto varlıklarınızı hızlı, güvenli ve kolay bir şekilde yönetin.</p></div>
+<div class="finance-switch"><button id="tabDeposit" class="active" onclick="switchMode('deposit')">↥&nbsp; Yatır</button><button id="tabWithdraw" onclick="switchMode('withdraw')">↧&nbsp; Çek</button></div>
+<div class="overview-hero"><div class="hero-copy"><h2 id="heroTitle">Kolay, Güvenli ve Hızlı</h2><p id="heroText">USDT yatırma işlemlerinizi birkaç adımda başlatın. Ödeme adresi yalnızca yatırım akışında, gerekli aşamada gösterilir.</p><div class="hero-features"><div class="hero-feature"><i>ϟ</i> Hızlı işlem</div><div class="hero-feature"><i>✓</i> Güvenli altyapı</div><div class="hero-feature"><i>◷</i> 7/24 destek</div></div></div></div>
+<h2 class="section-title" id="quickTitle">Hızlı İşlemler</h2>
+<div class="quick-actions" id="depositQuick">
+<a class="quick-action" href="deposit.html"><div class="quick-icon"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h3v3H8zM13 8h3M13 11h3M8 14h3M13 14h3M8 17h3"/></svg></div><div><strong>QR Kod ile Yatır</strong><span>Ödeme adımına geç ve adresi güvenli şekilde görüntüle.</span></div><b class="quick-arrow">›</b></a>
+<a class="quick-action" href="deposit.html"><div class="quick-icon"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></div><div><strong>Ödeme Adresini Gör</strong><span>Adresler burada açıkta tutulmaz; yatırım akışında gösterilir.</span></div><b class="quick-arrow">›</b></a>
+</div>
+<div class="quick-actions" id="withdrawQuick" style="display:none">
+<a class="quick-action" href="withdraw.html"><div class="quick-icon"><svg viewBox="0 0 24 24"><path d="M12 4v16M6.5 9.5 12 4l5.5 5.5M6.5 14.5 12 20l5.5-5.5"/></svg></div><div><strong>Çekim Talebi Başlat</strong><span>Ağı, alıcı adresini ve çekim tutarını güvenli şekilde gir.</span></div><b class="quick-arrow">›</b></a>
+<a class="quick-action" href="transactions.html"><div class="quick-icon"><svg viewBox="0 0 24 24"><path d="M5 5h14v14H5z"/><path d="M8 9h8M8 13h5"/></svg></div><div><strong>Çekim Geçmişini Gör</strong><span>Bekleyen ve tamamlanan taleplerini takip et.</span></div><b class="quick-arrow">›</b></a>
+</div>
+<div class="campaign campaign-reward"><div class="campaign-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 12v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8"/><path d="M3 8h18v4H3z"/><path d="M12 8v13"/><path d="M7.5 8C6.1 8 5 7.1 5 6s1.1-2 2.5-2c2.1 0 4.5 4 4.5 4S10 8 7.5 8Zm9 0C17.9 8 19 7.1 19 6s-1.1-2-2.5-2c-2.1 0-4.5 4-4.5 4s2 0 4.5 0Z"/></svg></div><div class="campaign-copy"><strong id="campaignTitle">Daha Fazla <em>Kazan!</em></strong><span id="campaignText">Özel kampanyalar, bonuslar ve ödül fırsatlarını kaçırma.</span></div><a href="events.html">Detayları Gör <span>→</span></a><div class="campaign-orbit orbit-one" aria-hidden="true">%</div><div class="campaign-orbit orbit-two" aria-hidden="true">%</div></div>
+<div class="recent-head"><h2>Son İşlemler</h2><a href="transactions.html">Tümünü Gör →</a></div>
+<div class="recent-card" id="recentList"></div>
+<div class="note" id="pageNote">Yatırım adresleri ve QR bilgileri bu genel ekranda gösterilmez. Yatırım başlatıldığında ödeme adımında görüntülenir ve kullanıcı bildirimi kontrol paneline gönderilir.</div>
+</div></main></div>
+<nav class="mobile-nav" aria-label="Ana menü">
+<a href="dashboard.html"><b class="nav-svg"><svg viewBox="0 0 24 24"><path d="M3 10.8 12 3l9 7.8v9.2a1 1 0 0 1-1 1h-5.2v-6h-5.6v6H4a1 1 0 0 1-1-1z"/></svg></b><span>Ana Sayfa</span></a>
+<a href="wallet.html"><b class="nav-svg"><svg viewBox="0 0 24 24"><path d="M4 6.5h14a3 3 0 0 1 3 3V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12"/><path d="M3 8h15.5a2.5 2.5 0 0 1 2.5 2.5V13h-5a2.5 2.5 0 0 1 0-5H21"/><circle cx="16" cy="10.5" r=".8"/></svg></b><span>Cüzdan</span></a>
+<a href="events.html"><b class="nav-svg"><svg viewBox="0 0 24 24"><path d="M12 3 14 10 21 12 14 14 12 21 10 14 3 12 10 10z"/></svg></b><span>Etkinlik</span></a>
+<a class="active" href="finance.html"><b class="nav-svg"><svg viewBox="0 0 24 24"><path d="M12 4v16"/><path d="m6.5 9.5 5.5-5.5 5.5 5.5"/><path d="m17.5 14.5-5.5 5.5-5.5-5.5"/></svg></b><span>Yatır / Çek</span></a>
+<a href="support.html"><b class="nav-svg"><svg viewBox="0 0 24 24"><path d="M4 13v-1a8 8 0 0 1 16 0v1"/><path d="M4 13h2.5A1.5 1.5 0 0 1 8 14.5v3A1.5 1.5 0 0 1 6.5 19H4z"/><path d="M20 13h-2.5a1.5 1.5 0 0 0-1.5 1.5v3a1.5 1.5 0 0 0 1.5 1.5H20z"/><path d="M9 20h5"/></svg></b><span>Canlı Destek</span></a>
+</nav>
+<script>
+function switchMode(mode){const dep=mode==='deposit';document.getElementById('tabDeposit').classList.toggle('active',dep);document.getElementById('tabWithdraw').classList.toggle('active',!dep);document.getElementById('depositQuick').style.display=dep?'grid':'none';document.getElementById('withdrawQuick').style.display=dep?'none':'grid';document.getElementById('heroTitle').textContent=dep?'Kolay, Güvenli ve Hızlı':'Güvenli ve Kontrollü Çekim';document.getElementById('heroText').textContent=dep?'USDT yatırma işlemlerinizi birkaç adımda başlatın. Ödeme adresi yalnızca yatırım akışında, gerekli aşamada gösterilir.':'Çekim talebinizi başlatın, ağ ve alıcı bilgilerinizi kontrol edin. Talep güvenlik ve limit kontrollerinden geçirilir.';document.getElementById('campaignTitle').innerHTML=dep?'Daha Fazla <em>Kazan!</em>':'Çekimlerini Güvenle Yönet';document.getElementById('campaignText').textContent=dep?'Özel kampanyalar, bonuslar ve ödül fırsatlarını kaçırma.':'İşlemlerinizi işlem geçmişinden takip edin.';document.getElementById('pageNote').textContent=dep?'Yatırım adresleri ve QR bilgileri bu genel ekranda gösterilmez. Yatırım başlatıldığında ödeme adımında görüntülenir ve kullanıcı bildirimi kontrol paneline gönderilir.':'Çekim adresi ve tutar bilgileri yalnızca çekim formunda girilir. Talep oluşturulduğunda işlem ID ile takip edilebilir.';}
+function renderRecent(){const el=document.getElementById('recentList');let rows=[];try{rows=SafepaysDemo.expirePending().slice(0,4)}catch(e){}if(!rows.length){el.innerHTML='<div class="recent-row"><div class="recent-icon deposit">↓</div><div class="recent-copy"><strong>Henüz işlem yok</strong><span>İşlemleriniz burada görünecek.</span></div></div>';return}el.innerHTML=rows.map(x=>{const dep=x.type==='deposit';const status=x.status||'pending';const label=status==='approved'?'Tamamlandı':status==='rejected'||status==='auto-rejected'?'Reddedildi':'İşleniyor';const dt=x.createdAt?new Date(x.createdAt).toLocaleString('tr-TR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'—';const netClass=String(x.network||'').toUpperCase()==='ERC20'?'erc':'trc';return '<div class="recent-row"><div class="recent-icon '+(dep?'deposit':'withdraw')+'">'+(dep?'↓':'↑')+'</div><div class="recent-copy"><strong>USDT '+(dep?'Yatırım':'Çekim')+'</strong><span>'+dt+' · <span class="network-inline '+netClass+'">'+x.network+'</span></span></div><div class="recent-amount '+(dep?'plus':'minus')+'">'+(dep?'+':'−')+' '+Number(x.amount||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:8})+' USDT</div><span class="status '+(status==='approved'?'approved':status==='pending'?'pending':'rejected')+'">'+label+'</span></div>'}).join('')}
+const initialMode=new URLSearchParams(location.search).get('mode');switchMode(initialMode==='withdraw'?'withdraw':'deposit');renderRecent();
+</script>
+<script>document.addEventListener('DOMContentLoaded',function(){try{const b=window.SafepaysDemo?.balance?SafepaysDemo.balance():0;document.querySelectorAll('.wallet-balance-pill b').forEach(e=>e.innerHTML=Number(b).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:8})+' <em>USDT</em>')}catch(e){}});</script></body></html>
