@@ -1,0 +1,131 @@
+/* =========================================================
+   SAFEPAYS — MOBILE NAV
+   TEK SABİT ALT MENÜ
+   ========================================================= */
+
+.mobile-nav {
+  position: fixed !important;
+
+  left: 50vw !important;
+  right: auto !important;
+  bottom: 14px !important;
+
+  width: 660px !important;
+  max-width: calc(100vw - 20px) !important;
+
+  height: 62px !important;
+  min-height: 62px !important;
+  max-height: 62px !important;
+
+  transform: translateX(-50%) !important;
+
+  display: grid !important;
+  grid-template-columns: repeat(5, 1fr) !important;
+
+  padding: 6px !important;
+  margin: 0 !important;
+
+  box-sizing: border-box !important;
+
+  z-index: 999999 !important;
+
+  overflow: hidden !important;
+
+  border-radius: 18px !important;
+}
+
+.mobile-nav > a {
+  display: flex !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  flex: none !important;
+
+  flex-direction: column !important;
+
+  align-items: center !important;
+  justify-content: center !important;
+
+  gap: 3px !important;
+
+  padding: 3px 2px !important;
+  margin: 0 !important;
+
+  box-sizing: border-box !important;
+
+  overflow: hidden !important;
+
+  text-decoration: none !important;
+}
+
+.mobile-nav > a .nav-svg {
+  width: 24px !important;
+  height: 24px !important;
+
+  min-width: 24px !important;
+  min-height: 24px !important;
+
+  display: flex !important;
+
+  align-items: center !important;
+  justify-content: center !important;
+
+  flex-shrink: 0 !important;
+}
+
+.mobile-nav > a .nav-svg svg {
+  display: block !important;
+
+  width: 21px !important;
+  height: 21px !important;
+
+  max-width: 21px !important;
+  max-height: 21px !important;
+
+  fill: none !important;
+  stroke: currentColor !important;
+
+  stroke-width: 1.8 !important;
+
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+.mobile-nav > a > span {
+  display: block !important;
+
+  width: 100% !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  text-align: center !important;
+
+  font-size: 10px !important;
+  line-height: 12px !important;
+
+  white-space: nowrap !important;
+
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* MENÜ HER EKRANDA GÖRÜNÜR */
+.mobile-nav {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Sayfa içeriği menünün altında kalmasın */
+main,
+.main {
+  padding-bottom: 100px !important;
+}
+
+.dash-content {
+  padding-bottom: 115px !important;
+}

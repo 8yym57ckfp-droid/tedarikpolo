@@ -1,0 +1,217 @@
+/* =========================================================
+   SAFEPAYS — ORTAK MOBİL ALT MENÜ
+   Tüm member sayfalarında aynı ölçü / konum / görünüm
+   ========================================================= */
+
+.mobile-nav,
+html body .mobile-nav,
+html.dark-theme body .mobile-nav {
+  position: fixed !important;
+
+  left: 50% !important;
+  right: auto !important;
+  bottom: 14px !important;
+
+  width: 676px !important;
+  max-width: calc(100vw - 28px) !important;
+
+  height: 56px !important;
+  min-height: 56px !important;
+  max-height: 56px !important;
+
+  transform: translateX(-50%) !important;
+
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+
+  align-items: stretch !important;
+  justify-content: initial !important;
+
+  margin: 0 !important;
+  padding: 5px 6px !important;
+  box-sizing: border-box !important;
+
+  background: rgba(5, 18, 32, .97) !important;
+  border: 1px solid #1b3a56 !important;
+  border-radius: 18px !important;
+
+  box-shadow:
+    0 12px 35px rgba(0,0,0,.48),
+    0 2px 10px rgba(0,0,0,.25) !important;
+
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+
+  overflow: hidden !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 999999 !important;
+
+  isolation: isolate !important;
+}
+
+.mobile-nav > a,
+html body .mobile-nav > a,
+html.dark-theme body .mobile-nav > a {
+  display: flex !important;
+
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  min-height: 0 !important;
+
+  flex: none !important;
+  flex-direction: column !important;
+
+  align-items: center !important;
+  justify-content: center !important;
+
+  gap: 1px !important;
+  margin: 0 !important;
+  padding: 2px !important;
+
+  box-sizing: border-box !important;
+
+  color: #91a5ba !important;
+  text-decoration: none !important;
+  text-align: center !important;
+
+  border: 0 !important;
+  border-radius: 12px !important;
+
+  overflow: hidden !important;
+  transform: none !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.mobile-nav > a.active,
+html body .mobile-nav > a.active,
+html.dark-theme body .mobile-nav > a.active {
+  color: #1598ff !important;
+  background: rgba(20, 149, 255, .08) !important;
+}
+
+.mobile-nav > a:hover {
+  color: #ffffff !important;
+}
+
+.mobile-nav > a .nav-svg {
+  display: grid !important;
+  place-items: center !important;
+
+  width: 25px !important;
+  height: 25px !important;
+  min-width: 25px !important;
+  min-height: 25px !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  color: currentColor !important;
+  line-height: 0 !important;
+  flex-shrink: 0 !important;
+}
+
+.mobile-nav > a .nav-svg svg {
+  display: block !important;
+
+  width: 21px !important;
+  height: 21px !important;
+  min-width: 21px !important;
+  min-height: 21px !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 1.8 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+.mobile-nav > a > span {
+  display: block !important;
+
+  width: 100% !important;
+  max-width: 100% !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  color: currentColor !important;
+
+  font-size: 9.5px !important;
+  line-height: 11px !important;
+  font-weight: 500 !important;
+
+  white-space: nowrap !important;
+  text-align: center !important;
+
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Telefon */
+@media (max-width: 700px) {
+  .mobile-nav,
+  html body .mobile-nav,
+  html.dark-theme body .mobile-nav {
+    left: 10px !important;
+    right: 10px !important;
+    bottom: 10px !important;
+
+    width: auto !important;
+    max-width: none !important;
+
+    height: 68px !important;
+    min-height: 68px !important;
+    max-height: 68px !important;
+
+    transform: none !important;
+
+    padding: 5px 4px !important;
+    border-radius: 22px !important;
+  }
+
+  .mobile-nav > a,
+  html body .mobile-nav > a,
+  html.dark-theme body .mobile-nav > a {
+    gap: 2px !important;
+    padding: 2px !important;
+  }
+
+  .mobile-nav > a .nav-svg {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+  }
+
+  .mobile-nav > a .nav-svg svg {
+    width: 23px !important;
+    height: 23px !important;
+    min-width: 23px !important;
+    min-height: 23px !important;
+  }
+
+  .mobile-nav > a > span {
+    font-size: 9.5px !important;
+    line-height: 12px !important;
+  }
+}
+
+/* Çok dar telefon */
+@media (max-width: 380px) {
+  .mobile-nav,
+  html body .mobile-nav,
+  html.dark-theme body .mobile-nav {
+    left: 8px !important;
+    right: 8px !important;
+  }
+
+  .mobile-nav > a > span {
+    font-size: 9px !important;
+  }
+}

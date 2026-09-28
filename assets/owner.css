@@ -1,0 +1,446 @@
+/* SafePays Owner Control Center — V158 */
+:root{--owner-bg:#050a12;--owner-panel:#0b1422;--owner-panel2:#0f1b2d;--owner-border:#1b3552;--owner-text:#edf5ff;--owner-muted:#8da2bd;--owner-blue:#1685ff;--owner-purple:#6354ef;--owner-green:#28d89a;--owner-red:#ff6674}
+html,body.admin-body{background:var(--owner-bg)!important;color:var(--owner-text)!important}
+.owner-layout{min-height:100vh;background:radial-gradient(circle at 80% -10%,rgba(22,133,255,.12),transparent 30%)}
+.owner-side{position:fixed;z-index:1000;inset:0 auto 0 0;width:250px;padding:22px 14px;background:#07111e;border-right:1px solid var(--owner-border);overflow:auto}
+.owner-brand{display:flex;align-items:center;gap:10px;padding:4px 10px 22px;border-bottom:1px solid #15283f}.owner-brand img{width:34px;height:34px;object-fit:contain}.owner-brand b{font-size:20px}.owner-brand span{color:#42a0ff}
+.owner-caption{font-size:10px;color:#5f7894;text-transform:uppercase;letter-spacing:.12em;font-weight:900;margin:20px 10px 7px}.owner-nav{display:grid;gap:4px}.owner-nav a{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;color:#9fb1c6;text-decoration:none;font-size:12px;font-weight:800}.owner-nav a:hover,.owner-nav a.active{background:#102743;color:#fff;box-shadow:inset 3px 0 var(--owner-blue)}
+.owner-main{margin-left:250px;min-height:100vh;padding:28px 32px}.owner-top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px}.owner-kicker{color:#6e87a4;font-size:11px;font-weight:900;letter-spacing:.1em}.owner-top h1{font-size:30px;letter-spacing:-1px;margin:3px 0}.owner-sub{color:var(--owner-muted);font-size:12px}.owner-user{padding:10px 13px;border:1px solid var(--owner-border);border-radius:11px;background:var(--owner-panel);font-size:11px;font-weight:800}.owner-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.owner-card{display:block;text-decoration:none;color:inherit;background:linear-gradient(145deg,#0c1929,#091321);border:1px solid var(--owner-border);border-radius:16px;padding:18px;min-height:110px;transition:.18s}.owner-card:hover{transform:translateY(-2px);border-color:#2c6fae}.owner-card small{color:#6f88a5;font-weight:800}.owner-card h3{margin:10px 0 4px;font-size:18px}.owner-card p{margin:0;color:#8da2bd;font-size:11px}.owner-section{margin-top:14px;background:var(--owner-panel);border:1px solid var(--owner-border);border-radius:16px;padding:18px}.owner-section h2{font-size:16px;margin:0 0 7px}.owner-section p{color:var(--owner-muted);font-size:12px;line-height:1.65}.owner-menu{display:none}
+.owner-btn{border:1px solid #27547c;background:#102943;color:#eaf3ff;border-radius:9px;padding:9px 12px;font-weight:800;cursor:pointer}.owner-btn.primary{background:linear-gradient(90deg,var(--owner-blue),var(--owner-purple));border-color:#318cff}.owner-btn.green{background:rgba(40,216,154,.12);border-color:#217f65;color:#62efbb}.owner-btn.red{background:rgba(255,102,116,.1);border-color:#7b3440;color:#ff9aa4}
+.owner-table{width:100%;border-collapse:collapse}.owner-table th,.owner-table td{padding:11px 8px;border-bottom:1px solid #18304a;text-align:left;font-size:11px}.owner-table th{color:#7890aa;text-transform:uppercase;letter-spacing:.04em}.owner-table td{color:#dce8f5}.owner-field{display:grid;gap:6px}.owner-field label{font-size:10px;color:#7990aa;font-weight:800}.owner-field input,.owner-field select{box-sizing:border-box;width:100%;padding:10px;border:1px solid #25425f;border-radius:9px;background:#091726;color:#eaf3ff;outline:none}.owner-field input:focus,.owner-field select:focus{border-color:#2e8cff}
+@media(max-width:1050px){.owner-cards{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:800px){.owner-side{transform:translateX(-105%);transition:.2s;width:245px;box-shadow:15px 0 40px rgba(0,0,0,.4)}.owner-side.open{transform:translateX(0)}.owner-main{margin-left:0;padding:72px 14px 25px}.owner-menu{display:block;position:fixed;top:14px;left:14px;z-index:1101;width:43px;height:43px;border:1px solid #294766;border-radius:11px;background:#0b1b2c;color:#fff;font-size:20px}.owner-top{align-items:flex-start}.owner-top h1{font-size:25px}.owner-cards{grid-template-columns:1fr}.owner-user{display:none}}
+/* Apply Owner skin to legacy owner pages too */
+body.admin-body .admin-side{width:250px;background:#07111e;border-color:var(--owner-border);padding:22px 14px}
+body.admin-body .admin-side .logo{padding:4px 10px 22px;border-bottom:1px solid #15283f;font-size:20px}
+body.admin-body .admin-side .logo span{color:#42a0ff}
+body.admin-body .admin-main{margin-left:250px;width:calc(100% - 250px);padding:28px 32px;background:var(--owner-bg)!important;color:var(--owner-text)}
+body.admin-body .admin-nav{gap:4px;margin-top:20px}body.admin-body .admin-nav a{padding:11px 12px;border-radius:10px;color:#9fb1c6;font-size:12px;font-weight:800}body.admin-body .admin-nav a:hover,body.admin-body .admin-nav a.active{background:#102743;color:#fff;box-shadow:inset 3px 0 var(--owner-blue)}
+body.admin-body .admin-head h1{color:#edf5ff;font-size:30px}body.admin-body .admin-head{margin-bottom:24px}body.admin-body .admin-muted{color:#8da2bd}
+body.admin-body .admin-card,body.admin-body .admin-grid .card{background:#0b1422;border-color:var(--owner-border);box-shadow:0 10px 30px rgba(0,0,0,.16);color:#edf5ff}
+body.admin-body .admin-grid .card:hover{border-color:#2c6fae}
+body.admin-body .admin-card input,body.admin-body .admin-card select,body.admin-body .admin-card textarea{background:#091726;border-color:#25425f;color:#eaf3ff}
+@media(max-width:900px){body.admin-body .admin-side{width:250px;transform:translateX(-105%)}body.admin-body .admin-side.open{transform:translateX(0)}body.admin-body .admin-main{margin-left:0;width:100%;padding:72px 14px 30px}}
+.owner-nav-title{font-size:9px;color:#4f6884;font-weight:900;letter-spacing:.12em;padding:15px 12px 5px}.owner-nav-icon{width:17px;text-align:center;color:#5ca9ff}.owner-badge{padding:9px 12px;border:1px solid #21466a;border-radius:999px;background:#0b1b2b;color:#68b6ff;font-size:10px;font-weight:900;white-space:nowrap}
+
+/* V165 — owner navigation uses clean category icons instead of emoji */
+.owner-nav-icon{width:19px;height:19px;flex:0 0 19px;display:inline-flex;align-items:center;justify-content:center;color:#67a9ff;text-align:center}
+.owner-nav-icon svg{width:18px;height:18px;display:block}
+.owner-nav a:hover .owner-nav-icon,.owner-nav a.active .owner-nav-icon{color:#fff}
+
+/* V205 — Owner Panel Purple Theme (Owner-only) */
+:root{
+  --owner-bg:#090316;
+  --owner-panel:#130821;
+  --owner-panel2:#1a0d2c;
+  --owner-border:#4b1d78;
+  --owner-text:#f8f3ff;
+  --owner-muted:#b6a6ca;
+  --owner-blue:#a43cff;
+  --owner-purple:#7c22ff;
+  --owner-green:#35e0a0;
+  --owner-red:#ff667b;
+}
+html,body.admin-body{background:#090316!important;color:#f8f3ff!important}
+body.admin-body .admin-main{background:#090316!important}
+body.admin-body .admin-side{background:linear-gradient(180deg,#10051e 0%,#0b0316 100%)!important;border-right-color:#35125a!important}
+body.admin-body .admin-side .logo{border-bottom-color:#32104f!important}
+body.admin-body .admin-side .logo span{color:#a43cff!important}
+body.admin-body .admin-nav a{color:#b8a7cc!important}
+body.admin-body .admin-nav a:hover,body.admin-body .admin-nav a.active{background:linear-gradient(90deg,#32105d,#24103f)!important;color:#fff!important;box-shadow:inset 3px 0 #a43cff!important}
+body.admin-body .admin-head h1{color:#fff!important}
+body.admin-body .admin-muted{color:#aa98c1!important}
+body.admin-body .admin-card,body.admin-body .admin-grid .card{background:linear-gradient(145deg,#170a27,#10051d)!important;border-color:#47206d!important;box-shadow:0 12px 35px rgba(93,24,150,.12)!important}
+body.admin-body .admin-card input,body.admin-body .admin-card select,body.admin-body .admin-card textarea{background:#10051c!important;border-color:#4a2270!important;color:#f2eaff!important}
+.owner-nav-title{color:#76578f!important}
+.owner-nav-icon{color:#b05cff!important}
+.owner-nav a:hover .owner-nav-icon,.owner-nav a.active .owner-nav-icon{color:#fff!important}
+.owner-badge{border-color:#6324a1!important;background:#1a082d!important;color:#c17cff!important}
+.owner-overview{gap:14px!important}
+.owner-kpi{background:linear-gradient(145deg,#1b0b2d,#11051e)!important;border-color:#4b1d78!important;box-shadow:0 10px 28px rgba(95,24,155,.12)!important}
+.owner-kpi span{color:#a88dbc!important}
+.owner-kpi b{color:#f8f3ff!important}
+.owner-kpi.green b{color:#45e0a6!important}.owner-kpi.red b{color:#ff6b7c!important}.owner-kpi.purple b{color:#bd7aff!important}
+.owner-row{background:linear-gradient(145deg,#180a29,#10051d)!important;border-color:#47206d!important}
+.owner-row strong{color:#f5edff!important}.owner-row span{color:#a88dbc!important}
+.owner-action{background:#211038!important;border-color:#5a2a88!important;color:#eee3ff!important}
+.owner-action.primary{background:linear-gradient(90deg,#7b20f4,#a43cff)!important;border-color:#a43cff!important;color:#fff!important}
+.owner-section{background:linear-gradient(145deg,#150823,#0f051b)!important;border-color:#47206d!important;box-shadow:0 12px 35px rgba(93,24,150,.1)!important}
+.owner-btn{background:#211038!important;border-color:#5a2a88!important;color:#f1e8ff!important}.owner-btn.primary{background:linear-gradient(90deg,#7b20f4,#a43cff)!important;border-color:#a43cff!important}.owner-btn.green{background:rgba(53,224,160,.1)!important;border-color:#26765a!important;color:#62efbb!important}.owner-btn.red{background:rgba(255,102,123,.1)!important;border-color:#793341!important;color:#ff9aa4!important}
+.owner-table th,.owner-table td{border-bottom-color:#351750!important}.owner-table th{color:#9d83b4!important}.owner-table td{color:#e9ddf5!important}
+.owner-field label{color:#9f87b5!important}.owner-field input,.owner-field select{background:#10051c!important;border-color:#4a2270!important;color:#f2eaff!important}.owner-field input:focus,.owner-field select:focus{border-color:#a43cff!important;box-shadow:0 0 0 2px rgba(164,60,255,.12)!important}
+.owner-menu{background:#17092a!important;border-color:#5a2a88!important;color:#fff!important}
+.owner-access-note{background:#1a082d!important;border-color:#8b36d9!important}
+@media(max-width:800px){body.admin-body .admin-main{background:#090316!important}}
+
+/* V206 — Owner dashboard layout matched to approved purple reference */
+.owner-dashboard{background:#080214!important}.owner-dashboard .admin-layout{background:#080214}.owner-dashboard-side{width:305px!important;background:linear-gradient(180deg,#12051f 0%,#080212 100%)!important;border-right:1px solid #2a1242!important;padding:26px 22px!important}.owner-dashboard-side .logo{display:flex!important;flex-direction:column!important;align-items:center!important;gap:2px!important;padding:0 0 24px!important;border-bottom:1px solid #241037!important;font-size:31px!important;letter-spacing:-2px!important}.owner-dashboard-side .logo span{color:#a63cff!important}.owner-dashboard-side .logo small{font-size:10px;letter-spacing:4px;color:#bca5d1;font-weight:800;margin-top:2px}.owner-dashboard .admin-nav{gap:5px!important;margin-top:18px!important}.owner-dashboard .admin-nav a{min-height:42px!important;padding:10px 16px!important;border-radius:10px!important;font-size:15px!important;color:#c7b8d7!important}.owner-dashboard .admin-nav a.active{background:linear-gradient(90deg,#6e1bd1,#35105e)!important;box-shadow:inset 4px 0 #c050ff,0 0 18px rgba(150,50,255,.16)!important}.owner-dashboard .admin-nav a:hover{background:#28103f!important}.owner-dashboard .owner-nav-title{display:block!important;color:#76578f!important;font-size:9px!important;font-weight:900!important;letter-spacing:.16em!important;padding:14px 12px 5px!important;margin-top:2px!important}.owner-dashboard .owner-nav-icon{width:22px!important;height:22px!important;color:#ad55ff!important}.owner-dashboard .admin-nav a.active .owner-nav-icon{color:#fff!important}.owner-dashboard-main{margin-left:305px!important;width:calc(100% - 305px)!important;padding:32px 36px 38px!important;background:radial-gradient(circle at 70% -20%,rgba(126,31,220,.16),transparent 35%),#080214!important}.owner-dashboard-header{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;margin-bottom:22px}.owner-dashboard-header h1{margin:2px 0 4px;font-size:35px!important;letter-spacing:-1.5px;color:#fff!important}.owner-dashboard-header p{margin:0;color:#b9a7c9;font-size:15px}.owner-kicker{font-size:13px;color:#bba6d0;letter-spacing:.04em}.crown{color:#ad39ff}.owner-header-right{display:grid;grid-template-columns:auto auto;grid-template-rows:auto auto;gap:14px;align-items:center}.owner-icon-btn{width:58px;height:58px;border-radius:15px;border:1px solid #48205f;background:#130821;color:#fff;font-size:27px;position:relative}.owner-icon-btn i{position:absolute;right:7px;top:7px;width:9px;height:9px;border-radius:50%;background:#a83cff}.owner-user-chip{display:flex;align-items:center;gap:10px;min-width:210px}.owner-user-chip .avatar{width:45px;height:45px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#7e21e8,#b13cff);font-weight:900;font-size:19px}.owner-user-chip b{display:block;color:#fff;font-size:15px}.owner-user-chip small{display:block;color:#bca5d1;font-size:13px;margin-top:3px}.owner-user-chip .chevron{margin-left:auto;color:#bca5d1;font-size:22px}.owner-date{grid-column:1 / span 2;justify-self:end;display:flex;gap:12px;align-items:center;padding:12px 16px;border:1px solid #4a205f;background:#140923;border-radius:12px;min-width:185px}.owner-date .cal{color:#b13cff;font-size:25px}.owner-date b,.owner-date small{display:block;color:#eee7f5}.owner-date small{color:#bba7cb;margin-top:3px}.owner-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.owner-stat{position:relative;overflow:hidden;min-height:128px;padding:17px 18px;border:1px solid #542075;border-radius:13px;background:linear-gradient(145deg,#1a092a,#10051c);display:flex;gap:14px;align-items:flex-start;box-shadow:0 10px 30px rgba(70,10,110,.12)}.owner-stat .stat-icon{width:52px;height:52px;border:1px solid #5d2486;border-radius:13px;display:grid;place-items:center;color:#ae39ff;background:#210b38;font-size:25px;flex:0 0 52px}.owner-stat small{color:#c0aecf;font-size:13px}.owner-stat b{display:block;color:#fff;font-size:23px;margin-top:6px}.owner-stat em{display:block;color:#42e7aa;font-style:normal;font-size:13px;margin-top:8px;font-weight:700}.owner-stat:nth-child(2) em{color:#42e7aa}.owner-stat:nth-child(4) em{color:#42e7aa}.spark{position:absolute;right:0;bottom:7px;width:110px;height:45px}.spark path{fill:none;stroke:#9c31ff;stroke-width:2.5}.owner-dashboard-middle{display:grid;grid-template-columns:1.7fr 1fr;gap:14px;margin-top:16px}.owner-chart-card,.owner-network-card,.owner-table-card{border:1px solid #4d1f70;border-radius:14px;background:linear-gradient(145deg,#170a27,#0d0418);box-shadow:0 10px 30px rgba(70,10,110,.12)}.owner-chart-card,.owner-network-card{padding:18px}.card-head,.table-head{display:flex;justify-content:space-between;align-items:center;gap:12px}.card-head h2,.owner-network-card h2,.table-head h2{margin:0;color:#fff;font-size:18px}.card-head select{background:#18092a;border:1px solid #4f2471;color:#d9c7e8;padding:9px 13px;border-radius:9px}.chart-wrap{height:260px;margin-top:8px}.chart-wrap svg{width:100%;height:100%}.chart-wrap .grid{stroke:#32194a;stroke-width:1}.chart-wrap .axis{fill:#ad99bd;font-size:11px}.chart-wrap .line{fill:none;stroke:#a02fff;stroke-width:3}.chart-wrap .point{fill:#a02fff;stroke:#d69cff;stroke-width:2}.network-content{display:flex;align-items:center;justify-content:center;gap:28px;height:260px}.donut-wrap{position:relative;width:210px;height:210px}.donut-wrap svg{width:100%;height:100%;transform:rotate(-90deg)}.donut-bg,.donut-trc,.donut-erc{fill:none;stroke-width:26}.donut-bg{stroke:#29183b}.donut-trc{stroke:#8c1fff}.donut-erc{stroke:#d38cff}.donut-center{position:absolute;inset:0;display:grid;place-content:center;text-align:center}.donut-center small{color:#a992b9;font-size:12px}.donut-center b{color:#fff;font-size:15px;margin-top:4px}.network-legend{min-width:130px}.network-legend div{display:grid;grid-template-columns:14px 1fr auto;gap:8px;align-items:center;margin:17px 0;color:#eae2f1;font-size:14px}.network-legend span{color:#c5b4d2}.dot{width:10px;height:10px;border-radius:50%;display:block}.dot.trc{background:#8c1fff}.dot.erc{background:#d38cff}.dot.other{background:#9b8fa6}.owner-tables{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}.owner-table-card{padding:18px}.table-head a{color:#bf51ff;text-decoration:none;font-size:13px;font-weight:700}.table-scroll{overflow:auto;margin-top:12px}.owner-table-card table{width:100%;border-collapse:collapse;min-width:620px}.owner-table-card th,.owner-table-card td{padding:10px 8px;border-bottom:1px solid #2e1744;text-align:left;font-size:12px;white-space:nowrap}.owner-table-card th{color:#aa91bd;font-weight:700}.owner-table-card td{color:#eee7f5}.status-ok{display:inline-block;padding:5px 9px;border-radius:999px;background:rgba(38,209,146,.12);border:1px solid #1f6d57;color:#43e6ac;font-size:11px}.empty{text-align:center!important;color:#8f7b9e!important;padding:25px!important}@media(max-width:1200px){.owner-stat-grid{grid-template-columns:repeat(2,1fr)}.owner-dashboard-middle{grid-template-columns:1fr}.owner-tables{grid-template-columns:1fr}}@media(max-width:800px){.owner-dashboard-side{width:285px!important}.owner-dashboard-main{margin-left:0!important;width:100%!important;padding:72px 14px 28px!important}.owner-dashboard-header{display:block}.owner-header-right{margin-top:15px}.owner-dashboard-header h1{font-size:28px!important}.owner-stat-grid{grid-template-columns:1fr}.owner-tables{grid-template-columns:1fr}.owner-stat{min-height:112px}.owner-network-card .network-content{gap:10px}.owner-access-card{bottom:18px}.owner-dashboard-side .logo{padding-top:8px!important}}
+
+/* V207 — Purple skin for ALL Owner pages; admin/ member panels are untouched because they do not load owner.css */
+body.admin-body .admin-layout,
+body.admin-body .admin-main{background:#080214!important}
+body.admin-body .admin-head h1{color:#f8f3ff!important}
+body.admin-body .admin-head{color:#f8f3ff!important}
+body.admin-body .admin-card,
+body.admin-body .admin-grid .card,
+body.admin-body .card,
+body.admin-body .mini-card,
+body.admin-body .team-card,
+body.admin-body .member-table-wrap,
+body.admin-body .tx-table,
+body.admin-body .content-tabs,
+body.admin-body .content-tab,
+body.admin-body .bonus-actions,
+body.admin-body .form-actions{background:linear-gradient(145deg,#170a27,#0e0419)!important;border-color:#47206d!important;color:#f5edff!important;box-shadow:0 10px 30px rgba(91,25,145,.10)!important}
+body.admin-body .admin-grid .card .admin-value,
+body.admin-body .admin-value{color:#f8f3ff!important}
+body.admin-body .admin-card h2,
+body.admin-body .admin-card h3,
+body.admin-body .team-card h3,
+body.admin-body .mini-card h3{color:#f8f3ff!important}
+body.admin-body .admin-card p,
+body.admin-body .admin-card label,
+body.admin-body .admin-muted,
+body.admin-body .source-note,
+body.admin-body .status-note{color:#b7a4c8!important}
+body.admin-body .admin-card input,
+body.admin-body .admin-card select,
+body.admin-body .admin-card textarea,
+body.admin-body input,
+body.admin-body select,
+body.admin-body textarea{background:#0f0619!important;border:1px solid #4b2270!important;color:#f3eaff!important;box-shadow:none!important}
+body.admin-body input::placeholder,
+body.admin-body textarea::placeholder{color:#8f7b9e!important}
+body.admin-body .admin-btn,
+body.admin-body .member-btn,
+body.admin-body .owner-btn{background:linear-gradient(90deg,#7120dc,#a43cff)!important;border:1px solid #a43cff!important;color:#fff!important}
+body.admin-body .admin-btn:hover,
+body.admin-body .member-btn:hover,
+body.admin-body .owner-btn:hover{filter:brightness(1.08)}
+body.admin-body .search-row{background:transparent!important}
+body.admin-body .search-row input{border-color:#4b2270!important}
+body.admin-body .error-box,
+body.admin-body #error{background:rgba(110,25,45,.32)!important;border:1px solid #78334a!important;color:#ff9aa8!important;border-radius:10px}
+body.admin-body .security-note,
+body.admin-body .demo-login-note,
+body.admin-body .image-upload-error{background:linear-gradient(145deg,#21102f,#160a22)!important;border:1px solid #5b2b7f!important;color:#d9c7e8!important}
+body.admin-body .content-tab{background:#12071f!important;color:#bda9cc!important}
+body.admin-body .content-tab.active,
+body.admin-body .content-tab:hover{background:linear-gradient(90deg,#6f1fd3,#a13cff)!important;color:#fff!important;border-color:#a43cff!important}
+body.admin-body .role,
+body.admin-body .badge{background:#211038!important;border:1px solid #5b2a86!important;color:#d9c5ec!important}
+body.admin-body .member-table,
+body.admin-body .tx-table,
+body.admin-body table{color:#eee5f5!important}
+body.admin-body .member-table th,
+body.admin-body .tx-table th,
+body.admin-body table th{color:#a992b8!important;border-bottom-color:#35174e!important}
+body.admin-body .member-table td,
+body.admin-body .tx-table td,
+body.admin-body table td{color:#e9dff1!important;border-bottom-color:#29133d!important}
+body.admin-body .member-table-wrap .member-actions,
+body.admin-body .actions{background:transparent!important}
+body.admin-body .member-btn{padding:9px 12px!important;border-radius:9px!important}
+body.admin-body .field label{color:#a991b7!important}
+body.admin-body .field input:focus,
+body.admin-body .field select:focus,
+body.admin-body .field textarea:focus{border-color:#a43cff!important;box-shadow:0 0 0 2px rgba(164,60,255,.12)!important}
+body.admin-body .owner-badge{background:#1a082d!important;border-color:#6324a1!important;color:#c17cff!important}
+body.admin-body .status-ok{background:rgba(53,224,160,.10)!important;border-color:#26765a!important;color:#62efbb!important}
+body.admin-body .status-note strong{color:#fff!important}
+body.admin-body .team-card .badge,
+body.admin-body .team-card .role{background:#211038!important}
+
+/* V230 — Owner pages always use the purple Owner skin; theme CSS must not wash them to light mode. */
+
+html:not(.dark-theme) body.admin-body.owner-dashboard,
+html:not(.dark-theme) body.admin-body.owner-dashboard .admin-layout,
+html:not(.dark-theme) body.admin-body.owner-dashboard .admin-main,
+html:not(.dark-theme) body.admin-body .owner-dashboard-main {
+  background: #080214 !important;
+  color: #f8f3ff !important;
+}
+html:not(.dark-theme) body.admin-body.owner-dashboard .admin-side,
+html:not(.dark-theme) body.admin-body.owner-dashboard .owner-dashboard-side {
+  background: linear-gradient(180deg,#12051f 0%,#080212 100%) !important;
+  border-color: #2a1242 !important;
+}
+html:not(.dark-theme) body.admin-body.owner-dashboard .owner-stat,
+html:not(.dark-theme) body.admin-body.owner-dashboard .owner-chart-card,
+html:not(.dark-theme) body.admin-body.owner-dashboard .owner-network-card,
+html:not(.dark-theme) body.admin-body.owner-dashboard .owner-table-card {
+  background: linear-gradient(145deg,#170a27,#0d0418) !important;
+  border-color: #4d1f70 !important;
+  color: #f5edff !important;
+}
+html:not(.dark-theme) body.admin-body.owner-dashboard .owner-dashboard-header h1,
+html:not(.dark-theme) body.admin-body.owner-dashboard .card-head h2,
+html:not(.dark-theme) body.admin-body.owner-dashboard .owner-network-card h2,
+html:not(.dark-theme) body.admin-body.owner-dashboard .table-head h2,
+html:not(.dark-theme) body.admin-body.owner-dashboard .owner-user-chip b,
+html:not(.dark-theme) body.admin-body.owner-dashboard .owner-stat b { color:#fff !important; }
+
+
+/* V231 — Purple Owner skin is global across every authenticated Owner page. */
+body.admin-body.owner-page,
+body.admin-body.owner-page .admin-layout,
+body.admin-body.owner-page .admin-main{
+  background:#090316!important;
+  color:#f8f3ff!important;
+}
+body.admin-body.owner-page .admin-side{
+  background:linear-gradient(180deg,#10051e 0%,#0b0316 100%)!important;
+  border-right:1px solid #35125a!important;
+}
+body.admin-body.owner-page .admin-side .logo{
+  border-bottom-color:#32104f!important;
+  color:#fff!important;
+}
+body.admin-body.owner-page .admin-side .logo span{color:#a43cff!important}
+body.admin-body.owner-page .admin-nav a{color:#b8a7cc!important}
+body.admin-body.owner-page .admin-nav a:hover,
+body.admin-body.owner-page .admin-nav a.active{
+  background:linear-gradient(90deg,#32105d,#24103f)!important;
+  color:#fff!important;
+  box-shadow:inset 3px 0 #a43cff!important;
+}
+body.admin-body.owner-page .admin-head h1{color:#fff!important}
+body.admin-body.owner-page .admin-muted,
+body.admin-body.owner-page .hint,
+body.admin-body.owner-page .status-note,
+body.admin-body.owner-page label{color:#aa98c1!important}
+body.admin-body.owner-page .admin-card,
+body.admin-body.owner-page .admin-grid .card,
+body.admin-body.owner-page .card,
+body.admin-body.owner-page .member-row,
+body.admin-body.owner-page .team-card,
+body.admin-body.owner-page .detail-box,
+body.admin-body.owner-page .mini-card{
+  background:linear-gradient(145deg,#170a27,#10051d)!important;
+  border-color:#47206d!important;
+  color:#f8f3ff!important;
+  box-shadow:0 12px 35px rgba(93,24,150,.12)!important;
+}
+body.admin-body.owner-page h1,
+body.admin-body.owner-page h2,
+body.admin-body.owner-page h3,
+body.admin-body.owner-page h4,
+body.admin-body.owner-page strong,
+body.admin-body.owner-page .team-title,
+body.admin-body.owner-page .member-name{color:#f8f3ff!important}
+body.admin-body.owner-page input,
+body.admin-body.owner-page select,
+body.admin-body.owner-page textarea{
+  background:#10051c!important;
+  border-color:#4a2270!important;
+  color:#f2eaff!important;
+}
+body.admin-body.owner-page input::placeholder,
+body.admin-body.owner-page textarea::placeholder{color:#8f7b9e!important}
+body.admin-body.owner-page .admin-btn,
+body.admin-body.owner-page .owner-btn,
+body.admin-body.owner-page .member-btn{
+  background:linear-gradient(90deg,#7120dc,#a43cff)!important;
+  border-color:#a43cff!important;
+  color:#fff!important;
+}
+body.admin-body.owner-page .admin-btn.dark,
+body.admin-body.owner-page .owner-btn.gray{
+  background:#211038!important;
+  border-color:#5a2a88!important;
+  color:#eee3ff!important;
+}
+body.admin-body.owner-page .owner-btn.green{background:rgba(53,224,160,.1)!important;border-color:#26765a!important;color:#62efbb!important}
+body.admin-body.owner-page .owner-btn.red{background:rgba(255,102,123,.1)!important;border-color:#793341!important;color:#ff9aa4!important}
+body.admin-body.owner-page table,
+body.admin-body.owner-page .member-table,
+body.admin-body.owner-page .tx-table{color:#eee5f5!important}
+body.admin-body.owner-page th{color:#a992b8!important;border-bottom-color:#35174e!important}
+body.admin-body.owner-page td{color:#e9dff1!important;border-bottom-color:#29133d!important}
+body.admin-body.owner-page .role,
+body.admin-body.owner-page .badge{background:#211038!important;border-color:#5b2a86!important;color:#d9c5ec!important}
+body.admin-body.owner-page .security-note,
+body.admin-body.owner-page .demo-login-note,
+body.admin-body.owner-page .image-upload-error{
+  background:linear-gradient(145deg,#21102f,#160a22)!important;
+  border-color:#5b2b7f!important;
+  color:#d9c7e8!important;
+}
+body.admin-body.owner-page .content-tab{background:#12071f!important;color:#bda9cc!important;border-color:#4b2270!important}
+body.admin-body.owner-page .content-tab.active,
+body.admin-body.owner-page .content-tab:hover{background:linear-gradient(90deg,#6f1fd3,#a13cff)!important;color:#fff!important;border-color:#a43cff!important}
+@media(max-width:900px){body.admin-body.owner-page .admin-main{margin-left:0;width:100%}}
+
+/* V232 — Owner Dashboard visual refresh: compact, balanced SafePays purple control center */
+body.admin-body.owner-dashboard{
+  --od-bg:#08020f;
+  --od-panel:#10051b;
+  --od-panel-2:#140820;
+  --od-border:#422064;
+  --od-border-soft:#2a153f;
+  --od-purple:#a33cff;
+  --od-purple-2:#7020dc;
+  --od-text:#f7f2fb;
+  --od-muted:#aa9ab8;
+  background:radial-gradient(900px 420px at 72% -12%,rgba(128,27,224,.14),transparent 62%),#08020f!important;
+  color:var(--od-text)!important;
+  overflow-x:hidden;
+}
+body.admin-body.owner-dashboard .owner-dashboard-layout{min-height:100vh;background:transparent!important}
+body.admin-body.owner-dashboard .owner-dashboard-side{
+  width:285px!important;box-sizing:border-box;padding:18px 14px!important;
+  background:linear-gradient(180deg,#12051e 0%,#090210 100%)!important;
+  border-right:1px solid #2d1444!important;
+}
+body.admin-body.owner-dashboard .owner-dashboard-side .logo{
+  position:relative;display:flex!important;flex-direction:column!important;align-items:center!important;
+  justify-content:center;min-height:118px;padding:4px 0 18px!important;
+  border-bottom:1px solid #29143d!important;color:#fff!important;font-size:29px!important;
+  letter-spacing:-1.6px!important;line-height:1.05;
+}
+body.admin-body.owner-dashboard .owner-dashboard-side .logo:before{
+  content:"";width:39px;height:39px;margin-bottom:7px;display:block;
+  background:url('../assets/safepays-mark.png') center/contain no-repeat;
+  filter:drop-shadow(0 0 8px rgba(140,40,255,.24));
+}
+body.admin-body.owner-dashboard .owner-dashboard-side .logo span{color:#a83cff!important}
+body.admin-body.owner-dashboard .owner-dashboard-side .logo small{
+  margin-top:7px!important;font-size:9px!important;letter-spacing:3.5px!important;color:#b9a7c7!important;
+}
+body.admin-body.owner-dashboard .admin-nav{margin-top:13px!important;gap:3px!important}
+body.admin-body.owner-dashboard .admin-nav a{
+  min-height:40px!important;padding:9px 13px!important;border-radius:9px!important;
+  color:#bcaacb!important;font-size:13px!important;font-weight:700!important;
+  transition:background .16s ease,border-color .16s ease,transform .16s ease;
+}
+body.admin-body.owner-dashboard .admin-nav a.active{
+  background:linear-gradient(90deg,#4e1787,#2a1048)!important;
+  box-shadow:inset 3px 0 #b13dff,0 6px 18px rgba(126,32,214,.10)!important;
+  color:#fff!important;
+}
+body.admin-body.owner-dashboard .admin-nav a:hover{background:#241034!important;color:#fff!important}
+body.admin-body.owner-dashboard .owner-nav-icon{width:20px!important;height:20px!important;color:#a93dff!important}
+body.admin-body.owner-dashboard .admin-nav a.active .owner-nav-icon{color:#fff!important}
+body.admin-body.owner-dashboard .owner-dashboard-main{
+  margin-left:285px!important;width:calc(100% - 285px)!important;box-sizing:border-box;
+  padding:24px 28px 28px!important;background:transparent!important;
+}
+body.admin-body.owner-dashboard .owner-dashboard-header{
+  display:flex;align-items:center;justify-content:space-between;gap:22px;margin:0 0 18px!important;
+  min-height:62px;
+}
+body.admin-body.owner-dashboard .owner-dashboard-header>div:first-child{min-width:0}
+body.admin-body.owner-dashboard .owner-kicker{font-size:10px!important;letter-spacing:.13em!important;color:#a991b9!important;font-weight:800}
+body.admin-body.owner-dashboard .owner-dashboard-header h1{font-size:25px!important;line-height:1.15;margin:2px 0 4px!important;letter-spacing:-.8px!important}
+body.admin-body.owner-dashboard .owner-dashboard-header p{font-size:12px!important;color:#9f8daf!important}
+body.admin-body.owner-dashboard .owner-header-right{display:flex!important;align-items:center!important;gap:10px!important;margin-left:auto}
+body.admin-body.owner-dashboard .owner-date{order:0;display:flex!important;min-width:auto!important;padding:8px 11px!important;border:0!important;background:transparent!important;gap:9px!important}
+body.admin-body.owner-dashboard .owner-date .cal{font-size:19px!important;color:#a43cff!important}
+body.admin-body.owner-dashboard .owner-date b{font-size:11px!important}
+body.admin-body.owner-dashboard .owner-date small{font-size:10px!important;margin-top:2px!important}
+body.admin-body.owner-dashboard .owner-icon-btn{width:42px!important;height:42px!important;border-radius:11px!important;background:#12071d!important;border-color:#3a1c54!important;font-size:21px!important}
+body.admin-body.owner-dashboard .owner-user-chip{min-width:165px!important;padding:6px 8px!important;border:1px solid #3a1b54!important;border-radius:11px!important;background:#12071d!important}
+body.admin-body.owner-dashboard .owner-user-chip .avatar{width:34px!important;height:34px!important;font-size:14px!important}
+body.admin-body.owner-dashboard .owner-user-chip b{font-size:12px!important}
+body.admin-body.owner-dashboard .owner-user-chip small{font-size:10px!important}
+body.admin-body.owner-dashboard .owner-stat-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important}
+body.admin-body.owner-dashboard .owner-stat{
+  min-height:106px!important;padding:15px!important;border-radius:12px!important;
+  border-color:#422064!important;background:linear-gradient(145deg,#160823,#0e0418)!important;
+  box-shadow:0 8px 24px rgba(69,10,110,.10)!important;
+}
+body.admin-body.owner-dashboard .owner-stat .stat-icon{
+  width:42px!important;height:42px!important;flex-basis:42px!important;border-radius:10px!important;
+  font-size:20px!important;background:#210b38!important;border-color:#56247b!important;color:#b13dff!important;
+}
+body.admin-body.owner-dashboard .owner-stat small{font-size:11px!important;color:#ad9aba!important}
+body.admin-body.owner-dashboard .owner-stat b{font-size:19px!important;margin-top:5px!important}
+body.admin-body.owner-dashboard .owner-stat em{font-size:10px!important;margin-top:6px!important}
+body.admin-body.owner-dashboard .spark{width:88px!important;height:34px!important;opacity:.85}
+body.admin-body.owner-dashboard .owner-dashboard-middle{grid-template-columns:minmax(0,1.65fr) minmax(340px,1fr)!important;gap:12px!important;margin-top:12px!important}
+body.admin-body.owner-dashboard .owner-chart-card,
+body.admin-body.owner-dashboard .owner-network-card,
+body.admin-body.owner-dashboard .owner-table-card{
+  border-radius:12px!important;border-color:#422064!important;background:linear-gradient(145deg,#150822,#0d0417)!important;
+  box-shadow:0 8px 24px rgba(69,10,110,.09)!important;
+}
+body.admin-body.owner-dashboard .owner-chart-card,
+body.admin-body.owner-dashboard .owner-network-card{padding:15px!important}
+body.admin-body.owner-dashboard .card-head h2,
+body.admin-body.owner-dashboard .owner-network-card h2,
+body.admin-body.owner-dashboard .table-head h2{font-size:15px!important}
+body.admin-body.owner-dashboard .card-head select{padding:7px 10px!important;font-size:11px!important;border-radius:8px!important}
+body.admin-body.owner-dashboard .chart-wrap{height:218px!important;margin-top:6px!important}
+body.admin-body.owner-dashboard .chart-wrap .axis{font-size:9px!important}
+body.admin-body.owner-dashboard .chart-wrap .line{stroke-width:2.5!important}
+body.admin-body.owner-dashboard .network-content{height:218px!important;gap:18px!important}
+body.admin-body.owner-dashboard .donut-wrap{width:170px!important;height:170px!important}
+body.admin-body.owner-dashboard .donut-bg,
+body.admin-body.owner-dashboard .donut-trc,
+body.admin-body.owner-dashboard .donut-erc{stroke-width:22!important}
+body.admin-body.owner-dashboard .network-legend{min-width:115px!important}
+body.admin-body.owner-dashboard .network-legend div{margin:13px 0!important;font-size:11px!important}
+body.admin-body.owner-dashboard .owner-tables{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;margin-top:12px!important}
+body.admin-body.owner-dashboard .owner-table-card{padding:15px!important}
+body.admin-body.owner-dashboard .table-head a{font-size:11px!important}
+body.admin-body.owner-dashboard .owner-table-card table{min-width:0!important}
+body.admin-body.owner-dashboard .owner-table-card th,
+body.admin-body.owner-dashboard .owner-table-card td{padding:9px 7px!important;font-size:10px!important}
+body.admin-body.owner-dashboard .status-ok{padding:4px 8px!important;font-size:9px!important}
+body.admin-body.owner-dashboard #ownerMenuToggle{
+  position:fixed!important;top:14px!important;left:18px!important;z-index:1200!important;
+  width:38px!important;height:38px!important;border-radius:10px!important;border:1px solid #d5d5df!important;
+  background:#fff!important;color:#273044!important;box-shadow:0 8px 20px rgba(0,0,0,.16)!important;font-size:0!important;
+}
+body.admin-body.owner-dashboard #ownerMenuToggle:after{content:'☰';font-size:17px;line-height:1}
+body.admin-body.owner-dashboard .admin-side{scrollbar-width:none}
+body.admin-body.owner-dashboard .admin-side::-webkit-scrollbar{display:none}
+body.admin-body.owner-dashboard::-webkit-scrollbar{width:8px}
+body.admin-body.owner-dashboard::-webkit-scrollbar-track{background:#08020f}
+body.admin-body.owner-dashboard::-webkit-scrollbar-thumb{background:#35144e;border-radius:99px}
+@media(max-width:1250px){
+  body.admin-body.owner-dashboard .owner-dashboard-main{padding:22px 20px 24px!important}
+  body.admin-body.owner-dashboard .owner-dashboard-middle{grid-template-columns:1fr!important}
+  body.admin-body.owner-dashboard .owner-network-card{min-height:260px}
+}
+@media(max-width:900px){
+  body.admin-body.owner-dashboard .owner-dashboard-side{width:270px!important}
+  body.admin-body.owner-dashboard .owner-dashboard-main{margin-left:0!important;width:100%!important;padding:70px 14px 22px!important}
+  body.admin-body.owner-dashboard .owner-dashboard-header{align-items:flex-start!important}
+  body.admin-body.owner-dashboard .owner-header-right{display:none!important}
+  body.admin-body.owner-dashboard .owner-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body.admin-body.owner-dashboard .owner-tables{grid-template-columns:1fr!important}
+}
+@media(max-width:560px){
+  body.admin-body.owner-dashboard .owner-stat-grid{grid-template-columns:1fr!important}
+  body.admin-body.owner-dashboard .owner-dashboard-header h1{font-size:22px!important}
+  body.admin-body.owner-dashboard .owner-network-card .network-content{gap:8px!important}
+  body.admin-body.owner-dashboard .donut-wrap{width:145px!important;height:145px!important}
+  body.admin-body.owner-dashboard .network-legend{min-width:105px!important}
+}
+
+/* V237 — Owner dashboard navigation categories visible like the other Owner pages */
+body.admin-body.owner-dashboard .owner-dashboard-side .owner-nav-title{display:block!important;color:#76578f!important;font-size:9px!important;font-weight:900!important;letter-spacing:.16em!important;padding:14px 12px 5px!important;margin-top:2px!important}
+
+/* V252.1 — Owner navigation hardening: generated categories must remain visible and vertical. */
+body.admin-body.owner-page .admin-side .admin-nav,
+body.admin-body.owner-dashboard .admin-side .admin-nav{
+  display:flex!important;flex-direction:column!important;align-items:stretch!important;
+  gap:3px!important;overflow:visible!important;
+}
+body.admin-body.owner-page .admin-side .owner-nav-title,
+body.admin-body.owner-dashboard .admin-side .owner-nav-title{
+  display:block!important;flex:0 0 auto!important;width:100%!important;box-sizing:border-box!important;
+  clear:both!important;
+}
+body.admin-body.owner-page .admin-side .admin-nav>a,
+body.admin-body.owner-dashboard .admin-side .admin-nav>a{
+  display:flex!important;flex:0 0 auto!important;width:100%!important;box-sizing:border-box!important;
+  align-items:center!important;white-space:nowrap!important;position:relative!important;
+}
+body.admin-body.owner-page .admin-side .owner-nav-icon,
+body.admin-body.owner-dashboard .admin-side .owner-nav-icon{
+  display:inline-flex!important;flex:0 0 20px!important;align-items:center!important;justify-content:center!important;
+}
+body.admin-body.owner-page .admin-side .owner-nav-icon svg,
+body.admin-body.owner-dashboard .admin-side .owner-nav-icon svg{width:18px!important;height:18px!important;display:block!important}

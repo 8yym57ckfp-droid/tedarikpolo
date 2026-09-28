@@ -1,0 +1,56 @@
+
+.ref-page{max-width:1120px}.page-title h1{color:#0c1a2e;font-size:28px;margin:3px 0}.page-title p{color:#77869a;font-size:12px;margin:0 0 18px}
+.ref-top{display:grid;grid-template-columns:1.25fr .75fr;gap:13px}.ref-hero{background:linear-gradient(125deg,#062247,#0a67d7);color:#fff;border-radius:16px;padding:23px;position:relative;overflow:hidden}.ref-hero:after{content:"";position:absolute;width:220px;height:220px;border:1px solid rgba(255,255,255,.13);border-radius:50%;right:-60px;top:-75px}.ref-hero h2{margin:0;font-size:25px}.ref-hero p{color:#c5ddfa;font-size:11px;line-height:1.6;max-width:450px}.ref-link{display:flex;gap:7px;margin-top:17px}.ref-link input{flex:1;border:0;background:rgba(255,255,255,.12);color:#fff;padding:11px;border-radius:8px;font-family:monospace;font-size:10px}.ref-link button{border:0;background:#1da1ff;color:#fff;border-radius:8px;padding:0 13px;font-weight:800}
+.ref-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.ref-stat{background:#fff;border:1px solid #dfe7f1;border-radius:13px;padding:17px}.ref-stat .num{font-size:24px;font-weight:950;margin-top:7px;color:#0c1a2e}.ref-stat .lbl{font-size:10px;color:#78879a}
+.ref-grid{display:grid;grid-template-columns:1fr .72fr;gap:13px;margin-top:13px}.ref-card{background:#fff;border:1px solid #dfe7f1;border-radius:14px;padding:18px}.ref-card h3{font-size:14px;margin:0 0 4px}.ref-card .sub{font-size:10px;color:#8390a2}
+.ref-table{width:100%;border-collapse:collapse;margin-top:12px}.ref-table th,.ref-table td{padding:11px 7px;border-bottom:1px solid #e7edf3;text-align:left;font-size:11px}.ref-table th{color:#7d8ba0}.level{display:inline-flex;padding:5px 8px;background:#edf6ff;color:#087cff;border-radius:999px;font-weight:800;font-size:9px}
+.reward{background:linear-gradient(135deg,#f8fbff,#edf7ff);border:1px solid #d6e8fa;border-radius:12px;padding:15px}.reward strong{font-size:25px}.claim{margin-top:10px;width:100%;border:0;border-radius:9px;padding:11px;background:#087cff;color:#fff;font-weight:900}.claim:disabled{background:#aebccc}
+.progress{height:8px;background:#e8eef5;border-radius:99px;overflow:hidden;margin:8px 0}.progress i{display:block;height:100%;width:68%;background:linear-gradient(90deg,#087cff,#21b4ff);border-radius:99px}
+.filter-row{display:flex;gap:8px;margin:13px 0}.filter-row input,.filter-row select{background:#fbfdff;border:1px solid #dfe7f1;border-radius:9px;padding:10px;color:#243851;outline:none}.filter-row input{flex:1}
+.tx-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.tx-summary .ref-stat{padding:14px}
+@media(max-width:900px){.ref-top,.ref-grid{grid-template-columns:1fr}.ref-stats{grid-template-columns:repeat(3,1fr)}.tx-summary{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.ref-stats{grid-template-columns:1fr}.ref-link{flex-direction:column}.ref-link button{height:40px}.ref-table{min-width:620px}.ref-card{overflow:auto}}
+
+/* V47 — mobile transaction history cleanup */
+@media(max-width:600px){
+  .main{padding-bottom:125px!important}
+  .ref-page{max-width:100%;width:100%}
+  .page-title{padding:2px 2px 0}
+  .page-title h1{font-size:28px;line-height:1.08;margin:4px 0 7px}
+  .page-title p{font-size:11px;line-height:1.45}
+  .tx-summary{grid-template-columns:1fr 1fr;gap:9px}
+  .tx-summary .ref-stat{min-height:96px;padding:14px}
+  .tx-summary .ref-stat .num{font-size:23px}
+  .pending-card,.ref-card{margin-top:10px!important;padding:14px!important;border-radius:15px}
+  .pending-head{margin-bottom:10px}
+  .pending-head h3{font-size:14px!important}
+  .pending-item{padding:12px;gap:10px}
+  .pending-item b{font-size:12px}
+  .pending-item span{font-size:10px}
+  .pending-right{min-width:72px}
+  .filter-row{display:grid;grid-template-columns:1fr;gap:8px;margin:0 0 12px}
+  .filter-row input,.filter-row select{width:100%;min-height:42px;font-size:12px}
+  .ref-card > div[style*="overflow:auto"]{overflow:visible!important}
+  .ref-table{width:100%;min-width:0!important;border-collapse:separate;border-spacing:0}
+  .ref-table thead{display:none}
+  .ref-table tbody{display:grid;gap:10px}
+  .ref-table tbody tr{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;background:#fbfdff;border:1px solid #dfe7f1;border-radius:13px;padding:10px 12px;overflow:hidden}
+  .ref-table tbody td{display:grid;grid-template-columns:78px minmax(0,1fr);gap:7px;align-items:start;padding:8px 0;border-bottom:1px solid #e8edf3;font-size:10px;min-width:0;word-break:break-word}
+  .ref-table tbody td:last-child{border-bottom:0}
+  .ref-table tbody td:before{font-size:9px;font-weight:800;color:#7c8ba0;text-transform:uppercase;letter-spacing:.02em}
+  .ref-table tbody td:nth-child(1):before{content:'İşlem ID'}
+  .ref-table tbody td:nth-child(2):before{content:'Tarih'}
+  .ref-table tbody td:nth-child(3):before{content:'Tür'}
+  .ref-table tbody td:nth-child(4):before{content:'Ağ'}
+  .ref-table tbody td:nth-child(5):before{content:'Tutar'}
+  .ref-table tbody td:nth-child(6):before{content:'TX / Adres'}
+  .ref-table tbody td:nth-child(7):before{content:'Durum'}
+  .ref-table tbody td:nth-child(6),.ref-table tbody td:nth-child(7){grid-column:1/-1}
+  .ref-table tbody td:nth-child(1) b{font-size:10px;line-height:1.25}
+  .ref-table tbody td:nth-child(6){font-family:monospace;font-size:9px;line-height:1.35}
+  .ref-table tbody td:nth-child(7){align-items:center}
+  .ref-table tbody tr .badge{justify-self:start}
+}
+html.dark-theme .ref-table tbody tr{background:#09182a;border-color:#263d57}
+html.dark-theme .ref-table tbody td{border-color:#263d57;color:#dce7f2}
+html.dark-theme .ref-table tbody td:before{color:#91a6bd}

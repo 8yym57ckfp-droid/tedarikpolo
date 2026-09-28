@@ -1,0 +1,16 @@
+/* SafePays network identity icons */
+.network-tab{display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.network-icon{width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 22px;border-radius:7px;vertical-align:middle}
+.network-icon svg{width:18px;height:18px;display:block}
+.network-icon.trc{background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.28)}
+.network-icon.erc{background:rgba(98,126,234,.13);color:#8298ff;border:1px solid rgba(98,126,234,.3)}
+.network-label{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.network-title .network-icon{margin-right:7px;transform:translateY(2px)}
+.network-badge{display:inline-flex;align-items:center;gap:6px;font-weight:800;white-space:nowrap}
+.network-badge .network-icon{width:20px;height:20px;flex-basis:20px;border-radius:6px}
+/* Inline network identity for tables / timelines */
+.network{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.network::before,.network-inline::before{content:"";display:inline-block;width:17px;height:17px;flex:0 0 17px;background-repeat:no-repeat;background-position:center;background-size:contain}
+.network.trc::before,.network-inline.trc::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ef4444' d='M4 5h16l-8 14L4 5Z'/%3E%3Cpath fill='%23fff' opacity='.34' d='M7 7h10l-5 8.8L7 7Z'/%3E%3C/svg%3E")}
+.network.erc::before,.network-inline.erc::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23627eea' d='M12 2.5 17.1 12 12 9.1 6.9 12 12 2.5Z'/%3E%3Cpath fill='%23627eea' opacity='.58' d='m12 10.2 5.1 2.9-5.1 8.4-5.1-8.4 5.1-2.9Z'/%3E%3C/svg%3E")}
+.network-inline{display:inline-flex;align-items:center;gap:7px;font-weight:800;white-space:nowrap}

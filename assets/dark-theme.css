@@ -1,0 +1,714 @@
+/* SAFE PAYS — unified black visual system */
+:root{color-scheme:dark}
+html,body{background:#000!important;color:#f5f7fb!important}
+body{min-height:100vh}
+/* Remove theme/language controls everywhere */
+#themeSwitch,.theme-switch,.sp-page-controls,.sp-page-lang,.dashboard-language-host,.auth-page-controls{display:none!important}
+/* Common light surfaces -> black / charcoal */
+.card,.auth,.profile,.finance-card,.account-card,.dash-card,.quick,.network-invest,.network-invest-card,.balance-card:not(.main-balance),.assets-summary,.mobile-nav,.field input,.field select,.field textarea,.form-control,.table-wrap,.modal,.panel,.stat-card,.info-card,.support-card,.security-card,.notice-card,.news .card{background:#050505!important;color:#eef3f8!important;border-color:#17263a!important;box-shadow:none!important}
+input,select,textarea{background:#050505!important;color:#eef3f8!important;border-color:#1b3047!important}
+/* Public pages */
+.public-header,.nav{background:#000!important;border-color:#17263a!important}
+.public-header a,.nav a{color:#dbe6f2}
+.public-header .logo-words b:first-child,.public-header .logo-words b:last-child{color:#fff}
+.hero,.main,.auth-wrap{background:#000!important}
+.section-title,h1,h2,h3,h4{color:#f5f7fb!important}
+.section-sub,.lead,.auth p,.hint,.sub,.muted{color:#8fa4bb!important}
+#news{background:#000!important}
+.footer{background:#000!important;border-color:#17263a!important;color:#7f94ab!important}
+/* Auth */
+.auth-page{background:#000!important}
+.auth-page .auth{background:#050505!important;border-color:#17263a!important}
+.auth-page .auth h1,.auth-page .auth h2{color:#f5f7fb!important}
+.auth-page .field label{color:#9db0c5!important}
+/* Dashboard */
+.dashboard-shell{background:#000!important;grid-template-columns:1fr!important}
+.side{display:none!important}
+.dash-main{background:#000!important}
+.dash-header{height:108px!important;background:#000!important;border-bottom:1px solid #17202d!important;padding:18px 28px!important}
+.dash-brand-mobile{display:block!important;flex:0 0 auto}
+.dash-brand-mobile .mobile-stack-logo{display:flex!important;align-items:center;gap:10px;text-decoration:none!important}
+.dash-brand-mobile .mobile-stack-logo img{width:58px;height:58px;object-fit:contain}
+.dash-brand-mobile .mobile-stack-logo .brand-words{display:flex;flex-direction:column;font-size:25px;font-weight:950;line-height:.88;letter-spacing:-1px}
+.dash-brand-mobile .mobile-stack-logo .brand-words span:first-child{color:#fff}
+.dash-brand-mobile .mobile-stack-logo .brand-words span:last-child{color:#168cff}
+.desktop-label{display:none!important}
+.header-actions{margin-left:auto!important;display:flex!important;align-items:center!important;gap:12px!important}
+.header-actions .wallet-balance-pill{display:flex!important;align-items:center!important;gap:12px!important;min-width:300px!important;height:64px!important;padding:9px 18px!important;background:#050505!important;border:1px solid #1a3048!important;border-radius:16px!important;color:#fff!important;text-decoration:none!important}
+.header-actions .wallet-balance-pill small{display:block!important;color:#91a6bd!important;font-size:12px!important}
+.header-actions .wallet-balance-pill b{display:block!important;color:#f4f7fb!important;font-size:19px!important;line-height:1.1!important;margin-top:3px!important}
+.header-actions .wallet-balance-pill em{color:#0795ff!important;font-style:normal!important}
+.header-actions .wallet-mini-icon{width:40px!important;height:40px!important;border-radius:11px!important;background:#062f54!important;color:#129bff!important;display:grid!important;place-items:center!important;flex:0 0 auto!important}
+.header-actions .wallet-mini-icon svg{width:24px!important;height:24px!important}
+.header-actions .user-pill{display:grid!important;place-items:center!important;width:64px!important;height:64px!important;padding:0!important;border-radius:50%!important;background:#000!important;border:1px solid #078cff!important}
+.header-actions .user-pill span{display:none!important}
+.header-actions .avatar-sm{width:auto!important;height:auto!important;background:none!important;color:#fff!important;font-size:21px!important}
+.dash-content{max-width:none!important;padding:30px 28px 130px!important}
+.welcome{display:block!important;margin:0 0 24px!important}
+.welcome p{font-size:39px!important;line-height:1.05!important;font-weight:900!important;letter-spacing:-1.8px!important;color:#fff!important;margin:0!important;max-width:600px!important}
+.welcome .wallet-balance-card{display:none!important}
+.balance-grid{display:block!important;margin:0 0 30px!important}
+.main-balance{min-height:220px!important;border-radius:22px!important;padding:34px!important;background:linear-gradient(135deg,#06101b,#07111d 60%,#06101a)!important;border:1px solid #17304b!important;box-shadow:none!important}
+.main-balance:after{width:260px!important;height:260px!important;right:-45px!important;top:-115px!important;border-color:rgba(73,146,213,.2)!important}
+.main-balance:before{width:190px!important;height:190px!important;right:55px!important;top:-70px!important;border-color:rgba(73,146,213,.14)!important}
+.balance-label{font-size:15px!important;color:#9db2c8!important}
+.balance-amount{font-size:43px!important;line-height:1.1!important;color:#fff!important;margin:18px 0!important;letter-spacing:-1.5px!important}
+.balance-meta{font-size:14px!important;color:#a5b7c9!important}
+.member-news{margin:0 0 28px!important;border-radius:22px!important}
+.member-slide{min-height:245px!important;padding:34px!important}
+.member-slide strong{font-size:31px!important;max-width:430px!important}
+.member-slide small{font-size:14px!important}
+.assets-summary{margin:0 0 30px!important;padding:28px!important;border-radius:22px!important;background:#020202!important;border:1px solid #17263a!important}
+.assets-summary-head h3{font-size:28px!important;color:#fff!important}
+.assets-summary-head a{color:#1295ff!important;font-size:15px!important}
+.assets-kicker{color:#91a8bf!important;letter-spacing:4px!important}
+.assets-summary-main{margin-top:22px!important}
+.asset-token-icon{background:#062f54!important;color:#0798ff!important}
+.asset-main-copy strong{color:#f4f7fb!important;font-size:23px!important}
+.asset-main-copy span,.asset-main-value{color:#9db1c6!important}
+.asset-main-value{font-size:20px!important}
+.assets-summary-networks{border-color:#17263a!important;color:#9db1c6!important}
+.network-invest{margin-bottom:30px!important;border-radius:22px!important;background:#020202!important}
+.quick-grid{gap:14px!important;margin:0 0 30px!important}
+.quick{border-radius:18px!important;padding:24px!important;background:#020202!important}
+.dash-two,.tx-card{background:#020202!important}
+.mobile-nav{position:fixed!important;left:22px!important;right:22px!important;bottom:22px!important;width:auto!important;z-index:1000!important;background:#03080f!important;border:1px solid #18314a!important;border-radius:24px!important;padding:12px 8px!important;box-shadow:0 15px 45px rgba(0,0,0,.55)!important}
+.mobile-nav a{color:#91a5ba!important}
+.mobile-nav a:first-child{color:#0795ff!important}
+.mobile-nav a span{font-size:12px!important}
+.mobile-nav .nav-svg{color:inherit!important}
+.mobile-nav a:last-child{display:flex!important}
+@media(max-width:700px){
+ .dash-header{height:108px!important;padding:16px 18px!important;overflow:visible!important}
+ .dash-brand-mobile .mobile-stack-logo img{width:54px!important;height:54px!important}
+ .dash-brand-mobile .mobile-stack-logo .brand-words{font-size:23px!important}
+ .header-actions{gap:7px!important}
+ .header-actions .wallet-balance-pill{min-width:0!important;width:215px!important;height:58px!important;padding:7px 11px!important;gap:9px!important}
+ .header-actions .wallet-balance-pill small{font-size:9px!important}
+ .header-actions .wallet-balance-pill b{font-size:15px!important}
+ .header-actions .wallet-mini-icon{width:35px!important;height:35px!important}
+ .header-actions .user-pill{width:54px!important;height:54px!important}
+ .header-actions .avatar-sm{font-size:18px!important}
+ .dash-content{padding:28px 24px 130px!important}
+ .welcome p{font-size:31px!important;line-height:1.06!important}
+ .main-balance{min-height:205px!important;padding:28px!important}
+ .balance-amount{font-size:34px!important}
+ .member-slide{min-height:220px!important;padding:30px!important}
+ .member-slide strong{font-size:27px!important}
+ .assets-summary{padding:24px!important}
+ .assets-summary-head h3{font-size:26px!important}
+ .network-invest-card{background:#050505!important}
+}
+@media(max-width:430px){
+ .dash-header{padding-left:12px!important;padding-right:10px!important}
+ .dash-brand-mobile .mobile-stack-logo{gap:6px!important}
+ .dash-brand-mobile .mobile-stack-logo img{width:45px!important;height:45px!important}
+ .dash-brand-mobile .mobile-stack-logo .brand-words{font-size:18px!important}
+ .header-actions{gap:5px!important}
+ .header-actions .wallet-balance-pill{width:178px!important;height:52px!important;padding:6px 8px!important}
+ .header-actions .wallet-balance-pill b{font-size:13px!important}
+ .header-actions .wallet-balance-pill small{font-size:8px!important}
+ .header-actions .wallet-mini-icon{width:31px!important;height:31px!important}
+ .header-actions .user-pill{width:47px!important;height:47px!important}
+ .header-actions .avatar-sm{font-size:16px!important}
+ .dash-content{padding-left:18px!important;padding-right:18px!important}
+ .welcome p{font-size:28px!important}
+ .balance-amount{font-size:31px!important}
+}
+/* Hide obsolete demo/status decorations */
+#apiStatus{display:none!important}
+.recent-activity{margin-top:0!important}.recent-row{display:grid;grid-template-columns:58px 1fr auto;align-items:center;gap:14px;padding:14px 0;border-top:1px solid #17263a}.recent-icon{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-size:27px;font-weight:900}.recent-icon.deposit{background:rgba(15,201,154,.2);color:#12d7a4}.recent-icon.withdraw{background:rgba(255,61,75,.18);color:#ff5662}.recent-copy strong{display:block;color:#f4f7fb;font-size:16px}.recent-copy span{display:block;color:#8fa4bb;font-size:12px;margin-top:3px}.recent-amount{text-align:right;font-weight:900;font-size:15px}.recent-amount.plus{color:#13d7a4}.recent-amount.minus{color:#ff5662}@media(max-width:600px){.recent-row{grid-template-columns:50px 1fr auto}.recent-icon{width:46px;height:46px}.recent-amount{font-size:12px}}
+
+/* V88 — dark mode is the only visual mode. */
+html,html.dark-theme,body{background:#000!important;color:#eef3f8!important}
+body{color-scheme:dark!important}
+.theme-switch,#themeSwitch,.dashboard-language-host,.sp-page-lang,.sp-page-controls,.auth-page-controls{display:none!important}
+.mobile-nav{background:#03080f!important;border-color:#18314a!important;color:#eaf3fc!important}
+
+
+/* V89 — unconditional black visual system across every page. */
+html,html.dark-theme,body,body.dark-theme{background:#000!important;color:#eef3f8!important;color-scheme:dark!important}
+/* No language selector and no theme control anywhere. */
+html body .sp-page-controls,html body .sp-page-lang,html body .dashboard-language-host,html body .theme-switch,html body #themeSwitch,html body .auth-page-controls{display:none!important}
+/* Remove any obsolete floating/legacy control layer if present. */
+#apiStatus{display:none!important}
+/* Public/auth surfaces stay dark even when their original CSS has light inline backgrounds. */
+#news,.news,.hero,.auth-wrap,.auth-page,.auth,.public-header,.nav,.footer,main,.main,.dash-main,.dashboard-shell,.account-grid,.support-shell,.finance-page,.wallet-page{background:#000!important;color:#eef3f8!important}
+.card,.auth,.profile,.finance-card,.account-card,.dash-card,.quick,.network-invest,.network-invest-card,.balance-card,.assets-summary,.mobile-nav,.field input,.field select,.field textarea,.form-control,.table-wrap,.modal,.panel,.stat-card,.info-card,.support-card,.security-card,.notice-card,.news .card,.context-card,.support-panel,.chat-panel,.ticket,.session,.ref-banner{background:#050505!important;color:#eef3f8!important;border-color:#17263a!important;box-shadow:none!important}
+input,select,textarea{background:#050505!important;color:#eef3f8!important;border-color:#1b3047!important}
+
+
+/* V90 — permanent black visual system and hidden language/theme controls */
+html,body{background:#000!important;color:#eef3f8!important;color-scheme:dark!important}
+body{min-height:100vh!important}
+.sp-page-controls,.sp-page-lang,.dashboard-language-host,.auth-page-controls,.theme-switch,#themeSwitch,.language-trigger,.language-menu,#languageSelect{display:none!important}
+.public-header,.auth-page,.auth-wrap,.auth-brand,.auth,.nav,main,.footer,.side,.topbar,.main,.account-grid,.support-shell,.finance-page,.wallet-page{background:#000!important;color:#eef3f8!important}
+.auth-wrap .auth,.card,.auth .card,.account-card,.support-card,.finance-card,.wallet-card,.dash-card,.quick,.network-invest,.network-invest-card,.assets-summary,.mobile-nav,.panel,.info-card,.notice-card,.context-card,.chat-panel,.ticket,.session{background:#050505!important;color:#eef3f8!important;border-color:#17304b!important;box-shadow:none!important}
+.auth input,.auth select,.auth textarea,.field input,.field select,.field textarea{background:#050505!important;color:#eef3f8!important;border-color:#1b3047!important}
+#news,.news,section[style*="background:#f7f9fc"],section[style*="background: #f7f9fc"]{background:#000!important;color:#eef3f8!important}
+.section-title[style]{color:#eef3f8!important}
+.public-header .btn.secondary,.auth .btn.secondary{background:#050505!important;color:#eef3f8!important;border-color:#17304b!important}
+
+/* V93 — final mobile dashboard correction. The dark-theme stylesheet previously
+   hid the fifth nav item after dashboard.css loaded. Keep all five items visible. */
+@media (max-width:700px){
+  .mobile-nav{
+    display:grid!important;
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+    align-items:center!important;
+  }
+  .mobile-nav a,
+  .mobile-nav a:last-child{
+    display:flex!important;
+    min-width:0!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:center!important;
+  }
+  .mobile-nav a span{display:block!important;white-space:nowrap!important}
+}
+
+/* Keep the compact header from growing vertically on narrow phones. */
+@media (max-width:430px){
+  .dash-header{height:96px!important;min-height:96px!important;padding-top:10px!important;padding-bottom:10px!important}
+  .header-actions .wallet-balance-pill{width:166px!important;height:48px!important}
+  .header-actions .user-pill{width:44px!important;height:44px!important;flex-basis:44px!important}
+}
+
+
+/* V94 — current-page active state for all mobile pages. */
+@media(max-width:700px){
+  .mobile-nav{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;}
+  .mobile-nav a{color:#91a5ba!important;}
+  .mobile-nav a:first-child{color:#91a5ba!important;}
+  .mobile-nav a.active{color:#0795ff!important;}
+  .mobile-nav a:last-child{display:flex!important;}
+  .mobile-nav a span{white-space:nowrap!important;}
+}
+
+
+/* V100 — public landing header: horizontal Safe Pays logo + visible register CTA */
+.public-header .public-logo{display:flex!important;align-items:center!important;gap:10px!important;white-space:nowrap!important}
+.public-header .logo-words{display:flex!important;flex-direction:row!important;align-items:center!important;gap:5px!important;line-height:1!important;letter-spacing:-1.4px!important;font-size:25px!important;font-weight:900!important}
+.public-header .logo-words b{display:inline!important;font-weight:900!important}
+.public-header .logo-words b:first-child{color:#fff!important}
+.public-header .logo-words b:last-child{color:#1598ff!important}
+.public-header .public-register{display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:12px 18px!important;border-radius:14px!important;white-space:nowrap!important}
+@media(max-width:700px){
+  .public-header{height:88px!important;padding:0 18px!important;gap:8px!important}
+  .public-header .public-logo img{width:48px!important;height:48px!important}
+  .public-header .logo-words{font-size:22px!important;gap:4px!important}
+  .public-header .header-actions{gap:7px!important}
+  .public-header .public-login,.public-header .public-register{display:inline-flex!important;padding:10px 12px!important;font-size:12px!important;border-radius:12px!important}
+}
+@media(max-width:430px){
+  .public-header{padding:0 12px!important}
+  .public-header .public-logo{gap:6px!important}
+  .public-header .public-logo img{width:42px!important;height:42px!important}
+  .public-header .logo-words{font-size:19px!important;letter-spacing:-1px!important}
+  .public-header .header-actions{gap:5px!important}
+  .public-header .public-login,.public-header .public-register{padding:9px 10px!important;font-size:11px!important}
+}
+@media(max-width:370px){
+  .public-header{padding:0 8px!important}
+  .public-header .public-logo img{width:38px!important;height:38px!important}
+  .public-header .logo-words{font-size:17px!important}
+  .public-header .public-login,.public-header .public-register{padding:8px 8px!important;font-size:10px!important}
+}
+
+/* V123 — unified member bottom navigation across all member pages */
+@media (max-width: 900px){
+  .mobile-nav{
+    position:fixed!important;
+    display:grid!important;
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+    align-items:stretch!important;
+    justify-content:initial!important;
+    left:22px!important;
+    right:22px!important;
+    bottom:22px!important;
+    width:auto!important;
+    height:72px!important;
+    min-height:72px!important;
+    padding:6px 6px!important;
+    gap:0!important;
+    box-sizing:border-box!important;
+    border:1px solid #18314a!important;
+    border-radius:24px!important;
+    background:#03080f!important;
+    backdrop-filter:blur(16px)!important;
+    -webkit-backdrop-filter:blur(16px)!important;
+    box-shadow:0 15px 45px rgba(0,0,0,.55)!important;
+    z-index:1000!important;
+  }
+  .mobile-nav a,
+  .mobile-nav a:last-child{
+    display:flex!important;
+    flex:initial!important;
+    width:auto!important;
+    min-width:0!important;
+    height:100%!important;
+    margin:0!important;
+    padding:0!important;
+    align-items:center!important;
+    justify-content:center!important;
+    flex-direction:column!important;
+    text-align:center!important;
+    text-decoration:none!important;
+    color:#91a5ba!important;
+    font-size:12px!important;
+    line-height:14px!important;
+    box-sizing:border-box!important;
+    transform:none!important;
+  }
+  .mobile-nav a.active{color:#0795ff!important;}
+  .mobile-nav .nav-svg{
+    display:grid!important;
+    place-items:center!important;
+    width:30px!important;
+    height:30px!important;
+    min-width:30px!important;
+    min-height:30px!important;
+    margin:0 0 3px!important;
+    padding:0!important;
+    color:inherit!important;
+    line-height:0!important;
+  }
+  .mobile-nav .nav-svg svg{
+    display:block!important;
+    width:24px!important;
+    height:24px!important;
+    min-width:24px!important;
+    min-height:24px!important;
+    margin:0!important;
+    fill:none!important;
+    stroke:currentColor!important;
+    stroke-width:1.8!important;
+    stroke-linecap:round!important;
+    stroke-linejoin:round!important;
+  }
+  .mobile-nav a span{
+    display:block!important;
+    width:auto!important;
+    max-width:100%!important;
+    margin:0!important;
+    padding:0!important;
+    white-space:nowrap!important;
+    font-size:12px!important;
+    line-height:14px!important;
+  }
+  body{padding-bottom:0!important;}
+  .main,
+  .finance-v101,
+  .finance-page,
+  .wallet-page,
+  .events-page,
+  .support-page{
+    padding-bottom:110px!important;
+  }
+}
+@media (max-width:430px){
+  .mobile-nav{
+    left:10px!important;
+    right:10px!important;
+    bottom:10px!important;
+    height:68px!important;
+    min-height:68px!important;
+    padding:5px 4px!important;
+    border-radius:22px!important;
+  }
+  .mobile-nav .nav-svg{
+    width:28px!important;
+    height:28px!important;
+    min-width:28px!important;
+    min-height:28px!important;
+  }
+  .mobile-nav .nav-svg svg{
+    width:23px!important;
+    height:23px!important;
+    min-width:23px!important;
+    min-height:23px!important;
+  }
+  .mobile-nav a,
+  .mobile-nav a:last-child,
+  .mobile-nav a span{
+    font-size:10px!important;
+    line-height:12px!important;
+  }
+}
+
+/* V144 — unified member UI polish / final mobile pass */
+:root{
+  --sp-bg:#000;
+  --sp-surface:#050505;
+  --sp-surface-2:#081a2d;
+  --sp-surface-3:#0b223a;
+  --sp-line:#18344f;
+  --sp-line-soft:#12283d;
+  --sp-text:#f5f8fc;
+  --sp-muted:#8fa5bb;
+  --sp-blue:#0b86ff;
+  --sp-blue-2:#6255ee;
+  --sp-red:#d64a58;
+  --sp-red-soft:#2a1116;
+}
+
+html.dark-theme body{background:var(--sp-bg)!important;color:var(--sp-text)!important}
+html.dark-theme .main,
+html.dark-theme .dash-main{background:var(--sp-bg)!important}
+html.dark-theme .main{padding-bottom:118px}
+html.dark-theme .finance-page,
+html.dark-theme .ref-page{max-width:1120px;margin:0 auto}
+
+/* shared cards */
+html.dark-theme .card,
+html.dark-theme .account-card,
+html.dark-theme .finance-card,
+html.dark-theme .ref-card,
+html.dark-theme .ref-stat,
+html.dark-theme .support-panel,
+html.dark-theme .context-card,
+html.dark-theme .notice-card,
+html.dark-theme .stat-card{
+  background:var(--sp-surface)!important;
+  border:1px solid var(--sp-line)!important;
+  border-radius:18px!important;
+  box-shadow:none!important;
+}
+html.dark-theme .finance-card,
+html.dark-theme .account-card,
+html.dark-theme .ref-card{padding:20px!important}
+html.dark-theme .muted,
+html.dark-theme .sub,
+html.dark-theme .page-title p,
+html.dark-theme .finance-title p{color:var(--sp-muted)!important}
+
+/* page headings */
+html.dark-theme .topbar{margin-bottom:22px!important}
+html.dark-theme .topbar h1,
+html.dark-theme .finance-title h1,
+html.dark-theme .page-title h1{color:#fff!important}
+html.dark-theme .finance-title h1{font-size:32px!important;margin:4px 0 6px!important;letter-spacing:-1.2px}
+html.dark-theme .finance-title p:first-child{color:#8fb0cc!important;margin-bottom:2px}
+html.dark-theme .page-title h1{font-size:32px!important;letter-spacing:-1.2px}
+
+/* buttons */
+html.dark-theme .btn{border-radius:11px!important}
+html.dark-theme .btn.secondary{background:#0d2238!important;border-color:#28455f!important;color:#eaf2fa!important}
+html.dark-theme .btn.secondary:hover{background:#12304e!important}
+html.dark-theme .btn.danger{background:#2a1116!important;border-color:#67303a!important;color:#ff9ca6!important}
+
+/* wallet */
+html.dark-theme .wallet-page-title{padding-top:8px!important;margin-bottom:18px!important}
+html.dark-theme .wallet-page-title h1{margin-bottom:3px!important}
+html.dark-theme .wallet-page-title + .finance-grid{margin-top:0!important}
+html.dark-theme .finance-grid{gap:16px!important}
+html.dark-theme .finance-card .balance-label{font-size:15px!important;color:#9eb2c7!important}
+html.dark-theme .finance-card .balance-amount{font-size:48px!important;line-height:1!important;margin:18px 0 20px!important;letter-spacing:-2px!important;color:#fff!important}
+html.dark-theme .wallet-secure-card{margin-top:20px!important;background:#081a2d!important;border-color:#23445f!important;padding:17px!important;border-radius:16px!important}
+html.dark-theme .wallet-secure-copy h3{font-size:18px!important}
+html.dark-theme .wallet-secure-card>.btn{background:linear-gradient(135deg,#087cff,#6656ee)!important}
+html.dark-theme .quick-actions{gap:14px!important}
+html.dark-theme .quick-actions .btn{min-height:54px!important}
+html.dark-theme .quick-actions .btn.secondary{background:#281217!important;border-color:#6a303b!important;color:#ffb0b7!important}
+html.dark-theme .quick-actions .btn.secondary:hover{background:#35171d!important}
+html.dark-theme .finance-card hr{border-top-color:#1a344c!important;margin:22px 0!important}
+html.dark-theme #walletTotalDeposits,
+html.dark-theme #walletTotalWithdrawals{font-size:25px!important;margin:7px 0 20px!important}
+
+/* deposit / withdraw */
+html.dark-theme .stepbar{margin:0 0 16px!important}
+html.dark-theme .step{background:#152a40!important}
+html.dark-theme .step.active{background:linear-gradient(90deg,#087cff,#6557ef)!important}
+html.dark-theme .network-tabs{gap:8px!important}
+html.dark-theme .network-tabs .network-tab{border-radius:11px!important}
+html.dark-theme .field label{color:#8fa7be!important}
+html.dark-theme .field input,
+html.dark-theme .field select,
+html.dark-theme .field textarea{background:#020202!important;border-color:#1d3851!important;color:#f1f6fb!important}
+html.dark-theme .network{background:#0a2036!important;border-color:#24445f!important}
+html.dark-theme .info{background:#0a2036!important;border-color:#24445f!important}
+html.dark-theme .amount{background:#091a2c!important;border-color:#24445f!important}
+html.dark-theme .finance-page .finance-card h3{font-size:19px!important}
+
+/* referrals — keep the user's own code, not a raw referral URL */
+html.dark-theme .ref-top{grid-template-columns:1.15fr .85fr!important;gap:16px!important}
+html.dark-theme .ref-hero{border-radius:18px!important;padding:22px!important;background:linear-gradient(135deg,#071e37,#0b3760)!important;border:1px solid #204765!important}
+html.dark-theme .ref-hero h2{font-size:24px!important}
+html.dark-theme .ref-stats{gap:10px!important}
+html.dark-theme .ref-stat{padding:16px!important}
+html.dark-theme .ref-stat .num{color:#fff!important}
+html.dark-theme .ref-grid{gap:16px!important;margin-top:16px!important}
+html.dark-theme .ref-table th,
+html.dark-theme .ref-table td{border-color:#18344f!important}
+html.dark-theme .filter-row input,
+html.dark-theme .filter-row select{background:#020202!important;border-color:#1d3851!important;color:#eef5fb!important}
+html.dark-theme .reward{background:#081d31!important;border-color:#23445f!important}
+html.dark-theme .claim{background:linear-gradient(135deg,#087cff,#6557ef)!important}
+
+/* profile */
+html.dark-theme .account-grid{gap:16px!important}
+html.dark-theme .account-head{border-bottom-color:#1a344c!important;padding-bottom:17px!important}
+html.dark-theme .account-head h2{font-size:20px!important}
+html.dark-theme .account-head p{color:#9eb2c7!important}
+html.dark-theme .security-list{gap:9px!important}
+html.dark-theme .security-row{background:#0a2036!important;border-color:#24445f!important;border-radius:13px!important;padding:12px 13px!important}
+html.dark-theme .security-row strong{color:#fff!important}
+html.dark-theme .security-row span{color:#9ab0c5!important}
+html.dark-theme .session{border-bottom-color:#1a344c!important;padding:12px 0!important}
+html.dark-theme .session span{color:#8fa5bb!important}
+html.dark-theme .danger-zone{background:#0b0607!important;border-color:#57232c!important}
+html.dark-theme .danger-zone h3{color:#ff9ca6!important}
+html.dark-theme .profile-danger-actions{gap:9px!important}
+html.dark-theme .profile-danger-actions .btn{min-height:44px!important}
+
+/* support */
+html.dark-theme .support-shell{gap:16px!important}
+html.dark-theme .support-panel{border-radius:18px!important}
+html.dark-theme .chat-head{padding:15px 18px!important;border-color:#18344f!important}
+html.dark-theme .support-messages{background:#020202!important}
+html.dark-theme .bubble{border-radius:15px!important;background:#0a2036!important;border-color:#24445f!important}
+html.dark-theme .bubble.me{background:linear-gradient(135deg,#0a3962,#163f7a)!important}
+html.dark-theme .quick-replies{background:#050505!important;border-color:#18344f!important}
+html.dark-theme .quick-replies button{background:#0a2036!important;border-color:#294967!important}
+html.dark-theme .support-compose{background:#050505!important;border-color:#18344f!important}
+html.dark-theme .support-compose input{background:#020202!important;border-color:#294967!important}
+
+/* events empty state */
+html.dark-theme .campaign-note{margin-top:18px!important;border-radius:16px!important;background:#091b2e!important;border:1px solid #23435f!important;color:#c7d5e3!important;padding:18px 20px!important}
+html.dark-theme #publishedContent:empty{min-height:0!important}
+html.dark-theme .events-grid{gap:14px!important}
+html.dark-theme .event-card{background:#050505!important;border-color:#18344f!important;border-radius:16px!important}
+html.dark-theme .event-card .event-body{background:#050505!important}
+
+/* dashboard */
+html.dark-theme .dash-content{padding-bottom:126px!important}
+html.dark-theme .welcome{margin-bottom:18px!important}
+html.dark-theme .main-balance{min-height:184px!important;padding:27px!important;border-radius:18px!important}
+html.dark-theme .balance-amount{font-size:40px!important;margin:15px 0!important}
+html.dark-theme .member-news{margin-bottom:20px!important;border-radius:18px!important}
+html.dark-theme .member-slide{min-height:190px!important;padding:26px!important}
+html.dark-theme .member-slide strong{font-size:26px!important}
+html.dark-theme .assets-summary{margin-bottom:20px!important;padding:21px!important;border-radius:18px!important}
+html.dark-theme .assets-summary-head h3{font-size:23px!important}
+html.dark-theme .network-invest{margin-bottom:20px!important;border-radius:18px!important}
+html.dark-theme .quick-grid{gap:10px!important;margin-bottom:20px!important}
+html.dark-theme .quick{border-radius:15px!important;padding:19px!important}
+
+/* unified bottom navigation */
+html.dark-theme .mobile-nav{left:14px!important;right:14px!important;bottom:10px!important;height:70px!important;padding:4px!important;border-radius:22px!important;background:rgba(5,18,32,.97)!important;border-color:#1b3a56!important;box-shadow:0 12px 40px rgba(0,0,0,.55)!important}
+html.dark-theme .mobile-nav a{font-size:9.5px!important;color:#8fa5bb!important}
+html.dark-theme .mobile-nav a.active{color:#1495ff!important}
+html.dark-theme .mobile-nav .nav-svg{width:28px!important;height:28px!important;margin-bottom:2px!important}
+html.dark-theme .mobile-nav .nav-svg svg{width:22px!important;height:22px!important}
+
+/* mobile: less vertical waste, more breathing room */
+@media(max-width:700px){
+  html.dark-theme .main{padding:18px 14px 108px!important}
+  html.dark-theme .finance-page,html.dark-theme .ref-page{width:100%!important}
+  html.dark-theme .finance-card,html.dark-theme .account-card,html.dark-theme .ref-card{padding:17px!important}
+  html.dark-theme .finance-title h1,html.dark-theme .page-title h1{font-size:29px!important}
+  html.dark-theme .finance-card .balance-amount{font-size:39px!important}
+  html.dark-theme .finance-grid{gap:12px!important}
+  html.dark-theme .account-grid,.ref-grid{gap:12px!important}
+  html.dark-theme .ref-top{gap:12px!important}
+  html.dark-theme .ref-stats{grid-template-columns:repeat(3,1fr)!important}
+  html.dark-theme .ref-stat{padding:13px!important}
+  html.dark-theme .ref-stat .num{font-size:21px!important}
+  html.dark-theme .wallet-secure-card{margin-top:17px!important}
+  html.dark-theme .wallet-secure-card>.btn{min-height:48px!important}
+  html.dark-theme .quick-actions{gap:9px!important}
+  html.dark-theme .quick-actions .btn{font-size:13px!important;min-height:50px!important}
+}
+@media(max-width:520px){
+  html.dark-theme .ref-stats{grid-template-columns:1fr!important}
+  html.dark-theme .ref-stat{display:flex!important;justify-content:space-between!important;align-items:center!important}
+  html.dark-theme .ref-stat .num{margin:0!important}
+  html.dark-theme .finance-card .balance-amount{font-size:36px!important}
+  html.dark-theme .mobile-nav{left:10px!important;right:10px!important;height:68px!important}
+}
+
+/* public/auth: no demo credentials exposed in the UI */
+html.dark-theme .auth-page .auth{max-width:500px!important;border-radius:22px!important}
+html.dark-theme .auth-page .social .btn{min-height:58px!important;background:#020202!important;border-color:#1c3852!important}
+html.dark-theme .auth-page .field input{background:#020202!important;border-color:#1c3852!important}
+html.dark-theme .auth-page .btn.full{min-height:54px!important}
+
+
+/* V184 — Support must never disappear from the member bottom navigation.
+   The legacy dark-theme rule hid the fifth item outside the narrow-phone
+   breakpoint. This final rule is intentionally unconditional for member nav. */
+.mobile-nav a[href="support.html"]{display:flex!important;visibility:visible!important;opacity:1!important;}
+@media (max-width:1200px), (orientation:landscape) {
+  .mobile-nav{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;}
+  .mobile-nav a{display:flex!important;visibility:visible!important;opacity:1!important;flex:1 1 0!important;min-width:0!important;}
+  .mobile-nav a[href="support.html"]{display:flex!important;visibility:visible!important;opacity:1!important;}
+}
+
+/* V219 — Admin/Team light theme restoration. Dark theme remains unchanged. */
+html:not(.dark-theme){color-scheme:light!important;background:#f5f8fc!important}
+html:not(.dark-theme) body.admin-body{background:#07182d!important;color:#0c1a2e!important}
+html:not(.dark-theme) .admin-main{background:#f5f8fc!important;color:#0c1a2e!important}
+html:not(.dark-theme) .admin-head h1{color:#0c1a2e!important}
+html:not(.dark-theme) .admin-muted{color:#6d7b91!important}
+html:not(.dark-theme) .admin-card,
+html:not(.dark-theme) .admin-grid .card,
+html:not(.dark-theme) .qstat,
+html:not(.dark-theme) .user-panel,
+html:not(.dark-theme) .user-info-grid>div,
+html:not(.dark-theme) .detail,
+html:not(.dark-theme) .network-card,
+html:not(.dark-theme) .content-row,
+html:not(.dark-theme) .audit-note,
+html:not(.dark-theme) .history-stats .hstat,
+html:not(.dark-theme) .type-tab,
+html:not(.dark-theme) .panel,
+html:not(.dark-theme) .queue-card{background:#fff!important;border-color:#dfe7f1!important;color:#172b44!important;box-shadow:0 5px 20px rgba(2,19,40,.05)!important}
+html:not(.dark-theme) .admin-card h3,
+html:not(.dark-theme) .admin-value,
+html:not(.dark-theme) .qstat strong,
+html:not(.dark-theme) .user-info-grid b,
+html:not(.dark-theme) .detail b,
+html:not(.dark-theme) .txid,
+html:not(.dark-theme) .history-stats .hstat strong,
+html:not(.dark-theme) .type-tab strong{color:#172b44!important}
+html:not(.dark-theme) .admin-search input,
+html:not(.dark-theme) .admin-card input,
+html:not(.dark-theme) .admin-card select,
+html:not(.dark-theme) .queue-toolbar input,
+html:not(.dark-theme) .queue-toolbar select,
+html:not(.dark-theme) .audit-toolbar input,
+html:not(.dark-theme) .audit-toolbar select,
+html:not(.dark-theme) .toolbar input,
+html:not(.dark-theme) .toolbar select,
+html:not(.dark-theme) .filter-btn,
+html:not(.dark-theme) .field input,
+html:not(.dark-theme) .field select,
+html:not(.dark-theme) .field textarea{background:#fbfdff!important;border-color:#dfe7f1!important;color:#172b44!important}
+html:not(.dark-theme) input::placeholder,
+html:not(.dark-theme) textarea::placeholder{color:#8a98aa!important}
+html:not(.dark-theme) .admin-table th,
+html:not(.dark-theme) .queue-table th,
+html:not(.dark-theme) .history-table th{color:#7c8ba0!important;border-color:#e5ebf2!important}
+html:not(.dark-theme) .admin-table td,
+html:not(.dark-theme) .queue-table td,
+html:not(.dark-theme) .history-table td{color:#42536b!important;border-color:#e5ebf2!important}
+html:not(.dark-theme) .admin-user,
+html:not(.dark-theme) .admin-user-link,
+html:not(.dark-theme) .admin-theme,
+html:not(.dark-theme) .team-status-control{background:#fff!important;border-color:#dfe7f1!important;color:#52647c!important}
+html:not(.dark-theme) .admin-theme i,
+html:not(.dark-theme) .team-status-control .team-status-dot{background:#dbe5f0!important}
+html:not(.dark-theme) .admin-theme i:after,
+html:not(.dark-theme) .team-status-control .team-status-dot:after{background:#172b44!important}
+html:not(.dark-theme) .team-status-control.is-active .team-status-dot{background:#087cff!important}
+html:not(.dark-theme) .team-status-control.is-active .team-status-dot:after{background:#fff!important}
+html:not(.dark-theme) .type-tab span,
+html:not(.dark-theme) .sub,
+html:not(.dark-theme) .note,
+html:not(.dark-theme) .empty,
+html:not(.dark-theme) .loading,
+html:not(.dark-theme) .audit-note p{color:#6d7b91!important}
+html:not(.dark-theme) .type-tab.active{background:#edf5ff!important;border-color:#9cc8ff!important}
+html:not(.dark-theme) .type-tab.active strong,
+html:not(.dark-theme) .filter-btn.active{color:#087cff!important}
+html:not(.dark-theme) .filter-btn{color:#52647c!important;background:#fff!important}
+html:not(.dark-theme) .status.s-pending{background:#fff6df!important;color:#b87c0b!important}
+html:not(.dark-theme) .status.s-approved{background:#e9f9f1!important;color:#138654!important}
+html:not(.dark-theme) .status.s-rejected{background:#fff0f1!important;color:#d74754!important}
+html:not(.dark-theme) .status.s-auto{background:#eef2f6!important;color:#68778b!important}
+html:not(.dark-theme) .role{background:#eef3f8!important;color:#65758b!important}
+html:not(.dark-theme) .team-profile-avatar{background:#0f2f4d!important;color:#eaf5ff!important}
+
+/* Public landing exception: keep the animated atmosphere visible. The black
+   visual system remains unchanged for every other page. */
+html body.public-landing,
+html body.public-landing main,
+html body.public-landing .hero,
+html body.public-landing .main,
+html body.public-landing #news,
+html body.public-landing .public-header,
+html body.public-landing .nav,
+html body.public-landing .footer{
+  background:transparent!important;
+}
+html body.public-landing .public-header{
+  background:rgba(2,6,14,.78)!important;
+}
+html body.public-landing .pl-footer{
+  background:rgba(2,5,12,.82)!important;
+}
+html body.public-landing{
+  background:#02060e!important;
+}
+
+/* Auth public exception: same ambient/glass treatment as public-landing.
+   Keeps dashboard/admin black visual system untouched. */
+html body.auth-public,
+html body.auth-public .auth-page,
+html body.auth-public .auth-wrap,
+html body.auth-public .auth-brand{
+  background:transparent!important;
+}
+html body.auth-public{
+  background:#02060e!important;
+  color:#e8eef7!important;
+}
+html body.auth-public .auth{
+  background:rgba(10,24,48,.72)!important;
+  border-color:rgba(80,170,255,.16)!important;
+  color:#e8eef7!important;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.02) inset,
+    0 20px 60px rgba(0,0,0,.35),
+    0 0 40px rgba(8,124,255,.08)!important;
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  max-width:none!important;
+  border-radius:22px!important;
+}
+html body.auth-public .auth h1,
+html body.auth-public .auth h2{color:#f5f7fb!important}
+html body.auth-public .auth p,
+html body.auth-public .auth .hint,
+html body.auth-public .auth .center{color:#9eb2c9!important}
+html body.auth-public .field label{color:#9db0c5!important}
+html body.auth-public .field input,
+html body.auth-public .field select,
+html body.auth-public .field textarea,
+html body.auth-public .auth input,
+html body.auth-public .auth select,
+html body.auth-public .auth textarea{
+  background:rgba(2,8,18,.55)!important;
+  color:#eef3f8!important;
+  border-color:rgba(80,170,255,.22)!important;
+}
+html body.auth-public .phone-input-wrap{
+  background:rgba(2,8,18,.55)!important;
+  border-color:rgba(80,170,255,.22)!important;
+}
+html body.auth-public .social .btn,
+html body.auth-public .auth .btn.secondary{
+  /* legacy secondary buttons unused on auth-public; oauth pills win */
+  background:#fff!important;
+  color:#1f1f1f!important;
+  border-color:#dadce0!important;
+}
+html body.auth-public .oauth-pill{
+  background:#fff!important;
+  color:#1f1f1f!important;
+  border:1px solid #dadce0!important;
+  box-shadow:none!important;
+  min-height:48px!important;
+  border-radius:9999px!important;
+}
+html body.auth-public .oauth-pill span{color:#1f1f1f!important;font-weight:700!important}
+html body.auth-public .oauth-pill:hover{background:#f8f9fa!important}
+html body.auth-public .auth-submit,
+html body.auth-public .auth .btn.full{
+  background:linear-gradient(135deg,#087cff,#19b7e8)!important;
+  color:#fff!important;
+  border:0!important;
+  min-height:52px!important;
+  box-shadow:0 10px 28px rgba(8,124,255,.35)!important;
+}
