@@ -1,0 +1,1 @@
+V246: Wallet status badges/legend updated. Active is green, passive is red in Owner and Admin wallet address tables, including dark theme styling.

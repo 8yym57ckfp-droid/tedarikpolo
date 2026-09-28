@@ -1,0 +1,1 @@
+Safepays v103 — finance page watermark reduced to an extremely subtle dark background; mobile width explicitly constrained to viewport; no wallet/address workflow changes.
