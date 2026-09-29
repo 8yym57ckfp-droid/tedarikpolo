@@ -22,7 +22,7 @@ f.onsubmit=async e=>{e.preventDefault();err.textContent='Güvenlik bilgileri kon
       location.href='../owner/dashboard.html';
       return;
     }
-    const account=SafeAdmin.login(email.value,password.value,code.value);
+    const account=await SafeAdmin.login(email.value,password.value,code.value);
     localStorage.setItem('safepays_portal','staff');
     SafeAdmin.setSessionProfile(account);
     SafeAdmin.recordSecurityEvent({type:'login',status:'success',actorId:account.id,actor:account.name||account.email,email:account.email,role:account.role,ip:context.ip,device:context.device,os:context.os,browser:context.browser,userAgent:context.userAgent});
