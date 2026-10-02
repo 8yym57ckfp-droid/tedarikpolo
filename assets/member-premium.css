@@ -340,35 +340,20 @@ body.member-premium main,body.member-premium .dash-main,body.member-premium .mai
   html body.auth-public .auth-wrap{padding:10px 0!important}
   html body.auth-public .auth-wrap .auth{padding:26px 20px!important;border-radius:24px!important}
 }
-@media(max-width:420px){
-  body.public-landing .public-header .navlinks{display:none!important}
-  body.public-landing .public-header{justify-content:space-between!important}
-  body.public-landing .public-header .header-actions{margin-left:auto}
-  body.public-landing .pl-hero .actions{gap:8px}
-  body.public-landing .pl-hero .actions .btn{padding-inline:13px!important;font-size:12px!important}
-  html body.auth-public .auth-page{padding-inline:10px!important}
-  html body.auth-public .auth-wrap .auth{padding:23px 16px!important}
-  html body.auth-public .auth-name-grid{grid-template-columns:1fr!important;gap:0!important}
-}
-@media(prefers-reduced-motion:reduce){
-  html{scroll-behavior:auto}
-  .member-depth-orb,body.public-landing .pl-globe,html body.auth-public .auth-visual-sphere,html body.auth-public .auth-coin{animation:none!important}
-  html body.member-premium .member-depth-card,html body.member-premium .member-depth-card.member-depth-visible,html body.member-premium .member-depth-card.member-depth-visible:hover{opacity:1!important;transform:none!important;transition:none!important;will-change:auto!important}
-  body.public-landing .pl-logo-ticker-track{animation:none!important}
-}
 
-/* Legacy standalone member pages join the same desktop rail and content grid. */
-html body.member-premium .app-shell{min-height:100vh!important;background:transparent!important}
-html body.member-premium main.wrap,html body.member-premium main.main-content{width:calc(100% - 276px)!important;max-width:1430px!important;min-height:100vh!important;margin:0 0 0 276px!important;padding:30px clamp(20px,3.7vw,58px) 132px!important;background:transparent!important;color:#f7f9ff!important;box-sizing:border-box!important}
-html body.member-premium .app>.member-topbar,html body.member-premium .app>.member-header{width:calc(100% - 298px)!important;margin:12px 22px 21px 288px!important}
-html body.member-premium .member-header{position:sticky!important;top:12px!important;z-index:45!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:18px!important;min-height:72px!important;padding:12px 18px!important;border:1px solid rgba(255,255,255,.75)!important;border-radius:20px!important;background:rgba(255,253,247,.94)!important;color:var(--solar-ink)!important;box-shadow:0 14px 46px rgba(0,0,0,.19),inset 0 1px 0 #fff!important;backdrop-filter:blur(18px)!important}
-html body.member-premium .main-content .page-head h1,html body.member-premium .wrap h1{color:#fff!important}
-html body.member-premium .main-content .page-head .muted,html body.member-premium .wrap .muted{color:#c6d2e7!important}
-html body.member-premium .main-content .panel,html body.member-premium .wrap .panel{padding:22px!important}
+/* Keep the reference's vertical icon dock on narrow screens too. */
 @media(max-width:760px){
-  html body.member-premium main.wrap,html body.member-premium main.main-content{width:100%!important;max-width:none!important;min-height:100vh!important;margin:0!important;padding:20px 14px 115px!important}
-  html body.member-premium .app>.member-topbar,html body.member-premium .app>.member-header{width:auto!important;margin:7px 9px 15px!important}
-  html body.member-premium .member-header{min-height:60px!important;padding:9px 11px!important;border-radius:16px!important}
+  html body.member-premium:not(.public-landing):not(.auth-public) .side{display:block!important;visibility:visible!important;pointer-events:auto!important;top:55%!important;right:auto!important;bottom:auto!important;left:7px!important;transform:translateY(-50%)!important;width:60px!important;min-width:60px!important;max-width:60px!important;max-height:90dvh!important;overflow-x:visible!important;overflow-y:auto!important;padding:8px 4px!important;border-radius:22px!important}
+  html body.member-premium:not(.public-landing):not(.auth-public) .side .logo{width:42px!important;min-width:42px!important;height:42px!important;min-height:42px!important;margin:0 auto 7px!important;border-radius:15px!important}
+  html body.member-premium:not(.public-landing):not(.auth-public) .side .logo:before{width:28px!important;height:28px!important;border-radius:10px!important;font-size:16px!important}
+  html body.member-premium:not(.public-landing):not(.auth-public) .side nav{gap:3px!important}
+  html body.member-premium:not(.public-landing):not(.auth-public) .side nav a{width:42px!important;min-width:42px!important;max-width:42px!important;height:38px!important;min-height:38px!important;border-radius:13px!important}
+  html body.member-premium:not(.public-landing):not(.auth-public) .side nav a:before{width:24px!important;height:24px!important;font-size:18px!important}
+  html body.member-premium:not(.public-landing):not(.auth-public) .mobile-nav{display:none!important;visibility:hidden!important;pointer-events:none!important}
+  html body.member-premium:not(.public-landing):not(.auth-public) .dash-main,html body.member-premium:not(.public-landing):not(.auth-public) .main,html body.member-premium:not(.public-landing):not(.auth-public) main.wrap,html body.member-premium:not(.public-landing):not(.auth-public) main.main-content{width:calc(100% - 72px)!important;max-width:none!important;margin:0 0 0 68px!important;padding:12px 6px 24px!important;box-sizing:border-box!important}
+  html body.member-premium:not(.public-landing):not(.auth-public) .app>.member-topbar,html body.member-premium:not(.public-landing):not(.auth-public) .app>.member-header{width:calc(100% - 80px)!important;margin:7px 6px 12px 68px!important}
+  html body.member-premium:not(.public-landing):not(.auth-public) .dash-header,html body.member-premium:not(.public-landing):not(.auth-public) .topbar,html body.member-premium:not(.public-landing):not(.auth-public) .member-topbar,html body.member-premium:not(.public-landing):not(.auth-public) .member-header{top:6px!important;min-height:54px!important;margin:6px 4px 11px!important;padding:8px 9px!important;border-radius:15px!important}
+  html body.member-premium:not(.public-landing):not(.auth-public) .dash-content{padding:6px 5px 24px!important}
 }
 
 /* Graphite reference system: one monochrome glass workspace across member pages. */
@@ -463,17 +448,217 @@ html body.member-premium:not(.public-landing):not(.auth-public) .event-card .eve
 @media(max-width:1050px){html body.member-premium:not(.public-landing):not(.auth-public) .dash-main,html body.member-premium:not(.public-landing):not(.auth-public) .main,html body.member-premium:not(.public-landing):not(.auth-public) main.wrap,html body.member-premium:not(.public-landing):not(.auth-public) main.main-content{width:calc(100% - 116px)!important;margin-left:100px!important}}
 @media(max-width:760px){html body.member-premium:not(.public-landing):not(.auth-public) .dash-main,html body.member-premium:not(.public-landing):not(.auth-public) .main,html body.member-premium:not(.public-landing):not(.auth-public) main.wrap,html body.member-premium:not(.public-landing):not(.auth-public) main.main-content{width:100%!important;margin:0!important;padding:16px 12px 116px!important}html body.member-premium:not(.public-landing):not(.auth-public) .dash-header,html body.member-premium:not(.public-landing):not(.auth-public) .topbar,html body.member-premium:not(.public-landing):not(.auth-public) .member-topbar,html body.member-premium:not(.public-landing):not(.auth-public) .member-header,html body.member-premium:not(.public-landing):not(.auth-public) .app>.member-topbar,html body.member-premium:not(.public-landing):not(.auth-public) .app>.member-header{top:7px!important;width:auto!important;margin:7px 8px 15px!important;padding:9px 11px!important;border-radius:17px!important}html body.member-premium:not(.public-landing):not(.auth-public) .mobile-nav{left:50%!important;right:auto!important;bottom:12px!important;width:min(520px,calc(100vw - 24px))!important;transform:translateX(-50%)!important;padding:9px 5px!important}html body.member-premium:not(.public-landing):not(.auth-public) .mobile-nav a span{font-size:9px!important}html body.member-premium:not(.public-landing):not(.auth-public) .dash-content{padding:8px 10px 120px!important}}
 @media(prefers-reduced-motion:reduce){html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-ambient:before,html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-ambient:after{animation:none!important}}
-/* Keep the reference's vertical icon dock on narrow screens too. */
+
+/* Legacy standalone member pages join the same desktop rail and content grid. */
+html body.member-premium .app-shell{min-height:100vh!important;background:transparent!important}
+html body.member-premium main.wrap,html body.member-premium main.main-content{width:calc(100% - 276px)!important;max-width:1430px!important;min-height:100vh!important;margin:0 0 0 276px!important;padding:30px clamp(20px,3.7vw,58px) 132px!important;background:transparent!important;color:#f7f9ff!important;box-sizing:border-box!important}
+html body.member-premium .app>.member-topbar,html body.member-premium .app>.member-header{width:calc(100% - 298px)!important;margin:12px 22px 21px 288px!important}
+html body.member-premium .member-header{position:sticky!important;top:12px!important;z-index:45!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:18px!important;min-height:72px!important;padding:12px 18px!important;border:1px solid rgba(255,255,255,.75)!important;border-radius:20px!important;background:rgba(255,253,247,.94)!important;color:var(--solar-ink)!important;box-shadow:0 14px 46px rgba(0,0,0,.19),inset 0 1px 0 #fff!important;backdrop-filter:blur(18px)!important}
+html body.member-premium .main-content .page-head h1,html body.member-premium .wrap h1{color:#fff!important}
+html body.member-premium .main-content .page-head .muted,html body.member-premium .wrap .muted{color:#c6d2e7!important}
+html body.member-premium .main-content .panel,html body.member-premium .wrap .panel{padding:22px!important}
 @media(max-width:760px){
-  html body.member-premium:not(.public-landing):not(.auth-public) .side{display:block!important;visibility:visible!important;pointer-events:auto!important;top:55%!important;right:auto!important;bottom:auto!important;left:7px!important;transform:translateY(-50%)!important;width:60px!important;min-width:60px!important;max-width:60px!important;max-height:90dvh!important;overflow-x:visible!important;overflow-y:auto!important;padding:8px 4px!important;border-radius:22px!important}
-  html body.member-premium:not(.public-landing):not(.auth-public) .side .logo{width:42px!important;min-width:42px!important;height:42px!important;min-height:42px!important;margin:0 auto 7px!important;border-radius:15px!important}
-  html body.member-premium:not(.public-landing):not(.auth-public) .side .logo:before{width:28px!important;height:28px!important;border-radius:10px!important;font-size:16px!important}
-  html body.member-premium:not(.public-landing):not(.auth-public) .side nav{gap:3px!important}
-  html body.member-premium:not(.public-landing):not(.auth-public) .side nav a{width:42px!important;min-width:42px!important;max-width:42px!important;height:38px!important;min-height:38px!important;border-radius:13px!important}
-  html body.member-premium:not(.public-landing):not(.auth-public) .side nav a:before{width:24px!important;height:24px!important;font-size:18px!important}
-  html body.member-premium:not(.public-landing):not(.auth-public) .mobile-nav{display:none!important;visibility:hidden!important;pointer-events:none!important}
-  html body.member-premium:not(.public-landing):not(.auth-public) .dash-main,html body.member-premium:not(.public-landing):not(.auth-public) .main,html body.member-premium:not(.public-landing):not(.auth-public) main.wrap,html body.member-premium:not(.public-landing):not(.auth-public) main.main-content{width:calc(100% - 72px)!important;max-width:none!important;margin:0 0 0 68px!important;padding:12px 6px 24px!important;box-sizing:border-box!important}
-  html body.member-premium:not(.public-landing):not(.auth-public) .app>.member-topbar,html body.member-premium:not(.public-landing):not(.auth-public) .app>.member-header{width:calc(100% - 80px)!important;margin:7px 6px 12px 68px!important}
-  html body.member-premium:not(.public-landing):not(.auth-public) .dash-header,html body.member-premium:not(.public-landing):not(.auth-public) .topbar,html body.member-premium:not(.public-landing):not(.auth-public) .member-topbar,html body.member-premium:not(.public-landing):not(.auth-public) .member-header{top:6px!important;min-height:54px!important;margin:6px 4px 11px!important;padding:8px 9px!important;border-radius:15px!important}
-  html body.member-premium:not(.public-landing):not(.auth-public) .dash-content{padding:6px 5px 24px!important}
+  html body.member-premium main.wrap,html body.member-premium main.main-content{width:100%!important;max-width:none!important;min-height:100vh!important;margin:0!important;padding:20px 14px 115px!important}
+  html body.member-premium .app>.member-topbar,html body.member-premium .app>.member-header{width:auto!important;margin:7px 9px 15px!important}
+  html body.member-premium .member-header{min-height:60px!important;padding:9px 11px!important;border-radius:16px!important}
+}
+
+/* Account-only network activity uses authenticated ledger data, never sample figures. */
+html body.member-premium:not(.public-landing):not(.auth-public) .dash-content>.network-live-panel{grid-column:1/-1!important;width:100%!important;min-width:0!important;padding:clamp(17px,2vw,27px)!important;overflow:hidden!important;border:1px solid rgba(255,255,255,.17)!important;border-radius:27px!important;background:radial-gradient(ellipse at 92% 4%,rgba(255,255,255,.105),transparent 35%),linear-gradient(145deg,rgba(51,52,57,.82),rgba(19,20,23,.87) 66%,rgba(12,13,15,.9))!important;box-shadow:0 30px 82px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.19)!important;backdrop-filter:blur(28px) saturate(120%)!important;-webkit-backdrop-filter:blur(28px) saturate(120%)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin:0 0 19px}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-kicker{color:#dedee2;font-size:10px;font-weight:800;letter-spacing:.16em}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-heading h2{margin:6px 0 4px;font-size:clamp(20px,2vw,27px);color:#f7f7f8!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-heading p{margin:0;color:#aaabb1!important;font-size:12px}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-updated{display:flex;align-items:center;gap:8px;flex:0 0 auto;padding:8px 11px;border:1px solid rgba(255,255,255,.13);border-radius:999px;background:rgba(255,255,255,.055);color:#cacbd0;font-size:10px;font-variant-numeric:tabular-nums}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-updated i{width:7px;height:7px;border-radius:50%;background:#d9d9dd;box-shadow:0 0 12px rgba(255,255,255,.45);animation:network-live-pulse 2.1s ease-in-out infinite}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-updated i.offline{background:#8a8b90;box-shadow:none;animation:none}
+@keyframes network-live-pulse{50%{opacity:.45;box-shadow:0 0 2px rgba(255,255,255,.2)}}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;perspective:1000px}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-card{min-width:0;padding:17px;border:1px solid rgba(255,255,255,.14)!important;border-radius:21px!important;background:linear-gradient(150deg,rgba(67,68,73,.53),rgba(23,24,27,.66) 62%,rgba(16,17,20,.73))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 17px 44px rgba(0,0,0,.22)!important;backdrop-filter:blur(20px) saturate(118%)!important;-webkit-backdrop-filter:blur(20px) saturate(118%)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:13px;border-bottom:1px solid rgba(255,255,255,.1)}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-name{display:flex;align-items:center;gap:10px;min-width:0}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-symbol{display:grid;place-items:center;width:36px;height:36px;flex:0 0 36px;border:1px solid rgba(255,255,255,.17);border-radius:12px;background:linear-gradient(145deg,rgba(255,255,255,.19),rgba(255,255,255,.045));color:#f3f3f5;font-size:16px;font-weight:750;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-name>span:last-child{display:grid;gap:3px}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-name strong{color:#f5f5f7;font-size:13px;letter-spacing:.04em}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-name small{color:#aeb0b6!important;font-size:10px}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-count{flex:0 0 auto;padding:6px 9px;border:1px solid rgba(255,255,255,.11);border-radius:999px;background:rgba(255,255,255,.05);color:#c7c8cd;font-size:10px}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:14px 0 8px}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-metrics>div{display:grid;gap:5px;min-width:0}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-metrics>div>span{color:#aeb0b6;font-size:10px}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-metrics strong{color:#f2f2f4;font-size:17px;font-variant-numeric:tabular-nums;white-space:nowrap}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-metrics strong small{font-size:9px;color:#aaaab0!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-chart-wrap{padding:7px 0 10px;border-bottom:1px solid rgba(255,255,255,.1)}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-chart{display:block;width:100%;height:78px;overflow:visible;filter:drop-shadow(0 2px 8px rgba(255,255,255,.08))}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-chart-grid{fill:none;stroke:rgba(255,255,255,.11);stroke-width:1;stroke-dasharray:2 5}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-chart-in,html body.member-premium:not(.public-landing):not(.auth-public) .network-chart-out{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-chart-in{stroke:#f0f0f2;stroke-width:2}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-chart-out{stroke:#898a90;stroke-width:1.65;stroke-dasharray:5 4}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-legend{display:flex;align-items:center;gap:13px;padding-top:5px;color:#b8b9bf;font-size:9px}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-legend>span{display:flex;align-items:center;gap:5px}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-legend i{display:block;width:13px;height:2px;border-radius:2px;background:#eeeef0}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-legend i.out{background:#898a90}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-legend small{margin-left:auto;color:#96979d!important;font-size:9px}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-list{display:grid;gap:0;margin:0;padding:0;list-style:none}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-list li{display:grid;grid-template-columns:minmax(58px,.7fr) minmax(120px,1.2fr) minmax(120px,1fr);align-items:center;gap:8px;min-width:0;padding:10px 1px;border-bottom:1px solid rgba(255,255,255,.075)}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-list li:last-child{border-bottom:0;padding-bottom:1px}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-kind{color:#c9cacf;font-size:10px}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-amount{overflow:hidden;color:#f0f0f2;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;text-overflow:ellipsis;white-space:nowrap}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-state{overflow:hidden;color:#a8a9af;font-size:9px;text-overflow:ellipsis;white-space:nowrap;text-align:right}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-empty{grid-column:1/-1!important;color:#a6a7ad!important;font-size:10px!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-loading{grid-column:1/-1;padding:25px;border:1px solid rgba(255,255,255,.1);border-radius:17px;background:rgba(255,255,255,.035);color:#b4b5bb;font-size:12px}
+@media(max-width:760px){html body.member-premium:not(.public-landing):not(.auth-public) .network-live-heading{align-items:flex-start;flex-direction:column;gap:11px}html body.member-premium:not(.public-landing):not(.auth-public) .network-live-updated{align-self:flex-start}html body.member-premium:not(.public-landing):not(.auth-public) .network-live-grid{grid-template-columns:minmax(0,1fr)}html body.member-premium:not(.public-landing):not(.auth-public) .network-live-card{padding:15px;border-radius:19px!important}html body.member-premium:not(.public-landing):not(.auth-public) .network-live-list li{grid-template-columns:minmax(55px,.7fr) minmax(100px,1fr) minmax(95px,.8fr)}}
+@media(prefers-reduced-motion:reduce){html body.member-premium:not(.public-landing):not(.auth-public) .network-live-updated i{animation:none!important}}
+
+/* iPhone-inspired graphite glass: shared member shell and centered bottom dock. */
+html body.member-premium:not(.public-landing):not(.auth-public){
+  color-scheme:dark!important;background:#0a0b0d!important;color:#f4f4f6!important;
+  --graphite-bg:#0a0b0d;--graphite-panel:rgba(36,37,41,.72);--graphite-line:rgba(255,255,255,.14);
+  --graphite-text:#f4f4f6;--graphite-muted:#b6b7bd;--graphite-accent:#e64960;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-ambient{background:radial-gradient(ellipse at 18% 12%,rgba(255,255,255,.13),transparent 32%),radial-gradient(ellipse at 88% 58%,rgba(174,176,184,.1),transparent 34%),linear-gradient(145deg,#111215,#090a0c 58%,#131417)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-ambient:before{background:radial-gradient(ellipse at 26% 32%,rgba(255,255,255,.13),transparent 33%),radial-gradient(ellipse at 73% 73%,rgba(176,178,185,.08),transparent 35%)!important;opacity:.44!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-ambient:after{opacity:.12!important;background-image:linear-gradient(rgba(255,255,255,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.16) 1px,transparent 1px)!important;background-size:74px 74px!important;mask-image:linear-gradient(to bottom,#000 0%,transparent 74%)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-orb{opacity:.13!important;filter:blur(8px)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-orb.one{background:radial-gradient(circle,rgba(255,255,255,.55),transparent 72%)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-orb.two{background:radial-gradient(circle,rgba(182,184,190,.4),transparent 74%)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-orb.three{display:none!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-ring{border-color:rgba(255,255,255,.11)!important;box-shadow:0 0 65px rgba(255,255,255,.035),inset 0 0 45px rgba(255,255,255,.025)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-ring.ring-two{border-color:rgba(255,255,255,.08)!important}
+
+/* Replace the former left sidebar everywhere with the same accessible glass dock. */
+html body.member-premium:not(.public-landing):not(.auth-public) .side,
+html body.member-premium:not(.public-landing):not(.auth-public) .member-shared-rail{display:none!important;visibility:hidden!important;pointer-events:none!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .app,
+html body.member-premium:not(.public-landing):not(.auth-public) .dashboard-shell{display:block!important;width:100%!important;min-height:100vh!important;margin:0!important;padding:0!important;background:transparent!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .dash-main,
+html body.member-premium:not(.public-landing):not(.auth-public) .main,
+html body.member-premium:not(.public-landing):not(.auth-public) main.wrap,
+html body.member-premium:not(.public-landing):not(.auth-public) main.main-content{width:100%!important;max-width:none!important;min-height:100vh!important;margin:0!important;padding:18px clamp(14px,4vw,58px) 150px!important;box-sizing:border-box!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .mobile-nav{position:fixed!important;z-index:999999!important;left:50%!important;right:auto!important;bottom:calc(13px + env(safe-area-inset-bottom,0px))!important;display:grid!important;visibility:visible!important;pointer-events:auto!important;opacity:1!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;align-items:center!important;justify-content:initial!important;width:min(620px,calc(100vw - 32px))!important;max-width:620px!important;height:72px!important;min-height:72px!important;max-height:72px!important;margin:0!important;padding:7px!important;overflow:hidden!important;transform:translateX(-50%)!important;border:1px solid rgba(255,255,255,.2)!important;border-radius:26px!important;background:linear-gradient(150deg,rgba(73,74,80,.68),rgba(28,29,33,.76) 52%,rgba(16,17,20,.82))!important;box-shadow:0 24px 70px rgba(0,0,0,.58),inset 0 1px 0 rgba(255,255,255,.23),inset 0 -1px 0 rgba(255,255,255,.07)!important;backdrop-filter:blur(34px) saturate(125%)!important;-webkit-backdrop-filter:blur(34px) saturate(125%)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .mobile-nav>a{display:flex!important;position:relative!important;align-items:center!important;justify-content:center!important;gap:3px!important;width:100%!important;height:100%!important;min-height:0!important;margin:0!important;padding:4px 2px!important;border:1px solid transparent!important;border-radius:19px!important;background:transparent!important;color:#c5c6cb!important;font-size:10px!important;line-height:1.1!important;text-decoration:none!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .mobile-nav>a.active{border-color:rgba(255,255,255,.14)!important;background:linear-gradient(145deg,rgba(255,255,255,.2),rgba(255,255,255,.075))!important;color:#fff!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.19),0 8px 22px rgba(0,0,0,.14)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .mobile-nav>a.active:after{position:absolute!important;content:""!important;top:4px!important;left:50%!important;width:13px!important;height:2px!important;border-radius:3px!important;background:#e64960!important;transform:translateX(-50%)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .mobile-nav .nav-svg{display:grid!important;place-items:center!important;width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important;margin:0!important;border:1px solid transparent!important;border-radius:10px!important;background:transparent!important;color:currentColor!important;line-height:0!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .mobile-nav .nav-svg svg{display:block!important;width:21px!important;height:21px!important;min-width:21px!important;min-height:21px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.75!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .mobile-nav>a>span{display:block!important;width:100%!important;max-width:100%!important;margin:0!important;padding:0 1px!important;overflow:hidden!important;color:currentColor!important;font-size:10px!important;font-weight:600!important;line-height:12px!important;text-overflow:ellipsis!important;white-space:nowrap!important;text-align:center!important}
+
+/* Reusable SafePays silver mark and quiet, legible account headers. */
+html body.member-premium:not(.public-landing):not(.auth-public) .member-glass-brand{display:flex!important;flex:0 0 auto!important;align-items:center!important;gap:9px!important;min-width:0!important;color:#f4f4f6!important;text-decoration:none!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-glass-brand>img{display:block!important;width:37px!important;height:37px!important;object-fit:contain!important;filter:drop-shadow(0 5px 12px rgba(0,0,0,.32))}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-glass-brand .inline-brand{display:flex!important;gap:4px!important;color:#f4f4f6!important;font-size:15px!important;font-weight:800!important;letter-spacing:-.035em!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-glass-brand .inline-brand b{color:#f4f4f6!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .dash-brand-mobile{display:block!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .dash-brand-mobile .mobile-inline-logo{display:flex!important;align-items:center!important;gap:9px!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .dash-header,
+html body.member-premium:not(.public-landing):not(.auth-public) .topbar,
+html body.member-premium:not(.public-landing):not(.auth-public) .member-topbar,
+html body.member-premium:not(.public-landing):not(.auth-public) .member-header{position:sticky!important;top:10px!important;z-index:45!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;min-height:66px!important;height:auto!important;margin:10px auto 22px!important;padding:10px 15px!important;border:1px solid rgba(255,255,255,.15)!important;border-radius:22px!important;background:linear-gradient(145deg,rgba(65,66,71,.62),rgba(25,26,30,.72) 58%,rgba(17,18,21,.78))!important;color:#f4f4f6!important;box-shadow:0 18px 54px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.18)!important;backdrop-filter:blur(30px) saturate(122%)!important;-webkit-backdrop-filter:blur(30px) saturate(122%)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .topbar>.member-glass-brand,
+html body.member-premium:not(.public-landing):not(.auth-public) .member-topbar>.member-glass-brand,
+html body.member-premium:not(.public-landing):not(.auth-public) .member-header>.member-glass-brand{order:-1}
+html body.member-premium:not(.public-landing):not(.auth-public) .dash-header .desktop-label,html body.member-premium:not(.public-landing):not(.auth-public) .topbar .muted{color:#b8b9bf!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .dash-header .wallet-balance-pill,html body.member-premium:not(.public-landing):not(.auth-public) .dash-header .user-pill,html body.member-premium:not(.public-landing):not(.auth-public) .topbar .profile,html body.member-premium:not(.public-landing):not(.auth-public) .member-topbar .profile{border:1px solid rgba(255,255,255,.13)!important;border-radius:15px!important;background:rgba(255,255,255,.075)!important;color:#f3f3f5!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.1)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .dash-header .wallet-balance-pill b,html body.member-premium:not(.public-landing):not(.auth-public) .dash-header .wallet-balance-pill small{color:#eeeef0!important}
+
+/* One cool grayscale glass language for all account sections and controls. */
+html body.member-premium:not(.public-landing):not(.auth-public) .dash-content,
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page,
+html body.member-premium:not(.public-landing):not(.auth-public) .page-content,
+html body.member-premium:not(.public-landing):not(.auth-public) .wrap,
+html body.member-premium:not(.public-landing):not(.auth-public) .support-shell,
+html body.member-premium:not(.public-landing):not(.auth-public) .wallet-page{background:transparent!important;color:#f0f0f2!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .card,
+html body.member-premium:not(.public-landing):not(.auth-public) .dash-card,
+html body.member-premium:not(.public-landing):not(.auth-public) .assets-summary,
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-card,
+html body.member-premium:not(.public-landing):not(.auth-public) .network-invest,
+html body.member-premium:not(.public-landing):not(.auth-public) .network-invest-card,
+html body.member-premium:not(.public-landing):not(.auth-public) .quick,
+html body.member-premium:not(.public-landing):not(.auth-public) .member-earning-guide,
+html body.member-premium:not(.public-landing):not(.auth-public) .ref-banner,
+html body.member-premium:not(.public-landing):not(.auth-public) .support-panel,
+html body.member-premium:not(.public-landing):not(.auth-public) .support-card,
+html body.member-premium:not(.public-landing):not(.auth-public) .chat-panel,
+html body.member-premium:not(.public-landing):not(.auth-public) .context-card,
+html body.member-premium:not(.public-landing):not(.auth-public) .support-categories,
+html body.member-premium:not(.public-landing):not(.auth-public) .event-card,
+html body.member-premium:not(.public-landing):not(.auth-public) .history-card,
+html body.member-premium:not(.public-landing):not(.auth-public) .transaction-card,
+html body.member-premium:not(.public-landing):not(.auth-public) .transactions-card,
+html body.member-premium:not(.public-landing):not(.auth-public) .pending-card,
+html body.member-premium:not(.public-landing):not(.auth-public) .ref-card,
+html body.member-premium:not(.public-landing):not(.auth-public) .ref-page,
+html body.member-premium:not(.public-landing):not(.auth-public) .ref-stat,
+html body.member-premium:not(.public-landing):not(.auth-public) .account-card,
+html body.member-premium:not(.public-landing):not(.auth-public) .security-card,
+html body.member-premium:not(.public-landing):not(.auth-public) .security-hero,
+html body.member-premium:not(.public-landing):not(.auth-public) .recent-card,
+html body.member-premium:not(.public-landing):not(.auth-public) .campaign,
+html body.member-premium:not(.public-landing):not(.auth-public) .overview-hero,
+html body.member-premium:not(.public-landing):not(.auth-public) .profile,
+html body.member-premium:not(.public-landing):not(.auth-public) .wallet-card,
+html body.member-premium:not(.public-landing):not(.auth-public) .wallet-summary-card,
+html body.member-premium:not(.public-landing):not(.auth-public) .wallet-secure-panel,
+html body.member-premium:not(.public-landing):not(.auth-public) .wallet-activity-panel,
+html body.member-premium:not(.public-landing):not(.auth-public) .form-card,
+html body.member-premium:not(.public-landing):not(.auth-public) .panel,
+html body.member-premium:not(.public-landing):not(.auth-public) .table-wrap,
+html body.member-premium:not(.public-landing):not(.auth-public) .notice-card,
+html body.member-premium:not(.public-landing):not(.auth-public) .ticket,
+html body.member-premium:not(.public-landing):not(.auth-public) .session,
+html body.member-premium:not(.public-landing):not(.auth-public) .stat-card,
+html body.member-premium:not(.public-landing):not(.auth-public) .info-card,
+html body.member-premium:not(.public-landing):not(.auth-public) .balance-history-panel,
+html body.member-premium:not(.public-landing):not(.auth-public) .activity-panel,
+html body.member-premium:not(.public-landing):not(.auth-public) .balance-panel,
+html body.member-premium:not(.public-landing):not(.auth-public) .support-compose,
+html body.member-premium:not(.public-landing):not(.auth-public) .danger-zone,
+html body.member-premium:not(.public-landing):not(.auth-public) .security-row,
+html body.member-premium:not(.public-landing):not(.auth-public) .security-grid,
+html body.member-premium:not(.public-landing):not(.auth-public) .account-grid,
+html body.member-premium:not(.public-landing):not(.auth-public) .quick-action,
+html body.member-premium:not(.public-landing):not(.auth-public) .quick-actions,
+html body.member-premium:not(.public-landing):not(.auth-public) .table-container{color:#ececef!important;background:linear-gradient(145deg,rgba(56,57,62,.72),rgba(24,25,29,.8) 62%,rgba(16,17,20,.83))!important;border:1px solid rgba(255,255,255,.14)!important;border-radius:23px!important;box-shadow:0 24px 70px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.16)!important;backdrop-filter:blur(24px) saturate(118%)!important;-webkit-backdrop-filter:blur(24px) saturate(118%)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) h1,html body.member-premium:not(.public-landing):not(.auth-public) h2,html body.member-premium:not(.public-landing):not(.auth-public) h3,html body.member-premium:not(.public-landing):not(.auth-public) h4{color:#f6f6f7!important;letter-spacing:-.035em}
+html body.member-premium:not(.public-landing):not(.auth-public) p,html body.member-premium:not(.public-landing):not(.auth-public) .muted,html body.member-premium:not(.public-landing):not(.auth-public) .sub,html body.member-premium:not(.public-landing):not(.auth-public) .hint,html body.member-premium:not(.public-landing):not(.auth-public) small{color:#b7b8be!important}
+html body.member-premium:not(.public-landing):not(.auth-public) a:not(.btn):not(.mobile-nav a):not(.side a){color:#e0e0e3!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .main-balance,html body.member-premium:not(.public-landing):not(.auth-public) .balance-card.main-balance{background:radial-gradient(ellipse at 82% 12%,rgba(255,255,255,.18),transparent 31%),linear-gradient(135deg,rgba(70,71,76,.9),rgba(26,27,31,.94) 62%,rgba(14,15,18,.96))!important;border-color:rgba(255,255,255,.2)!important;box-shadow:0 30px 90px rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.24)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .main-balance *,html body.member-premium:not(.public-landing):not(.auth-public) .balance-card.main-balance *{color:#f4f4f6!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .quick-icon,html body.member-premium:not(.public-landing):not(.auth-public) .wallet-mini-icon,html body.member-premium:not(.public-landing):not(.auth-public) .wallet-card-icon{background:linear-gradient(145deg,#53545a,#24252a)!important;color:#f3f3f5!important;border:1px solid rgba(255,255,255,.17)!important;box-shadow:0 8px 20px rgba(0,0,0,.24)!important;filter:grayscale(.85)}
+html body.member-premium:not(.public-landing):not(.auth-public) button:not(.btn):not(.button):not([type=submit]){border:1px solid rgba(255,255,255,.16)!important;border-radius:13px!important;background:rgba(255,255,255,.075)!important;color:#f1f1f3!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.09)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .btn,html body.member-premium:not(.public-landing):not(.auth-public) .button,html body.member-premium:not(.public-landing):not(.auth-public) input[type=submit],html body.member-premium:not(.public-landing):not(.auth-public) button[type=submit]{border:1px solid rgba(255,255,255,.24)!important;border-radius:15px!important;background:linear-gradient(145deg,#f3f3f5,#c8c9cd)!important;color:#18191c!important;box-shadow:0 12px 32px rgba(0,0,0,.27),inset 0 1px 0 #fff!important;font-weight:750!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .btn.danger,html body.member-premium:not(.public-landing):not(.auth-public) button.danger{background:linear-gradient(145deg,#4a292f,#2d1b1f)!important;color:#f4dfe2!important}
+html body.member-premium:not(.public-landing):not(.auth-public) input:not([type=checkbox]):not([type=radio]),html body.member-premium:not(.public-landing):not(.auth-public) select,html body.member-premium:not(.public-landing):not(.auth-public) textarea{border:1px solid rgba(255,255,255,.17)!important;border-radius:14px!important;background:rgba(14,15,18,.72)!important;color:#f2f2f4!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.055)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) input::placeholder,html body.member-premium:not(.public-landing):not(.auth-public) textarea::placeholder{color:#919298!important}
+html body.member-premium:not(.public-landing):not(.auth-public) input:focus,html body.member-premium:not(.public-landing):not(.auth-public) select:focus,html body.member-premium:not(.public-landing):not(.auth-public) textarea:focus{border-color:rgba(255,255,255,.48)!important;box-shadow:0 0 0 4px rgba(255,255,255,.09)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) input[type=checkbox],html body.member-premium:not(.public-landing):not(.auth-public) input[type=radio]{accent-color:#e64960}
+html body.member-premium:not(.public-landing):not(.auth-public) table,html body.member-premium:not(.public-landing):not(.auth-public) .table{color:#e7e7e9!important;background:transparent!important}
+html body.member-premium:not(.public-landing):not(.auth-public) table th,html body.member-premium:not(.public-landing):not(.auth-public) table td,html body.member-premium:not(.public-landing):not(.auth-public) .table th,html body.member-premium:not(.public-landing):not(.auth-public) .table td{color:#d6d6da!important;border-color:rgba(255,255,255,.13)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-icon,html body.member-premium:not(.public-landing):not(.auth-public) .network-chip,html body.member-premium:not(.public-landing):not(.auth-public) .status,html body.member-premium:not(.public-landing):not(.auth-public) .network-inline{filter:grayscale(.88)!important}
+
+/* Scroll storytelling: perspective cards unfold from a shared spatial stage. */
+html body.member-premium:not(.public-landing):not(.auth-public) main,html body.member-premium:not(.public-landing):not(.auth-public) .dash-main,html body.member-premium:not(.public-landing):not(.auth-public) .main{perspective:1400px!important;perspective-origin:50% 42%;transform-style:preserve-3d!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-card{transform-origin:50% 40%!important;transform-style:preserve-3d!important;backface-visibility:hidden!important;transition:opacity .72s ease,transform .95s cubic-bezier(.16,.8,.22,1),box-shadow .3s ease,border-color .3s ease!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-card:not(.member-depth-visible){opacity:.1!important;transform:perspective(1400px) translate3d(var(--member-depth-x,0),72px,-150px) rotateX(10deg) rotateY(var(--member-depth-side,0deg)) scale(.94)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-card.member-depth-visible{opacity:1!important;transform:perspective(1400px) translate3d(var(--member-depth-x,0),var(--member-depth-y,0),var(--member-depth-z,0)) rotateX(var(--member-depth-r,0deg)) rotateY(var(--member-depth-side,0deg)) scale(var(--member-depth-scale,1))!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-card.member-depth-visible:hover{transform:perspective(1400px) translate3d(0,-5px,18px) rotateX(0) rotateY(0) scale(1.01)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-card{--member-depth-r:0deg;--member-depth-side:0deg;--member-depth-scale:1}
+@media(max-width:760px){html body.member-premium:not(.public-landing):not(.auth-public) .dash-main,html body.member-premium:not(.public-landing):not(.auth-public) .main,html body.member-premium:not(.public-landing):not(.auth-public) main.wrap,html body.member-premium:not(.public-landing):not(.auth-public) main.main-content{padding:12px 11px calc(142px + env(safe-area-inset-bottom,0px))!important}html body.member-premium:not(.public-landing):not(.auth-public) .dash-content{padding:8px 2px 28px!important}html body.member-premium:not(.public-landing):not(.auth-public) .dash-header,html body.member-premium:not(.public-landing):not(.auth-public) .topbar,html body.member-premium:not(.public-landing):not(.auth-public) .member-topbar,html body.member-premium:not(.public-landing):not(.auth-public) .member-header{position:relative!important;top:auto!important;margin:2px 0 16px!important;padding:9px 11px!important;border-radius:18px!important}html body.member-premium:not(.public-landing):not(.auth-public) .member-glass-brand .inline-brand{display:none!important}html body.member-premium:not(.public-landing):not(.auth-public) .member-glass-brand>img{width:33px!important;height:33px!important}html body.member-premium:not(.public-landing):not(.auth-public) .mobile-nav{bottom:calc(9px + env(safe-area-inset-bottom,0px))!important;width:calc(100vw - 24px)!important;height:68px!important;min-height:68px!important;max-height:68px!important;padding:6px!important;border-radius:24px!important}html body.member-premium:not(.public-landing):not(.auth-public) .mobile-nav>a{border-radius:18px!important}html body.member-premium:not(.public-landing):not(.auth-public) .mobile-nav>a>span{font-size:9px!important}}
+@media(prefers-reduced-motion:reduce){html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-card,html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-card.member-depth-visible{opacity:1!important;transform:none!important;transition:none!important;will-change:auto!important}}
+
+@media(max-width:420px){
+  body.public-landing .public-header .navlinks{display:none!important}
+  body.public-landing .public-header{justify-content:space-between!important}
+  body.public-landing .public-header .header-actions{margin-left:auto}
+  body.public-landing .pl-hero .actions{gap:8px}
+  body.public-landing .pl-hero .actions .btn{padding-inline:13px!important;font-size:12px!important}
+  html body.auth-public .auth-page{padding-inline:10px!important}
+  html body.auth-public .auth-wrap .auth{padding:23px 16px!important}
+  html body.auth-public .auth-name-grid{grid-template-columns:1fr!important;gap:0!important}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .member-depth-orb,body.public-landing .pl-globe,html body.auth-public .auth-visual-sphere,html body.auth-public .auth-coin{animation:none!important}
+  html body.member-premium .member-depth-card,html body.member-premium .member-depth-card.member-depth-visible,html body.member-premium .member-depth-card.member-depth-visible:hover{opacity:1!important;transform:none!important;transition:none!important;will-change:auto!important}
+  body.public-landing .pl-logo-ticker-track{animation:none!important}
 }

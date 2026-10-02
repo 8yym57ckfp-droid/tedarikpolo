@@ -4,6 +4,10 @@
   body.classList.add('member-premium');
   body.dataset.memberTheme='graphite';
 
+  document.querySelectorAll('img[src*="safepays-mark.png"]').forEach(img=>{
+    img.src='assets/safepays-graphite-mark.svg';
+  });
+
   const ambient=document.createElement('div');
   ambient.className='member-depth-ambient';
   ambient.setAttribute('aria-hidden','true');
@@ -19,15 +23,36 @@
       ['earnings.html','Kazanç Merkezi'],['support.html','Destek'],['notifications.html','Bildirimler'],
       ['profile.html','Profil & Güvenlik'],['security.html','Güvenlik Merkezi']
     ];
-    if(!document.querySelector('body>.side,.app>.side,.dashboard-shell>.side')){
-      const rail=document.createElement('aside');
-      rail.className='side member-shared-rail';
-      const logo=document.createElement('a');logo.className='logo';logo.href='dashboard.html';logo.innerHTML='Safe<span>Pays</span>';
-      const nav=document.createElement('nav');nav.setAttribute('aria-label','Üye menüsü');
-      for(const [href,label] of routes){const link=document.createElement('a');link.href=href;link.textContent=label;if(current===href)link.classList.add('active');nav.append(link)}
-      rail.append(logo,nav);
-      const app=document.querySelector('.app,.dashboard-shell');
-      (app||body).prepend(rail);
+    const routeGroups={
+      'dashboard.html':['dashboard.html'],'wallet.html':['wallet.html'],
+      'events.html':['events.html'],'finance.html':['finance.html','deposit.html','withdraw.html'],
+      'support.html':['support.html']
+    };
+    const nav= document.querySelector('.mobile-nav')||(()=>{
+      const created=document.createElement('nav');created.className='mobile-nav member-shared-mobile-nav';created.setAttribute('aria-label','Ana menü');
+      for(const [href,label,icon] of [['dashboard.html','Ana Sayfa','⌂'],['wallet.html','Cüzdan','◈'],['events.html','Etkinlik','✦'],['finance.html','Yatır / Çek','↕'],['support.html','Destek','?']]){
+        const link=document.createElement('a');link.href=href;
+        const symbol=document.createElement('b');symbol.className='nav-svg';symbol.setAttribute('aria-hidden','true');symbol.textContent=icon;
+        const text=document.createElement('span');text.textContent=label;link.append(symbol,text);created.append(link);
+      }
+      body.append(created);return created;
+    })();
+    const links=[...nav.querySelectorAll('a')];
+    links.forEach(link=>{
+      const href=link.getAttribute('href');
+      const active=(routeGroups[href]||[href]).includes(current);
+      link.classList.toggle('active',active);
+      if(active)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');
+    });
+    const brandMarkup='<img src="assets/safepays-graphite-mark.svg" alt=""><span class="inline-brand"><b>Safe</b><b>Pays</b></span>';
+    const inlineBrand=document.querySelector('.dash-brand-mobile .mobile-inline-logo');
+    if(inlineBrand){inlineBrand.classList.add('member-glass-brand');inlineBrand.innerHTML=brandMarkup;}
+    else{
+      const candidates=[...document.querySelectorAll('.dash-header,.topbar,.member-topbar,.member-header,.page-head,.finance-title')];
+      const heading=candidates.find(el=>getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden')||document.querySelector('.main,.main-content,.wrap');
+      if(heading&&!heading.querySelector('.member-glass-brand')){
+        const brand=document.createElement('a');brand.className='member-glass-brand';brand.href='dashboard.html';brand.setAttribute('aria-label','SafePays ana sayfa');brand.innerHTML=brandMarkup;heading.prepend(brand);
+      }
     }
     document.querySelectorAll('.side nav a').forEach(link=>{
       const label=link.textContent.replace(/\s+/g,' ').trim();
@@ -54,7 +79,7 @@
   const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
   const selector=[
     '.pl-hero .hero-copy','.pl-globe-stage','.pl-feature-card','.pl-news-card','.pl-how-card','.pl-faq-item','.pl-join-card',
-    '.dash-content>.balance-grid','.dash-content>.dashboard-published-feed','.dash-content>.assets-summary',
+    '.dash-content>.balance-grid','.dash-content>.dashboard-published-feed','.dash-content>.network-live-panel','.dash-content>.assets-summary',
     '.dash-content>.member-earning-guide','.dash-content>.network-invest','.dash-content>.quick-grid>.quick',
     '.dash-content #publishedContent .events-grid>.event-card',
     '.dash-content>.dash-two>.dash-card','.dash-content>.dash-two>.ref-banner','.dash-content>.tx-card',
@@ -78,12 +103,12 @@
         const phase=Math.max(-1.15,Math.min(1.15,(rect.top+rect.height*.5-viewport*.5)/viewport));
         const distance=Math.abs(phase);
         const side=Number(card.dataset.depthSide||1);
-        const x=Math.sin(phase*1.85+side)*Math.min(10,distance*9);
-        const y=Math.max(-18,Math.min(18,phase*15));
-        const z=-Math.min(34,distance*28);
-        const tilt=Math.max(-4.5,Math.min(4.5,-phase*4));
-        const turn=Math.sin(phase*1.8)*2.1+side*.7;
-        const scale=1-Math.min(.025,distance*.021);
+        const x=Math.sin(phase*1.7+side)*Math.min(16,distance*14);
+        const y=Math.max(-38,Math.min(38,phase*32));
+        const z=-Math.min(110,distance*94);
+        const tilt=Math.max(-8,Math.min(8,-phase*7));
+        const turn=Math.sin(phase*1.7)*3.2+side*1.1;
+        const scale=1-Math.min(.055,distance*.042);
         card.style.setProperty('--member-depth-x',x.toFixed(2)+'px');
         card.style.setProperty('--member-depth-y',y.toFixed(2)+'px');
         card.style.setProperty('--member-depth-z',z.toFixed(2)+'px');
@@ -94,10 +119,10 @@
       const maxScroll=Math.max(1,document.documentElement.scrollHeight-viewport);
       const progress=Math.max(0,Math.min(1,(scrollY||0)/maxScroll));
       body.style.setProperty('--member-scroll-progress',progress.toFixed(4));
-      body.style.setProperty('--member-hero-rotate-y',(-progress*6).toFixed(2)+'deg');
-      body.style.setProperty('--member-hero-rotate-x',(progress*3).toFixed(2)+'deg');
-      body.style.setProperty('--member-ticker-rotate',(-progress*2).toFixed(2)+'deg');
-      body.style.setProperty('--member-join-rotate',(progress*2).toFixed(2)+'deg');
+      body.style.setProperty('--member-hero-rotate-y',(-progress*9).toFixed(2)+'deg');
+      body.style.setProperty('--member-hero-rotate-x',(progress*4).toFixed(2)+'deg');
+      body.style.setProperty('--member-ticker-rotate',(-progress*3).toFixed(2)+'deg');
+      body.style.setProperty('--member-join-rotate',(progress*3).toFixed(2)+'deg');
       ambient.style.setProperty('--member-parallax-y',(-scrollY*.21).toFixed(2)+'px');
       ambient.style.setProperty('--member-grid-y',(-scrollY*.12).toFixed(2)+'px');
       ambient.style.setProperty('--member-ring-y',(-scrollY*.18).toFixed(2)+'px');
