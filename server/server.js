@@ -17,6 +17,12 @@ const USE_POSTGRES = !!DATABASE_URL && !!Pool;
 const pool = USE_POSTGRES ? new Pool({ connectionString: DATABASE_URL, ssl: process.env.PGSSL === 'false' ? false : { rejectUnauthorized:false } }) : null;
 if(process.env.NODE_ENV==='production'&&!pool){throw new Error('A persistent PostgreSQL DATABASE_URL is required in production.');}
 const TTL = Number(process.env.SESSION_TTL_SECONDS || 3600) * 1000;
+// Staff panels use their own bounded lifetime so a short member-session setting cannot force repeated 2FA.
+const configuredStaffTtlSeconds=Number(process.env.STAFF_SESSION_TTL_SECONDS);
+const STAFF_SESSION_TTL_SECONDS=Number.isFinite(configuredStaffTtlSeconds)&&configuredStaffTtlSeconds>0
+  ?Math.min(43200,Math.max(3600,configuredStaffTtlSeconds))
+  :28800;
+const STAFF_TTL=STAFF_SESSION_TTL_SECONDS*1000;
 const sessions = new Map();
 const resetTokens = new Map();
 const passwordResetCodes = new Map(); // email -> {codeHash, expires, attempts, verified}
@@ -214,7 +220,7 @@ function readSession(req,cookieName,store){
 function adminAuth(req){return readSession(req,ADMIN_COOKIE,adminSessions);}
 function ownerAuth(req){return readSession(req,OWNER_COOKIE,ownerSessions);}
 function clearCookie(name){return name+'=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax'+(process.env.NODE_ENV==='production'?'; Secure':'');}
-function sessionCookie(name,value){return name+'='+encodeURIComponent(value)+'; Max-Age='+Math.floor(TTL/1000)+'; Path=/; HttpOnly; SameSite=Lax'+(process.env.NODE_ENV==='production'?'; Secure':'');}
+function sessionCookie(name,value,ttl=TTL){return name+'='+encodeURIComponent(value)+'; Max-Age='+Math.floor(ttl/1000)+'; Path=/; HttpOnly; SameSite=Lax'+(process.env.NODE_ENV==='production'?'; Secure':'');}
 function addAudit(action,actor,meta={}){
   const item={id:`AUD-${crypto.randomBytes(6).toString('hex').toUpperCase()}`,action,actor,meta,createdAt:new Date().toISOString()};auditLog.unshift(item);if(auditLog.length>500)auditLog.pop();
   if(pool)pool.query('INSERT INTO audit_logs (id,action,actor,meta,created_at) VALUES ($1,$2,$3,$4,$5)',[item.id,item.action,item.actor,JSON.stringify(item.meta),item.createdAt]).catch(e=>console.error('Audit persistence failed',e));
@@ -319,9 +325,9 @@ async function route(req,res){
     if(email!==ADMIN_EMAIL.toLowerCase()||password!==ADMIN_PASSWORD){addAudit('owner_login_failed',email||'unknown',{...requestAuditMeta(req),reason:'invalid_credentials'});return json(res,401,{error:'invalid_owner_credentials'});}
     if(!/^\d{6}$/.test(code)||!verifyTotp(ADMIN_TOTP_SECRET,code)){addAudit('owner_login_failed',email,{...requestAuditMeta(req),reason:'invalid_2fa'});return json(res,401,{error:'invalid_2fa_code'});}
     const cookies=parseCookies(req);if(cookies[ADMIN_COOKIE])adminSessions.delete(cookies[ADMIN_COOKIE]);
-    const t=token();ownerSessions.set(t,{ownerId:'OWNER-001',email:ADMIN_EMAIL,role:'owner',expires:Date.now()+TTL});
+    const t=token();ownerSessions.set(t,{ownerId:'OWNER-001',email:ADMIN_EMAIL,role:'owner',expires:Date.now()+STAFF_TTL});
     addAudit('owner_login',ADMIN_EMAIL,requestAuditMeta(req));
-    return json(res,200,{ok:true,owner:{id:'OWNER-001',email:ADMIN_EMAIL,role:'owner'},expiresIn:TTL/1000},{'Set-Cookie':[sessionCookie(OWNER_COOKIE,t),clearCookie(ADMIN_COOKIE)]});
+    return json(res,200,{ok:true,owner:{id:'OWNER-001',email:ADMIN_EMAIL,role:'owner'},expiresIn:STAFF_SESSION_TTL_SECONDS},{'Set-Cookie':[sessionCookie(OWNER_COOKIE,t,STAFF_TTL),clearCookie(ADMIN_COOKIE)]});
   }
   if(req.url==='/api/admin/login' && req.method==='POST'){
     const b=await body(req),email=String(b.email||'').trim().toLowerCase(),password=String(b.password||''),code=String(b.code||'').trim();
@@ -331,9 +337,9 @@ async function route(req,res){
     if(email!==TEAM_ADMIN_EMAIL.toLowerCase()||password!==TEAM_ADMIN_PASSWORD){addAudit('team_login_failed',email||'unknown',{...requestAuditMeta(req),reason:'invalid_credentials'});return json(res,401,{error:'invalid_team_credentials'});}
     if(!/^\d{6}$/.test(code)||!verifyTotp(TEAM_ADMIN_TOTP_SECRET,code)){addAudit('team_login_failed',email,{...requestAuditMeta(req),reason:'invalid_2fa'});return json(res,401,{error:'invalid_2fa_code'});}
     const cookies=parseCookies(req);if(cookies[OWNER_COOKIE])ownerSessions.delete(cookies[OWNER_COOKIE]);
-    const t=token();adminSessions.set(t,{adminId:'TEAM-ADMIN-001',email:TEAM_ADMIN_EMAIL,role:'team_admin',expires:Date.now()+TTL});
+    const t=token();adminSessions.set(t,{adminId:'TEAM-ADMIN-001',email:TEAM_ADMIN_EMAIL,role:'team_admin',expires:Date.now()+STAFF_TTL});
     addAudit('team_admin_login',TEAM_ADMIN_EMAIL,requestAuditMeta(req));
-    return json(res,200,{ok:true,admin:{id:'TEAM-ADMIN-001',email:TEAM_ADMIN_EMAIL,role:'team_admin'},expiresIn:TTL/1000},{'Set-Cookie':[sessionCookie(ADMIN_COOKIE,t),clearCookie(OWNER_COOKIE)]});
+    return json(res,200,{ok:true,admin:{id:'TEAM-ADMIN-001',email:TEAM_ADMIN_EMAIL,role:'team_admin'},expiresIn:STAFF_SESSION_TTL_SECONDS},{'Set-Cookie':[sessionCookie(ADMIN_COOKIE,t,STAFF_TTL),clearCookie(OWNER_COOKIE)]});
   }
   if(req.url==='/api/admin/logout' && req.method==='POST'){
     const c=parseCookies(req)[ADMIN_COOKIE]||'';if(c)adminSessions.delete(c);return json(res,200,{ok:true},{'Set-Cookie':clearCookie(ADMIN_COOKIE)});
