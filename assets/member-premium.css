@@ -79,6 +79,7 @@ html body.member-premium .mobile-nav{z-index:90!important;border:1px solid rgba(
 @media(min-width:761px){html body.member-premium .mobile-nav{display:none!important}}
 html body.member-premium .mobile-nav a{color:#77829a!important}
 html body.member-premium .mobile-nav a.active{color:#1458ff!important}
+html body.member-premium .dash-header .mobile-inline-logo .inline-brand b:first-child{color:var(--solar-ink)!important}
 html body.member-premium .modal,html body.member-premium .modal-backdrop,html body.member-premium .drawer-backdrop,html body.member-premium .sp-confirm-backdrop,html body.member-premium .sp-forgot-backdrop{z-index:120!important}
 
 /* Dashboard is an editorial overview, not a stack of identical boxes. */
@@ -136,6 +137,19 @@ html body.member-premium .member-tile-copy strong{color:var(--solar-ink)!importa
 html body.member-premium .member-earning-tile input{background:#fff!important;color:var(--solar-ink)!important;border-color:#d5deea!important}
 html body.member-premium .member-estimate-line{background:#f3f7ff!important;color:var(--solar-copy)!important}
 html body.member-premium .member-estimate-line strong{color:#119879!important}
+
+/* Published member stories use the same bright, spacious canvas as the rest of the member portal. */
+html body.member-premium .dash-content #publishedContent{grid-column:1/-1!important;width:100%!important;max-width:none!important;min-width:0!important}
+html body.member-premium .dash-content #publishedContent .events-grid{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))!important;align-items:stretch!important;gap:18px!important;width:100%!important}
+html body.member-premium .dash-content #publishedContent .event-card{display:flex!important;flex-direction:column!important;width:100%!important;max-width:680px!important;overflow:hidden!important;border:1px solid rgba(255,255,255,.9)!important;border-radius:23px!important;background:linear-gradient(145deg,#fffdf7,#f3efe4)!important;color:var(--solar-ink)!important;box-shadow:0 24px 65px rgba(0,5,20,.3),inset 0 1px 0 #fff!important}
+html body.member-premium .dash-content #publishedContent .event-image.has-image{height:auto!important;min-height:0!important;aspect-ratio:16/9!important;overflow:hidden!important;background:linear-gradient(135deg,#1558ff,#3db8ff)!important}
+html body.member-premium .dash-content #publishedContent .event-image .event-published-image{inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important}
+html body.member-premium .dash-content #publishedContent .event-card .event-body{flex:1 1 auto!important;min-height:164px!important;padding:21px!important;background:linear-gradient(145deg,#fffdf7,#f5f1e6)!important;color:var(--solar-ink)!important}
+html body.member-premium .dash-content #publishedContent .event-card .event-body h3{margin:14px 0 7px!important;color:var(--solar-ink)!important;font-size:20px!important;line-height:1.2!important}
+html body.member-premium .dash-content #publishedContent .event-card .event-body p{min-height:0!important;margin:0!important;color:var(--solar-copy)!important;font-size:13px!important;line-height:1.6!important}
+html body.member-premium .dash-content #publishedContent .event-card .event-time{color:var(--solar-soft)!important}
+html body.member-premium .dash-content .campaign-note{padding:17px 20px!important;border:1px solid rgba(255,255,255,.78)!important;border-radius:18px!important;background:linear-gradient(145deg,#fffdf7,#f4f0e6)!important;color:var(--solar-copy)!important;box-shadow:0 16px 42px rgba(0,5,20,.2)!important}
+html body.member-premium .dash-content .campaign-note strong{color:var(--solar-ink)!important}
 
 /* The public home is a sequence of distinct scroll stages. */
 html body.member-premium.public-landing{background:#10152b!important;color:#f6f8ff!important}

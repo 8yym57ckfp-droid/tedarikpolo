@@ -52,6 +52,7 @@
     '.pl-hero .hero-copy','.pl-globe-stage','.pl-feature-card','.pl-news-card','.pl-how-card','.pl-faq-item','.pl-join-card',
     '.dash-content>.balance-grid','.dash-content>.dashboard-published-feed','.dash-content>.assets-summary',
     '.dash-content>.member-earning-guide','.dash-content>.network-invest','.dash-content>.quick-grid>.quick',
+    '.dash-content #publishedContent .events-grid>.event-card',
     '.dash-content>.dash-two>.dash-card','.dash-content>.dash-two>.ref-banner','.dash-content>.tx-card',
     '.main>.finance-card','.main>.support-panel','.main>.security-hero','.main>.account-card',
     '.finance-page>.finance-card','.finance-page>.support-panel','.finance-page>.wallet-summary-card',
