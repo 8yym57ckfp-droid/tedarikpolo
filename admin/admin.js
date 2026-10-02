@@ -51,10 +51,11 @@ document.addEventListener('DOMContentLoaded',()=>{
       menu.addEventListener('click',e=>e.stopPropagation());
       document.addEventListener('click',close);
       menu.querySelector('.team-menu-logout').addEventListener('click',async()=>{
-        try{await fetch('../api/admin/logout',{method:'POST',credentials:'include'});}catch(_){}
+        const ownerPortal=location.pathname.includes('/owner/');
+        try{await fetch(ownerPortal?'../api/owner/logout':'../api/admin/logout',{method:'POST',credentials:'include'});}catch(_){}
         if(window.SafeAdmin?.clearSessionProfile)SafeAdmin.clearSessionProfile();
         localStorage.removeItem('safepays_portal');
-        location.href='login.html';
+        location.href=ownerPortal?'../owner/login.html':'login.html';
       });
     }
   }
@@ -63,33 +64,25 @@ document.addEventListener('DOMContentLoaded',()=>{
   const legacy=head.querySelector('.team-profile');
   if(legacy) legacy.remove();
 });
-/* V128 — role-separated staff navigation + owner access guard */
+/* Separate portal guard and navigation for Team Admin and Owner pages. */
 (function(){
-  const ownerOnly=new Set();
-  const ownerPanelOnly=new Set();
   function current(){try{return window.SafeAdmin?.current?.()||null}catch(e){return null}}
-  // SECURITY FIX: `current()` only reads a JSON blob the browser itself wrote to localStorage — it proves
-  // nothing about who is actually logged in server-side. Previously any visitor could open devtools and run
-  // `localStorage.setItem('safepays_portal_user', JSON.stringify({id:'ADMIN-001',role:'Super Admin', ...}))`
-  // to gain full admin access, because this guard never asked the server to confirm the session. For the
-  // Super Admin role (the one the real backend actually authenticates — see server.js /api/admin/login),
-  // we now re-verify with the server on every admin page load, exactly like owner/owner.js already does.
-  // Team-account roles (Finance/Support/Content) still have no server-side equivalent yet — see admin-store.js
-  // and API.md for the tracked follow-up to migrate that account model to the backend.
-  async function verifySuperAdminSession(){
+  const ownerPortal=location.pathname.includes('/owner/');
+  async function verifyPortalSession(){
     try{
-      const r=await fetch('../api/admin/me',{credentials:'include',cache:'no-store'});
+      const r=await fetch(ownerPortal?'../api/owner/me':'../api/admin/me',{credentials:'include',cache:'no-store'});
       if(!r.ok) return false;
       const d=await r.json();
-      if(d?.admin?.role!=='super_admin')return false;
-      if(window.SafeAdmin?.setSessionProfile)SafeAdmin.setSessionProfile({id:d.admin.id,email:d.admin.email,role:'Super Admin',name:'Super Admin'});
+      const identity=ownerPortal?d.owner:d.admin;
+      if(ownerPortal?identity?.role!=='owner':identity?.role!=='team_admin')return false;
+      if(window.SafeAdmin?.setSessionProfile)SafeAdmin.setSessionProfile({id:identity.id,email:identity.email,role:ownerPortal?'Super Admin':'Team Admin',name:ownerPortal?'Super Admin':'Admin Ekibi'});
       return true;
     }catch(e){ return false; }
   }
   async function guard(){
     const path=location.pathname.split('/').pop()||'dashboard.html';
     if(path==='login.html')return true;
-    const serverOk=await verifySuperAdminSession();
+    const serverOk=await verifyPortalSession();
     if(!serverOk){
       localStorage.removeItem('safepays_portal');
       if(window.SafeAdmin?.clearSessionProfile)SafeAdmin.clearSessionProfile();
@@ -123,12 +116,12 @@ document.addEventListener('DOMContentLoaded',()=>{
       ['team-dashboard.html','home','Genel Bakış'],['requests.html','clock','Bekleyen İşlemler'],['withdrawal-pool.html','clock','Çekim Havuzu'],['history.html?status=approved','check','Onaylanan İşlemler'],['history.html?status=rejected','x','Reddedilen İşlemler'],['reconciliation.html','handshake','Mutabakat'],['reports.html','chart','Raporlar'],['wallet-addresses.html','wallet','Cüzdan Hesapları'],['audit.html','shield','İşlem / Audit Logları'],['profile.html','user','Profilim']
     ];
     const ownerItems=[
-      ['user-center.html','user','Kullanıcılar'],
+      ['member-operations.html','user','Kullanıcılar'],
       ['dashboard.html','home','Genel Bakış'],['requests.html','clock','Bekleyen İşlemler'],['withdrawal-pool.html','clock','Çekim Talepleri'],['history.html?status=approved','check','Onaylanan İşlemler'],['history.html?status=rejected','x','Reddedilen İşlemler'],['reconciliation.html','handshake','Mutabakat'],['reports.html','chart','Raporlar'],['wallet-addresses.html','wallet','Cüzdan Hesapları'],['support.html','news','Destek Talepleri'],['content.html','news','Site İçeriği'],['audit.html','shield','Audit Logları'],['settings.html','settings','Ayarlar'],['profile.html','user','Profilim'],['../index.html','back','Siteye Dön']
     ];
-    const portal=a?.role==='Super Admin'?'owner':'staff';
-    if(a?.role!=='Super Admin') localStorage.setItem('safepays_portal','staff'); else localStorage.setItem('safepays_portal','owner');
-    const items=(a?.role==='Super Admin' && portal==='owner')?ownerItems:staffItems;
+    const isOwner=ownerPortal&&a?.role==='Super Admin';
+    localStorage.setItem('safepays_portal',isOwner?'owner':'admin');
+    const items=isOwner?ownerItems:staffItems;
     document.querySelectorAll('.admin-nav').forEach(nav=>{
       nav.replaceChildren(...items.map(([href,ico,label])=>{const el=document.createElement('a');el.href=href;el.innerHTML=icon(ico)+'<span>'+label+'</span>';return el;}));
       const path=location.pathname.split('/').pop()||'dashboard.html';

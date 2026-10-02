@@ -18,6 +18,12 @@ services:
         sync: false
       - key: ADMIN_TOTP_SECRET
         sync: false
+      - key: TEAM_ADMIN_EMAIL
+        sync: false
+      - key: TEAM_ADMIN_PASSWORD
+        sync: false
+      - key: TEAM_ADMIN_TOTP_SECRET
+        sync: false
       - key: TRONGRID_API_KEY
         sync: false
       - key: ETHEREUM_RPC_URL

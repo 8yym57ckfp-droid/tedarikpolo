@@ -8,7 +8,7 @@ SafePays; üye hesapları, USDT yatırım/çekim talepleri, destek kayıtları, 
 2. Aşağıdaki değişkenleri ortamınıza tanımlayın.
 3. Uygulamayı `npm start` ile başlatın.
 
-Yönetici hesabı için `ADMIN_EMAIL`, `ADMIN_PASSWORD` ve `ADMIN_TOTP_SECRET` zorunludur. 2FA kodu Google Authenticator uyumlu TOTP uygulamasından üretilir. Uygulama varsayılan yönetici parolası veya test hesabı oluşturmaz.
+Owner hesabı için `ADMIN_EMAIL`, `ADMIN_PASSWORD` ve `ADMIN_TOTP_SECRET`; ayrı Admin ekip hesabı için `TEAM_ADMIN_EMAIL`, `TEAM_ADMIN_PASSWORD` ve `TEAM_ADMIN_TOTP_SECRET` zorunludur. İki hesapta e-posta, parola ve TOTP gizli anahtarı birbirinden farklı olmalıdır. Üye girişi `/login.html`, Admin ekip girişi `/admin/login.html`, Owner girişi `/owner/login.html` üzerinden yapılır. Oturum çerezleri ve sunucu API yetkileri portala göre ayrıdır; Admin oturumu Owner sayfalarını veya Owner’a özel API’leri açamaz.
 
 Yerel geliştirmede `DATABASE_URL` verilmediğinde veriler `server/data/db.json` dosyasına yazılır. Bu dosya yalnızca geliştirme içindir; üretim yayınında kalıcı depolama sayılmaz.
 
@@ -18,9 +18,10 @@ Render web servisi `render.yaml` dosyasını kullanır. Üretim başlangıcı `D
 
 1. Render’da PostgreSQL veritabanı oluşturun.
 2. Web servisindeki `DATABASE_URL` değişkenini veritabanı bağlantı adresine bağlayın; `PGSSL=true` kalsın.
-3. `ADMIN_EMAIL`, güçlü `ADMIN_PASSWORD` ve güvenli `ADMIN_TOTP_SECRET` değerlerini Render gizli değişkenlerine ekleyin.
-4. İhtiyaç varsa `ALLOWED_ORIGINS` değerini virgülle ayrılmış, izinli origin adresleriyle ayarlayın.
-5. Eski Render örneğinde yalnızca geçici dosya sisteminde bulunan kayıtlar otomatik taşınmaz. Yayından önce kurtarılabilir verileri dışa aktarın; veritabanı şemasını uygulama başlarken günceller.
+3. Owner için `ADMIN_EMAIL`, güçlü `ADMIN_PASSWORD` ve `ADMIN_TOTP_SECRET` değerlerini ayarlayın.
+4. Ayrı Admin ekip hesabı için `TEAM_ADMIN_EMAIL`, farklı `TEAM_ADMIN_PASSWORD` ve ayrı `TEAM_ADMIN_TOTP_SECRET` değerlerini ayarlayın. Bunları `Safepays Production` ortam grubuna veya web servisinin gizli değişkenlerine ekleyin.
+5. İhtiyaç varsa `ALLOWED_ORIGINS` değerini virgülle ayrılmış, izinli origin adresleriyle ayarlayın.
+6. Eski Render örneğinde yalnızca geçici dosya sisteminde bulunan kayıtlar otomatik taşınmaz. Yayından önce kurtarılabilir verileri dışa aktarın; veritabanı şemasını uygulama başlarken günceller.
 
 ## Bağlı akışlar
 

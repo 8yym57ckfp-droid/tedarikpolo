@@ -1,1 +1,68 @@
-<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SafePays — Yönetim paneli</title><script>location.replace("../admin/dashboard.html"+location.search+location.hash);</script></head><body><p>Yönetim paneline aktarılıyorsunuz. <a href="../admin/dashboard.html">Devam et</a></p></body></html>
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Safepays — Owner Kontrol Merkezi</title>
+  <script>(function(){try{if(localStorage.getItem('safepays-owner-theme')==='dark')document.documentElement.classList.add('dark-theme')}catch(e){}})();</script>
+  <link rel="stylesheet" href="../assets/styles.css">
+  <link rel="stylesheet" href="../admin/admin.css">
+  <link rel="stylesheet" href="../assets/dark-theme.css">
+  <link rel="stylesheet" href="../assets/owner.css">
+  <script src="../admin/admin-store.js"></script>
+  <script src="../admin/admin-api.js"></script>
+  <script src="owner.js"></script>
+  <style>
+    .owner-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:18px 0}
+    .owner-summary-card{padding:18px;border:1px solid #1d3550;border-radius:14px;background:#0b1b30}
+    .owner-summary-card small{display:block;color:#9fb0c4;font-size:11px}
+    .owner-summary-card strong{display:block;margin-top:8px;color:#f4f7fb;font-size:25px}
+    .owner-summary-card.users strong{color:#67a9ff}.owner-summary-card.pending strong{color:#ffd66a}.owner-summary-card.deposits strong{color:#5ee3aa}.owner-summary-card.withdrawals strong{color:#ff8893}
+    .owner-section-title{margin:24px 0 11px;color:#f4f7fb;font-size:16px}
+    .owner-shortcuts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    .owner-shortcut{display:block;padding:17px;border:1px solid #1d3550;border-radius:14px;background:#0b1b30;color:#e8eef7;text-decoration:none;transition:border-color .15s,transform .15s}
+    .owner-shortcut:hover{border-color:#3d86d8;transform:translateY(-1px)}
+    .owner-shortcut b{display:block;color:#f4f7fb;font-size:13px}.owner-shortcut span{display:block;margin-top:6px;color:#9fb0c4;font-size:11px;line-height:1.5}
+    .owner-overview-note{margin-top:12px;color:#9fb0c4;font-size:11px}
+    @media(max-width:900px){.owner-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.owner-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:560px){.owner-summary-grid,.owner-shortcuts{grid-template-columns:1fr}.owner-summary-card strong{font-size:22px}}
+  </style>
+</head>
+<body class="admin-body owner-page">
+  <div class="admin-layout">
+    <aside class="admin-side"><a class="logo" href="dashboard.html">Safe<span>Pays</span><small>OWNER PANEL</small></a><nav class="admin-nav"></nav></aside>
+    <main class="admin-main">
+      <div class="admin-head"><div><div class="admin-muted">SUPER ADMIN · OWNER CONTROL CENTER</div><h1>Owner Kontrol Merkezi</h1><div class="admin-muted">Siteyi ve Safepays yönetimini buradan kontrol et.</div></div><div class="owner-badge">● SUPER ADMIN</div></div>
+      <div class="owner-summary-grid">
+        <section class="owner-summary-card users"><small>Toplam üye</small><strong id="ownerUsers">—</strong></section>
+        <section class="owner-summary-card pending"><small>Bekleyen işlemler</small><strong id="ownerPending">—</strong></section>
+        <section class="owner-summary-card deposits"><small>Onaylı yatırımlar</small><strong id="ownerDeposits">—</strong></section>
+        <section class="owner-summary-card withdrawals"><small>Onaylı çekimler</small><strong id="ownerWithdrawals">—</strong></section>
+      </div>
+      <h2 class="owner-section-title">Hızlı erişim</h2>
+      <div class="owner-shortcuts">
+        <a class="owner-shortcut" href="panel-site-management.html"><b>Panel ve site yönetimi</b><span>Bakım durumunu ve bilgilendirme mesajlarını yönet.</span></a>
+        <a class="owner-shortcut" href="team-accounts.html"><b>Ekip hesapları</b><span>Yönetici ekip üyelerini ve erişimlerini düzenle.</span></a>
+        <a class="owner-shortcut" href="requests.html"><b>Yatırım ve çekim talepleri</b><span>Bekleyen işlemleri incele; son kararı admin ver.</span></a>
+        <a class="owner-shortcut" href="members.html"><b>Üye yönetimi</b><span>Üye hesaplarını ve işlem geçmişlerini görüntüle.</span></a>
+        <a class="owner-shortcut" href="content.html"><b>Site içeriği</b><span>Yayınlanan içerik ve duyuruları yönet.</span></a>
+        <a class="owner-shortcut" href="audit.html"><b>İşlem kayıtları</b><span>Admin işlemlerini ve audit kayıtlarını incele.</span></a>
+      </div>
+      <div class="owner-overview-note" id="ownerStatsNote" aria-live="polite">Özet sunucudan yükleniyor…</div>
+    </main>
+  </div>
+  <script>
+    (async function(){
+      const fmt=n=>new Intl.NumberFormat('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(n||0))+' USDT';
+      try{
+        const d=await adminFetch('/stats');
+        document.getElementById('ownerUsers').textContent=String(d.users??0);
+        document.getElementById('ownerPending').textContent=String(d.pending??0);
+        document.getElementById('ownerDeposits').textContent=fmt(d.totalDeposits);
+        document.getElementById('ownerWithdrawals').textContent=fmt(d.totalWithdrawals);
+        document.getElementById('ownerStatsNote').textContent='Özet, sunucudaki kayıtlı üye ve admin onaylı işlemlerden alınır.';
+      }catch(e){document.getElementById('ownerStatsNote').textContent='Özet şu anda yüklenemedi. Sayfayı yenileyip tekrar dene.';}
+    })();
+  </script>
+</body>
+</html>

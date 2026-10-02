@@ -22,12 +22,12 @@
   async function guard(){
     const local=me();
     try{
-      const r=await fetch('../api/admin/me',{credentials:'include',cache:'no-store'});
+      const r=await fetch('../api/owner/me',{credentials:'include',cache:'no-store'});
       if(!r.ok) throw new Error('unauthorized');
       const d=await r.json();
-      const admin=d.admin||{};
-      if(admin.role!=='super_admin') throw new Error('forbidden');
-      if(window.SafeAdmin?.setSessionProfile) SafeAdmin.setSessionProfile({id:admin.id,email:admin.email,role:'Super Admin',name:'Super Admin'});
+      const owner=d.owner||{};
+      if(owner.role!=='owner') throw new Error('forbidden');
+      if(window.SafeAdmin?.setSessionProfile) SafeAdmin.setSessionProfile({id:owner.id,email:owner.email,role:'Super Admin',name:'Super Admin'});
       return true;
     }catch(e){
       if(location.pathname.endsWith('/login.html') || location.pathname.endsWith('login.html')) return false;
@@ -43,7 +43,7 @@
       ['GENEL',[['dashboard.html','home','Genel Bakış']]],
       ['İŞLEMLER',[['requests.html','clock','Beklenen İşlemler'],['withdrawal-pool.html','wallet','Çekim Havuzu'],['history.html?status=approved','check','Onaylanan İşlemler'],['history.html?status=rejected','x','Reddedilen İşlemler'],['reconciliation.html','handshake','Mutabakat'],['reports.html','chart','Raporlar']]],
       ['FİNANS',[['wallet-addresses.html','wallet','Cüzdan Hesapları'],['team-accounts.html','team','Ekip Hesapları'],['earnings.html','coins','Kazanç & Bonuslar']]],
-      ['KULLANICILAR',[['member-operations.html','users','Üye Operasyonları'],['../admin/support.html','news','Destek Talepleri']]],
+      ['KULLANICILAR',[['member-operations.html','users','Üye Operasyonları'],['support.html','news','Destek Talepleri']]],
       ['İÇERİK',[['content.html','news','İçerik Merkezi']]],
       ['SİSTEM',[['panel-site-management.html','settings','Panel & Site Yönetimi'],['audit.html','shield','İşlem / Audit Logları'],['settings.html','settings','Ayarlar'],['profile.html','user','Profilim'],['../index.html','back','Siteye Dön']]]
     ];

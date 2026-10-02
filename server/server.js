@@ -22,12 +22,17 @@ const resetTokens = new Map();
 const passwordResetCodes = new Map(); // email -> {codeHash, expires, attempts, verified}
 const verificationCodes = new Map();
 const adminSessions = new Map();
+const ownerSessions = new Map();
 const auditLog = [];
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const ADMIN_TOTP_SECRET = process.env.ADMIN_TOTP_SECRET || '';
 const ADMIN_TOTP_CODE = process.env.ADMIN_TOTP_CODE || '';
+const TEAM_ADMIN_EMAIL = process.env.TEAM_ADMIN_EMAIL || '';
+const TEAM_ADMIN_PASSWORD = process.env.TEAM_ADMIN_PASSWORD || '';
+const TEAM_ADMIN_TOTP_SECRET = process.env.TEAM_ADMIN_TOTP_SECRET || '';
 const ADMIN_COOKIE = 'sp_admin_session';
+const OWNER_COOKIE = 'sp_owner_session';
 const DEFAULT_RATE_SETTINGS = { usdTrySpread: 1, trc20FeeUsdt: 0, erc20FeeUsdt: 0, quoteTtlSeconds: 60, maxRateAgeSeconds: 300, minRate: 0, maxRate: 100000 };
 const TX_CONTROL = { autoRejectMinutes: 30, lockMinutes: 5, largeApprovalThreshold: 10000 };
 const txLocks = new Map();
@@ -200,13 +205,16 @@ function base32Decode(str){const alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';let
 function totp(secret,counter){const key=base32Decode(secret);const buf=Buffer.alloc(8);buf.writeBigUInt64BE(BigInt(counter));const h=crypto.createHmac('sha1',key).update(buf).digest();const off=h[h.length-1]&15;const code=((h[off]&127)<<24|(h[off+1]&255)<<16|(h[off+2]&255)<<8|(h[off+3]&255))%1000000;return String(code).padStart(6,'0');}
 function verifyTotp(secret,code){const c=Math.floor(Date.now()/30000);return [-1,0,1].some(d=>totp(secret,c+d)===String(code));}
 function parseCookies(req){const raw=String(req.headers.cookie||'');const out={};for(const part of raw.split(';')){const i=part.indexOf('=');if(i>0)out[part.slice(0,i).trim()]=decodeURIComponent(part.slice(i+1).trim());}return out;}
-function adminAuth(req){
-  const h=req.headers.authorization||'';
-  const cookie=parseCookies(req)[ADMIN_COOKIE]||'';
-  const t=h.startsWith('AdminBearer ')?h.slice(12):cookie;
-  const s=adminSessions.get(t); if(!s || s.expires<Date.now()){ if(t)adminSessions.delete(t); return null; }
+function readSession(req,cookieName,store){
+  const t=parseCookies(req)[cookieName]||'';
+  const s=store.get(t);
+  if(!s || s.expires<Date.now()){if(t)store.delete(t);return null;}
   return s;
 }
+function adminAuth(req){return readSession(req,ADMIN_COOKIE,adminSessions);}
+function ownerAuth(req){return readSession(req,OWNER_COOKIE,ownerSessions);}
+function clearCookie(name){return name+'=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax'+(process.env.NODE_ENV==='production'?'; Secure':'');}
+function sessionCookie(name,value){return name+'='+encodeURIComponent(value)+'; Max-Age='+Math.floor(TTL/1000)+'; Path=/; HttpOnly; SameSite=Lax'+(process.env.NODE_ENV==='production'?'; Secure':'');}
 function addAudit(action,actor,meta={}){
   const item={id:`AUD-${crypto.randomBytes(6).toString('hex').toUpperCase()}`,action,actor,meta,createdAt:new Date().toISOString()};auditLog.unshift(item);if(auditLog.length>500)auditLog.pop();
   if(pool)pool.query('INSERT INTO audit_logs (id,action,actor,meta,created_at) VALUES ($1,$2,$3,$4,$5)',[item.id,item.action,item.actor,JSON.stringify(item.meta),item.createdAt]).catch(e=>console.error('Audit persistence failed',e));
@@ -238,6 +246,7 @@ function sendFile(req,res){
   const file=path.join(ROOT,url);
   fs.stat(file,(err,st)=>{if(err||!st.isFile())return json(res,404,{error:'not_found'});const ext=path.extname(file).toLowerCase();const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml'};res.writeHead(200,{'Content-Type':types[ext]||'application/octet-stream'});fs.createReadStream(file).pipe(res);});
 }
+function redirect(res,location){res.writeHead(302,{'Location':location,'Cache-Control':'no-store'});res.end();}
 
 async function insertTransaction(tx, client=null){
   if(!pool){const db=readDb();db.transactions.unshift(tx);writeDb(db);return;}
@@ -304,20 +313,45 @@ async function route(req,res){
   if(req.url==='/api/system/maintenance' && req.method==='GET') return json(res,200,{maintenance:await getMaintenance()});
   if(req.url==='/api/content' && req.method==='GET')return json(res,200,{items:(await getPublishedContent()).filter(x=>x.published)});
 
+  if(req.url==='/api/owner/login' && req.method==='POST'){
+    const b=await body(req),email=String(b.email||'').trim().toLowerCase(),password=String(b.password||''),code=String(b.code||'').trim();
+    if(!ADMIN_EMAIL||!ADMIN_PASSWORD||!ADMIN_TOTP_SECRET)return json(res,503,{error:'owner_login_not_configured'});
+    if(email!==ADMIN_EMAIL.toLowerCase()||password!==ADMIN_PASSWORD){addAudit('owner_login_failed',email||'unknown',{...requestAuditMeta(req),reason:'invalid_credentials'});return json(res,401,{error:'invalid_owner_credentials'});}
+    if(!/^\d{6}$/.test(code)||!verifyTotp(ADMIN_TOTP_SECRET,code)){addAudit('owner_login_failed',email,{...requestAuditMeta(req),reason:'invalid_2fa'});return json(res,401,{error:'invalid_2fa_code'});}
+    const cookies=parseCookies(req);if(cookies[ADMIN_COOKIE])adminSessions.delete(cookies[ADMIN_COOKIE]);
+    const t=token();ownerSessions.set(t,{ownerId:'OWNER-001',email:ADMIN_EMAIL,role:'owner',expires:Date.now()+TTL});
+    addAudit('owner_login',ADMIN_EMAIL,requestAuditMeta(req));
+    return json(res,200,{ok:true,owner:{id:'OWNER-001',email:ADMIN_EMAIL,role:'owner'},expiresIn:TTL/1000},{'Set-Cookie':[sessionCookie(OWNER_COOKIE,t),clearCookie(ADMIN_COOKIE)]});
+  }
   if(req.url==='/api/admin/login' && req.method==='POST'){
-    const b=await body(req); const email=String(b.email||'').trim().toLowerCase(); const password=String(b.password||''); const code=String(b.code||'').trim();
-    if(!ADMIN_EMAIL||!ADMIN_PASSWORD||email!==ADMIN_EMAIL.toLowerCase() || password!==ADMIN_PASSWORD){addAudit('admin_login_failed',email||'unknown',{...requestAuditMeta(req),reason:'invalid_credentials'});return json(res,401,{error:'invalid_admin_credentials'});}
-    if(ADMIN_TOTP_SECRET ? !verifyTotp(ADMIN_TOTP_SECRET,code) : (!ADMIN_TOTP_CODE || code!==ADMIN_TOTP_CODE)){addAudit('admin_login_failed',email,{...requestAuditMeta(req),reason:'invalid_2fa'});return json(res,401,{error:'invalid_2fa_code'});}
-    const t=token(); adminSessions.set(t,{adminId:'ADMIN-001',email:ADMIN_EMAIL,role:'super_admin',expires:Date.now()+TTL});
-    addAudit('admin_login',ADMIN_EMAIL,requestAuditMeta(req));
-    const cookie=`${ADMIN_COOKIE}=${encodeURIComponent(t)}; Max-Age=${Math.floor(TTL/1000)}; Path=/; HttpOnly; SameSite=Lax${process.env.NODE_ENV==='production' ? '; Secure' : ''}`;
-    return json(res,200,{ok:true,admin:{id:'ADMIN-001',email:ADMIN_EMAIL,role:'super_admin'},expiresIn:TTL/1000},{'Set-Cookie':cookie});
+    const b=await body(req),email=String(b.email||'').trim().toLowerCase(),password=String(b.password||''),code=String(b.code||'').trim();
+    if(!TEAM_ADMIN_EMAIL||!TEAM_ADMIN_PASSWORD||!TEAM_ADMIN_TOTP_SECRET)return json(res,503,{error:'team_login_not_configured'});
+    const credentialsOverlap=TEAM_ADMIN_EMAIL.toLowerCase()===ADMIN_EMAIL.toLowerCase()||TEAM_ADMIN_PASSWORD===ADMIN_PASSWORD||TEAM_ADMIN_TOTP_SECRET===ADMIN_TOTP_SECRET;
+    if(credentialsOverlap)return json(res,503,{error:'team_credentials_not_separate'});
+    if(email!==TEAM_ADMIN_EMAIL.toLowerCase()||password!==TEAM_ADMIN_PASSWORD){addAudit('team_login_failed',email||'unknown',{...requestAuditMeta(req),reason:'invalid_credentials'});return json(res,401,{error:'invalid_team_credentials'});}
+    if(!/^\d{6}$/.test(code)||!verifyTotp(TEAM_ADMIN_TOTP_SECRET,code)){addAudit('team_login_failed',email,{...requestAuditMeta(req),reason:'invalid_2fa'});return json(res,401,{error:'invalid_2fa_code'});}
+    const cookies=parseCookies(req);if(cookies[OWNER_COOKIE])ownerSessions.delete(cookies[OWNER_COOKIE]);
+    const t=token();adminSessions.set(t,{adminId:'TEAM-ADMIN-001',email:TEAM_ADMIN_EMAIL,role:'team_admin',expires:Date.now()+TTL});
+    addAudit('team_admin_login',TEAM_ADMIN_EMAIL,requestAuditMeta(req));
+    return json(res,200,{ok:true,admin:{id:'TEAM-ADMIN-001',email:TEAM_ADMIN_EMAIL,role:'team_admin'},expiresIn:TTL/1000},{'Set-Cookie':[sessionCookie(ADMIN_COOKIE,t),clearCookie(OWNER_COOKIE)]});
   }
   if(req.url==='/api/admin/logout' && req.method==='POST'){
-    const h=req.headers.authorization||''; const c=parseCookies(req)[ADMIN_COOKIE]||''; if(h.startsWith('AdminBearer '))adminSessions.delete(h.slice(12)); if(c)adminSessions.delete(c); return json(res,200,{ok:true},{'Set-Cookie':`${ADMIN_COOKIE}=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax${process.env.NODE_ENV==='production' ? '; Secure' : ''}`});
+    const c=parseCookies(req)[ADMIN_COOKIE]||'';if(c)adminSessions.delete(c);return json(res,200,{ok:true},{'Set-Cookie':clearCookie(ADMIN_COOKIE)});
   }
-  const admin=adminAuth(req);
-  if(req.url==='/api/admin/verify-2fa' && req.method==='POST'){if(!admin)return json(res,401,{error:'unauthorized'});const b=await body(req),code=String(b.code||'').trim(),valid=ADMIN_TOTP_SECRET?verifyTotp(ADMIN_TOTP_SECRET,code):(!ADMIN_TOTP_CODE?false:code===ADMIN_TOTP_CODE);if(!/^\d{6}$/.test(code)||!valid)return json(res,401,{error:'invalid_2fa_code'});addAudit('admin_sensitive_change_verified',admin.email,{});return json(res,200,{ok:true})}
+  if(req.url==='/api/owner/logout' && req.method==='POST'){
+    const c=parseCookies(req)[OWNER_COOKIE]||'';if(c)ownerSessions.delete(c);return json(res,200,{ok:true},{'Set-Cookie':clearCookie(OWNER_COOKIE)});
+  }
+  const owner=ownerAuth(req),teamAdmin=adminAuth(req),admin=owner||teamAdmin;
+  if(req.url==='/api/owner/me' && req.method==='GET'){
+    if(!owner)return json(res,401,{error:'unauthorized'});return json(res,200,{owner:{id:owner.ownerId,email:owner.email,role:owner.role}});
+  }
+  if(req.url==='/api/admin/me' && req.method==='GET'){
+    if(!teamAdmin)return json(res,401,{error:'unauthorized'});return json(res,200,{admin:{id:teamAdmin.adminId,email:teamAdmin.email,role:teamAdmin.role}});
+  }
+  const adminPath=new URL(req.url,'http://localhost').pathname;
+  const ownerOnlyAdminRequest=adminPath==='/api/admin/content'||adminPath==='/api/admin/maintenance'||(adminPath.startsWith('/api/admin/user/')&&adminPath.endsWith('/security'))||(adminPath==='/api/admin/wallet-addresses'&&req.method==='POST')||(adminPath==='/api/admin/rates'&&req.method==='POST');
+  if(teamAdmin&&!owner&&ownerOnlyAdminRequest)return json(res,403,{error:'owner_only'});
+  if(req.url==='/api/admin/verify-2fa' && req.method==='POST'){if(!admin)return json(res,401,{error:'unauthorized'});const b=await body(req),code=String(b.code||'').trim(),secret=owner?ADMIN_TOTP_SECRET:TEAM_ADMIN_TOTP_SECRET,valid=!!secret&&verifyTotp(secret,code);if(!/^\d{6}$/.test(code)||!valid)return json(res,401,{error:'invalid_2fa_code'});addAudit('admin_sensitive_change_verified',admin.email,{role:admin.role});return json(res,200,{ok:true})}
   if(req.url==='/api/admin/content' && req.method==='GET'){if(!admin)return json(res,401,{error:'unauthorized'});return json(res,200,{items:await getPublishedContent()});}
   if(req.url==='/api/admin/content' && req.method==='POST'){if(!admin)return json(res,401,{error:'unauthorized'});const clean=await savePublishedContent((await body(req)).items);addAudit('published_content_updated',admin.email,{items:clean.length});return json(res,200,{ok:true,items:clean});}
 
@@ -332,9 +366,6 @@ async function route(req,res){
     const next={site:clean(b.site,DEFAULT_MAINTENANCE.site.message),panel:clean(b.panel,DEFAULT_MAINTENANCE.panel.message)};
     await saveMaintenance(next); addAudit('maintenance_update',admin.email,{maintenance:next});
     return json(res,200,{ok:true,maintenance:next});
-  }
-  if(req.url==='/api/admin/me' && req.method==='GET'){
-    if(!admin)return json(res,401,{error:'unauthorized'}); return json(res,200,{admin:{id:admin.adminId,email:admin.email,role:admin.role}});
   }
   if(req.url==='/api/admin/stats' && req.method==='GET'){
     if(!admin)return json(res,401,{error:'unauthorized'}); const users=await getUsers(), tx=await getTransactions();
@@ -640,10 +671,10 @@ async function route(req,res){
     return json(res,400,{error:'invalid_amount'});
   }
   if(req.url==='/api/admin/rates' && req.method==='GET'){
-    const a=adminAuth(req); if(!a)return json(res,401,{error:'unauthorized'}); const snap=await getMarketSnapshot(); const settings=await getRateSettings(); return json(res,200,{marketRate:snap.market,safepaysRate:calc(snap.market,settings.usdTrySpread),source:snap.source,stale:!!snap.stale,rateAgeSeconds:Math.round((snap.ageMs||0)/1000),...settings});
+    const a=admin; if(!a)return json(res,401,{error:'unauthorized'}); const snap=await getMarketSnapshot(); const settings=await getRateSettings(); return json(res,200,{marketRate:snap.market,safepaysRate:calc(snap.market,settings.usdTrySpread),source:snap.source,stale:!!snap.stale,rateAgeSeconds:Math.round((snap.ageMs||0)/1000),...settings});
   }
   if(req.url==='/api/admin/rates' && req.method==='POST'){
-    const a=adminAuth(req); if(!a)return json(res,401,{error:'unauthorized'}); const b=await body(req); const usdTrySpread=Math.max(0,Number(b.usdTrySpread)); const trc20FeeUsdt=Math.max(0,Number(b.trc20FeeUsdt)); const erc20FeeUsdt=Math.max(0,Number(b.erc20FeeUsdt)); const quoteTtlSeconds=Math.min(300,Math.max(15,Number(b.quoteTtlSeconds||60))); const maxRateAgeSeconds=Math.min(3600,Math.max(30,Number(b.maxRateAgeSeconds||300))); const minRate=Math.max(0,Number(b.minRate||0)); const maxRate=Math.max(minRate,Number(b.maxRate||100000)); if(![usdTrySpread,trc20FeeUsdt,erc20FeeUsdt,quoteTtlSeconds,maxRateAgeSeconds,minRate,maxRate].every(Number.isFinite))return json(res,400,{error:'invalid_rate_settings'}); await saveRateSettings({usdTrySpread,trc20FeeUsdt,erc20FeeUsdt,quoteTtlSeconds,maxRateAgeSeconds,minRate,maxRate}); addAudit('rate_settings_update',a.email,{usdTrySpread,trc20FeeUsdt,erc20FeeUsdt,quoteTtlSeconds,maxRateAgeSeconds,minRate,maxRate}); const snap=await getMarketSnapshot(); return json(res,200,{ok:true,marketRate:snap.market,safepaysRate:calc(snap.market,usdTrySpread),source:snap.source,usdTrySpread,trc20FeeUsdt,erc20FeeUsdt,quoteTtlSeconds,maxRateAgeSeconds,minRate,maxRate});
+    const a=admin; if(!a)return json(res,401,{error:'unauthorized'}); if(!owner)return json(res,403,{error:'owner_only'}); const b=await body(req); const usdTrySpread=Math.max(0,Number(b.usdTrySpread)); const trc20FeeUsdt=Math.max(0,Number(b.trc20FeeUsdt)); const erc20FeeUsdt=Math.max(0,Number(b.erc20FeeUsdt)); const quoteTtlSeconds=Math.min(300,Math.max(15,Number(b.quoteTtlSeconds||60))); const maxRateAgeSeconds=Math.min(3600,Math.max(30,Number(b.maxRateAgeSeconds||300))); const minRate=Math.max(0,Number(b.minRate||0)); const maxRate=Math.max(minRate,Number(b.maxRate||100000)); if(![usdTrySpread,trc20FeeUsdt,erc20FeeUsdt,quoteTtlSeconds,maxRateAgeSeconds,minRate,maxRate].every(Number.isFinite))return json(res,400,{error:'invalid_rate_settings'}); await saveRateSettings({usdTrySpread,trc20FeeUsdt,erc20FeeUsdt,quoteTtlSeconds,maxRateAgeSeconds,minRate,maxRate}); addAudit('rate_settings_update',a.email,{usdTrySpread,trc20FeeUsdt,erc20FeeUsdt,quoteTtlSeconds,maxRateAgeSeconds,minRate,maxRate}); const snap=await getMarketSnapshot(); return json(res,200,{ok:true,marketRate:snap.market,safepaysRate:calc(snap.market,usdTrySpread),source:snap.source,usdTrySpread,trc20FeeUsdt,erc20FeeUsdt,quoteTtlSeconds,maxRateAgeSeconds,minRate,maxRate});
   }
 
   if(req.url==='/api/deposits/prepare' && req.method==='POST'){
@@ -748,6 +779,19 @@ async function route(req,res){
   }
   if(req.url==='/api/auth/logout' && req.method==='POST'){
     const h=req.headers.authorization||''; if(h.startsWith('Bearer '))sessions.delete(h.slice(7)); return json(res,200,{ok:true});
+  }
+  const staticPath=new URL(req.url,'http://localhost').pathname;
+  if(req.method==='GET'&&staticPath.endsWith('.html')){
+    if(staticPath.startsWith('/owner/')){
+      if(teamAdmin&&!owner)return redirect(res,'/admin/team-dashboard.html');
+      if(owner&&staticPath==='/owner/login.html')return redirect(res,'/owner/dashboard.html');
+      if(!owner&&staticPath!=='/owner/login.html')return redirect(res,'/owner/login.html');
+    }
+    if(staticPath.startsWith('/admin/')){
+      if(owner)return redirect(res,'/owner/dashboard.html');
+      if(teamAdmin&&staticPath==='/admin/login.html')return redirect(res,'/admin/team-dashboard.html');
+      if(!teamAdmin&&staticPath!=='/admin/login.html')return redirect(res,'/admin/login.html');
+    }
   }
   return sendFile(req,res);
 }

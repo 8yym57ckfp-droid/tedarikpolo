@@ -4,11 +4,12 @@
   function current(){
     try{
       const profile=JSON.parse(sessionStorage.getItem(PROFILE_KEY)||'null');
-      return profile&&profile.role==='Super Admin'?profile:null;
+      return profile&&['Super Admin','Team Admin'].includes(profile.role)?profile:null;
     }catch(_){return null;}
   }
   function setSessionProfile(profile){
-    const next={id:String(profile?.id||''),email:String(profile?.email||''),role:'Super Admin',name:'Super Admin'};
+    const role=profile?.role==='Team Admin'?'Team Admin':'Super Admin';
+    const next={id:String(profile?.id||''),email:String(profile?.email||''),role,name:role};
     sessionStorage.setItem(PROFILE_KEY,JSON.stringify(next));
     return next;
   }
