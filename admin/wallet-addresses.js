@@ -5,12 +5,22 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&
 let wallets=[],transactions=[],users=[];
 
 async function loadWalletData(){
-  const [w,t,u]=await Promise.all([
+  const [w,t,u]=await Promise.allSettled([
     adminFetch('/wallet-addresses'),
     adminFetch('/transactions'),
     adminFetch('/users')
   ]);
-  wallets=w.wallets||[];transactions=t.transactions||[];users=u.users||[];renderWalletData();
+  if(w.status==='rejected')throw w.reason;
+  wallets=w.value.wallets||[];
+  transactions=t.status==='fulfilled'?(t.value.transactions||[]):[];
+  users=u.status==='fulfilled'?(u.value.users||[]):[];
+  renderWalletData();
+  const msg=$('loadMsg');
+  if(msg&&(t.status==='rejected'||u.status==='rejected')){
+    const failed=[t.status==='rejected'?'işlem özeti':'',u.status==='rejected'?'üye özeti':''].filter(Boolean).join(' ve ');
+    msg.textContent=`Cüzdanlar yüklendi; ${failed} alınamadı.`;
+    msg.style.color='#b7791f';
+  }
 }
 function renderWalletData(){
   $('trcActive').textContent=wallets.filter(w=>w.network==='TRC20'&&w.active).length;

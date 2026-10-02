@@ -357,7 +357,7 @@ async function route(req,res){
     if(!teamAdmin)return json(res,401,{error:'unauthorized'});return json(res,200,{admin:{id:teamAdmin.adminId,email:teamAdmin.email,role:teamAdmin.role}});
   }
   const adminPath=new URL(req.url,'http://localhost').pathname;
-  const ownerOnlyAdminRequest=adminPath==='/api/admin/content'||adminPath==='/api/admin/maintenance'||(adminPath.startsWith('/api/admin/user/')&&adminPath.endsWith('/security'))||(adminPath==='/api/admin/wallet-addresses'&&req.method==='POST')||(adminPath==='/api/admin/rates'&&req.method==='POST');
+  const ownerOnlyAdminRequest=adminPath==='/api/admin/content'||adminPath==='/api/admin/maintenance'||(adminPath.startsWith('/api/admin/user/')&&adminPath.endsWith('/security'))||(adminPath==='/api/admin/rates'&&req.method==='POST');
   if(teamAdmin&&!owner&&ownerOnlyAdminRequest)return json(res,403,{error:'owner_only'});
   if(req.url==='/api/admin/verify-2fa' && req.method==='POST'){if(!admin)return json(res,401,{error:'unauthorized'});const b=await body(req),code=String(b.code||'').trim(),secret=owner?ADMIN_TOTP_SECRET:TEAM_ADMIN_TOTP_SECRET,valid=!!secret&&verifyTotp(secret,code);if(!/^\d{6}$/.test(code)||!valid)return json(res,401,{error:'invalid_2fa_code'});addAudit('admin_sensitive_change_verified',admin.email,{role:admin.role});return json(res,200,{ok:true})}
   if(req.url==='/api/admin/content' && req.method==='GET'){if(!admin)return json(res,401,{error:'unauthorized'});return json(res,200,{items:await getPublishedContent()});}
