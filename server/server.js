@@ -308,8 +308,8 @@ function clearExpiredLock(tx){return tx.lockedBy && tx.lockedAt && (Date.now()-n
 
 async function route(req,res){
   if(req.method==='OPTIONS') return json(res,204,{});
-  await refreshTransactionExpiry();
   if(req.url==='/api/health' && req.method==='GET') return json(res,200,{ok:true,service:'safepays-api',version:'35.0.0'});
+  await refreshTransactionExpiry();
   if(req.url==='/api/system/maintenance' && req.method==='GET') return json(res,200,{maintenance:await getMaintenance()});
   if(req.url==='/api/content' && req.method==='GET')return json(res,200,{items:(await getPublishedContent()).filter(x=>x.published)});
 
