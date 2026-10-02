@@ -8,8 +8,10 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: USE_POSTGRES
-        value: "false"
+      - key: DATABASE_URL
+        sync: false
+      - key: PGSSL
+        value: "true"
       - key: ADMIN_EMAIL
         sync: false
       - key: ADMIN_PASSWORD

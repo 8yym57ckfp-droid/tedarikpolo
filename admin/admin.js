@@ -42,9 +42,6 @@ document.addEventListener('DOMContentLoaded',()=>{
       menu.className='team-profile-menu';
       menu.innerHTML=''+
         '<a href="profile.html" class="team-menu-item"><span class="team-menu-icon">⌾</span><span>Profilim</span></a>'+
-        '<a href="profile.html#edit" class="team-menu-item"><span class="team-menu-icon">⚙</span><span>Profili Düzenle</span></a>'+
-        '<a href="profile.html#password" class="team-menu-item"><span class="team-menu-icon">▣</span><span>Şifre Değiştir</span></a>'+
-        '<a href="profile.html#2fa" class="team-menu-item"><span class="team-menu-icon">◇</span><span>2FA Ayarları</span></a>'+
         '<div class="team-menu-divider"></div>'+
         '<button type="button" class="team-menu-item team-menu-logout"><span class="team-menu-icon">↪</span><span>Çıkış Yap</span></button>';
       u.parentElement.style.position='relative';
@@ -53,8 +50,9 @@ document.addEventListener('DOMContentLoaded',()=>{
       u.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const open=menu.classList.toggle('open');u.setAttribute('aria-expanded',open?'true':'false')});
       menu.addEventListener('click',e=>e.stopPropagation());
       document.addEventListener('click',close);
-      menu.querySelector('.team-menu-logout').addEventListener('click',()=>{
-        localStorage.removeItem('safepays_admin_token');
+      menu.querySelector('.team-menu-logout').addEventListener('click',async()=>{
+        try{await fetch('../api/admin/logout',{method:'POST',credentials:'include'});}catch(_){}
+        if(window.SafeAdmin?.clearSessionProfile)SafeAdmin.clearSessionProfile();
         localStorage.removeItem('safepays_portal');
         location.href='login.html';
       });
@@ -67,8 +65,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 /* V128 — role-separated staff navigation + owner access guard */
 (function(){
-  const ownerOnly=new Set(['earnings.html','content.html','team-accounts.html','settings.html']);
-  const ownerPanelOnly=new Set(['earnings.html','content.html','team-accounts.html']);
+  const ownerOnly=new Set();
+  const ownerPanelOnly=new Set();
   function current(){try{return window.SafeAdmin?.current?.()||null}catch(e){return null}}
   // SECURITY FIX: `current()` only reads a JSON blob the browser itself wrote to localStorage — it proves
   // nothing about who is actually logged in server-side. Previously any visitor could open devtools and run
@@ -83,33 +81,20 @@ document.addEventListener('DOMContentLoaded',()=>{
       const r=await fetch('../api/admin/me',{credentials:'include',cache:'no-store'});
       if(!r.ok) return false;
       const d=await r.json();
-      return d?.admin?.role==='super_admin';
+      if(d?.admin?.role!=='super_admin')return false;
+      if(window.SafeAdmin?.setSessionProfile)SafeAdmin.setSessionProfile({id:d.admin.id,email:d.admin.email,role:'Super Admin',name:'Super Admin'});
+      return true;
     }catch(e){ return false; }
   }
   async function guard(){
     const path=location.pathname.split('/').pop()||'dashboard.html';
-    const a=current();
-    if(!a && path!=='login.html'){location.replace('login.html');return false;}
-    if(a && a.role==='Super Admin'){
-      const serverOk=await verifySuperAdminSession();
-      if(!serverOk){
-        localStorage.removeItem('safepays_portal');
-        if(window.SafeAdmin?.clearSessionProfile) SafeAdmin.clearSessionProfile();
-        if(path!=='login.html') location.replace('login.html?denied=1');
-        return false;
-      }
+    if(path==='login.html')return true;
+    const serverOk=await verifySuperAdminSession();
+    if(!serverOk){
+      localStorage.removeItem('safepays_portal');
+      if(window.SafeAdmin?.clearSessionProfile)SafeAdmin.clearSessionProfile();
+      location.replace('login.html?denied=1');return false;
     }
-    if(a && a.role==='Super Admin' && (path==='dashboard.html'||path==='team-dashboard.html')){location.replace('../owner/dashboard.html');return false;}
-    if(a && ownerPanelOnly.has(path)){
-      if(a.role==='Super Admin'){
-        location.replace('../owner/'+path);
-      }else{
-        location.replace('dashboard.html?access=denied');
-      }
-      return false;
-    }
-    if(a && a.role!=='Super Admin' && path==='dashboard.html'){location.replace('team-dashboard.html');return false;}
-    if(a && a.role!=='Super Admin' && ownerOnly.has(path)){location.replace('dashboard.html?access=denied');return false;}
     return true;
   }
   async function setupNav(){
@@ -134,10 +119,12 @@ document.addEventListener('DOMContentLoaded',()=>{
       back:'<path d="M10 6 4 12l6 6"/><path d="M4 12h16"/>'
     };return `<span class="nav-icon nav-icon-${name}" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths[name]}</svg></span>`};
     const staffItems=[
+      ['user-center.html','user','Kullanıcılar'],
       ['team-dashboard.html','home','Genel Bakış'],['requests.html','clock','Bekleyen İşlemler'],['withdrawal-pool.html','clock','Çekim Havuzu'],['history.html?status=approved','check','Onaylanan İşlemler'],['history.html?status=rejected','x','Reddedilen İşlemler'],['reconciliation.html','handshake','Mutabakat'],['reports.html','chart','Raporlar'],['wallet-addresses.html','wallet','Cüzdan Hesapları'],['audit.html','shield','İşlem / Audit Logları'],['profile.html','user','Profilim']
     ];
     const ownerItems=[
-      ['../owner/dashboard.html','home','Genel Bakış'],['requests.html','clock','Beklenen İşlemler'],['withdrawal-pool.html','clock','Çekim Havuzu'],['history.html?status=approved','check','Onaylanan İşlemler'],['history.html?status=rejected','x','Reddedilen İşlemler'],['reconciliation.html','handshake','Mutabakat'],['reports.html','chart','Raporlar'],['wallet-addresses.html','wallet','Cüzdan Hesapları'],['audit.html','shield','İşlem / Audit Logları'],['../owner/profile.html','user','Profilim'],['../owner/settings.html','settings','Ayarlar'],['../index.html','back','Siteye Dön']
+      ['user-center.html','user','Kullanıcılar'],
+      ['dashboard.html','home','Genel Bakış'],['requests.html','clock','Bekleyen İşlemler'],['withdrawal-pool.html','clock','Çekim Talepleri'],['history.html?status=approved','check','Onaylanan İşlemler'],['history.html?status=rejected','x','Reddedilen İşlemler'],['reconciliation.html','handshake','Mutabakat'],['reports.html','chart','Raporlar'],['wallet-addresses.html','wallet','Cüzdan Hesapları'],['support.html','news','Destek Talepleri'],['content.html','news','Site İçeriği'],['audit.html','shield','Audit Logları'],['settings.html','settings','Ayarlar'],['profile.html','user','Profilim'],['../index.html','back','Siteye Dön']
     ];
     const portal=a?.role==='Super Admin'?'owner':'staff';
     if(a?.role!=='Super Admin') localStorage.setItem('safepays_portal','staff'); else localStorage.setItem('safepays_portal','owner');

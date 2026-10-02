@@ -507,7 +507,7 @@ html.dark-theme .faq-item{background:#0b2039;border-color:rgba(255,255,255,.08)}
 }
 
 /* ============================================================
-   Landing mockup v1 — scoped to body.public-landing only
+   Public landing page — scoped to body.public-landing only
    so dashboard / admin / owner / auth pages are unaffected.
    Aesthetic: dark navy/black, neon cyan/blue, glass cards.
    ============================================================ */

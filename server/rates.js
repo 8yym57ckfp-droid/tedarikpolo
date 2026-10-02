@@ -63,10 +63,6 @@ async function getMarketSnapshot(){
   if(cache.market && now-cache.fetchedAt<=MAX_STALE_MS){
     return {...cache,ageMs:now-cache.fetchedAt,stale:true,warning:'using_last_known_rate'};
   }
-  const demo=Number(process.env.DEMO_USDT_TRY_RATE || 40);
-  if(Number.isFinite(demo)&&demo>0){
-    return {market:demo,source:'Demo fallback',fetchedAt:now,ageMs:0,stale:true,providers:[],warning:'demo_fallback'};
-  }
   throw new Error('rate_unavailable');
 }
 

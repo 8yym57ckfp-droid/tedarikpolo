@@ -2,7 +2,7 @@
   "name": "safepays-v252",
   "version": "252.0.0",
   "private": true,
-  "description": "Safepays demo backend; PostgreSQL optional — v252 security hardening baseline",
+  "description": "Safepays account and transaction API with PostgreSQL persistence",
   "scripts": {
     "start": "node server/server.js"
   },

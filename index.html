@@ -133,29 +133,6 @@
     </div>
   </section>
 
-  <!-- STATS — PLACEHOLDER numbers; owner can replace. Not audited/real metrics. -->
-  <section class="container pl-stats-wrap" aria-label="Platform özet istatistikleri">
-    <p class="pl-stats-note"></p>
-    <div class="pl-stats" data-placeholder-stats="true">
-      <div class="pl-stat">
-        <strong data-placeholder="+250.000">+250.000</strong>
-        <span>Aktif Üye</span>
-      </div>
-      <div class="pl-stat">
-        <strong data-placeholder="$1.2B+">$1.2B+</strong>
-        <span>Toplam İşlem Hacmi</span>
-      </div>
-      <div class="pl-stat">
-        <strong data-placeholder="%99.8">%99.8</strong>
-        <span>Başarı Oranı</span>
-      </div>
-      <div class="pl-stat">
-        <strong data-placeholder="7/24">7/24</strong>
-        <span>Destek</span>
-      </div>
-    </div>
-  </section>
-
   <!-- FEATURES -->
   <section id="about" class="container pl-features">
     <h2 class="section-title">Neden SafePays?</h2>
@@ -186,40 +163,8 @@
         <div class="pl-neon-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
         </div>
-        <h3>7/24 Destek</h3>
-        <p>AI destek ve gerektiğinde insan desteğine aktarım ile yanınızdayız.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- WALLET PREVIEW (static marketing UI) -->
-  <section id="wallet-preview" class="container pl-wallet-section">
-    <div class="pl-wallet-grid">
-      <div class="pl-wallet-copy">
-        <h2 class="section-title">Dijital Varlıklarınızı Kolayca Yönetin</h2>
-        <p class="section-sub">TRC20 ve ERC20 bakiyelerinizi tek panelden izleyin; yatırma ve çekme taleplerinizi birkaç adımda oluşturun.</p>
-        <a class="btn pl-cta-primary" href="login.html">Hesabına Git <span aria-hidden="true">→</span></a>
-      </div>
-      <div class="pl-wallet-card" aria-hidden="true">
-        <div class="pl-wallet-card-glow"></div>
-        <div class="pl-wallet-head">
-          <span>Cüzdan Bakiyesi</span>
-          <strong>0,000.00 <small>USDT</small></strong>
-        </div>
-        <div class="pl-wallet-actions">
-          <span class="pl-pill deposit">Yatır</span>
-          <span class="pl-pill withdraw">Çek</span>
-        </div>
-        <div class="pl-wallet-networks">
-          <div class="pl-net">
-            <span class="pl-net-tag trc">TRC20</span>
-            <strong>0,000.00 USDT</strong>
-          </div>
-          <div class="pl-net">
-            <span class="pl-net-tag erc">ERC20</span>
-            <strong>0,000.00 USDT</strong>
-          </div>
-        </div>
+        <h3>Destek Talepleri</h3>
+        <p>Destek talepleri sunucuya kaydedilir ve yanıtlar aynı konuşmada görünür.</p>
       </div>
     </div>
   </section>
@@ -229,7 +174,7 @@
     <div class="container">
       <h2 class="section-title">Haberler &amp; Duyurular</h2>
       <p class="section-sub">Safepays platformundaki yenilikleri takip edin.</p>
-      <!-- localStorage is per-browser; owner PC vs visitor PC won't share until a server content API exists (home-content is rates/notices only). -->
+      <!-- Published announcements are loaded from the server content API. -->
       <div class="news pl-news-grid" id="plNewsGrid" aria-live="polite"></div>
     </div>
   </section>
@@ -245,7 +190,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </div>
         <h3>Kayıt</h3>
-        <p>Hesabınızı oluşturun ve doğrulama adımlarını tamamlayın.</p>
+        <p>Hesabınızı oluşturun ve iletişim bilgilerinizi kaydedin.</p>
       </div>
       <div class="card dark-card pl-how-card">
         <div class="pl-step-num">02</div>
@@ -269,7 +214,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
         </div>
         <h3>Takip</h3>
-        <p>İşlemlerinizi saniyesine kadar takip edin.</p>
+        <p>İşlemlerinizin güncel durumunu panelden takip edin.</p>
       </div>
     </div>
   </section>
@@ -297,7 +242,7 @@
       </details>
       <details class="card dark-card faq-item pl-faq-item">
         <summary>Destek ekibine nasıl ulaşırım?</summary>
-        <p>Giriş yaptıktan sonra paneldeki destek / canlı destek bölümünden AI destek ve gerektiğinde insan desteğine aktarım akışını kullanabilirsiniz. Acil konular için hesabınıza giriş yapmanız önerilir.</p>
+        <p>Giriş yaptıktan sonra Destek bölümünden bir talep oluşturun. Talep sunucuya kaydedilir ve yanıtlar aynı konuşmada görünür.</p>
       </details>
       <details class="card dark-card faq-item pl-faq-item">
         <summary>Yanlış ağa gönderim yaparsam ne olur?</summary>
@@ -351,74 +296,13 @@
 </footer>
 
 <script>
-/* Public landing news: load owner-published items from safepays_content_v60 (same bridge as events.html). */
-(function(){
-  if(!document.body.classList.contains('public-landing')) return;
-  const grid=document.getElementById('plNewsGrid');
-  if(!grid) return;
-  const KEY='safepays_content_v60';
-  const OLD_KEYS=['safepays_content_v59','safepays_content_v58'];
-  const MAX=8;
-  function validItem(x){
-    if(!x||x.published===false)return false;
-    const title=String(x.title||'').trim(),excerpt=String(x.excerpt||'').trim();
-    if(title.length<3||excerpt.length<3)return false;
-    if(title==='...'||excerpt==='...'||title==='—'||excerpt==='—')return false;
-    if(!/[A-Za-zÇĞİÖŞÜçğıöşü0-9]/.test(title)||!/[A-Za-zÇĞİÖŞÜçğıöşü0-9]/.test(excerpt))return false;
-    return true;
-  }
-  function load(){
-    try{
-      let a=JSON.parse(localStorage.getItem(KEY)||'null');
-      if(Array.isArray(a))return a.filter(validItem);
-    }catch(e){}
-    for(const k of OLD_KEYS){
-      try{
-        const old=JSON.parse(localStorage.getItem(k)||'null');
-        if(Array.isArray(old)){
-          const clean=old.filter(validItem);
-          localStorage.setItem(KEY,JSON.stringify(clean));
-          return clean;
-        }
-      }catch(e){}
-    }
-    return [];
-  }
-  function esc(s){
-    return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-  }
-  function formatDate(iso){
-    const d=iso?new Date(iso):null;
-    if(!d||Number.isNaN(d.getTime()))return '';
-    try{
-      return d.toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
-    }catch(e){
-      return d.toISOString().slice(0,10);
-    }
-  }
-  function render(){
-    const news=load()
-      .filter(x=>x.kind==='news')
-      .sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')))
-      .slice(0,MAX);
-    if(!news.length){
-      grid.innerHTML='<div class="card news-card pl-news-card pl-news-empty" role="status"><div class="news-img pl-news-img">📰</div><div class="news-body"><h3>Yakında duyurular</h3><p>Yeni haberler burada görünecek.</p></div></div>';
-      return;
-    }
-    grid.innerHTML=news.map((x,i)=>{
-      const title=esc(x.title);
-      const date=formatDate(x.createdAt);
-      const href=esc(x.link||'events.html');
-      const id='pl-news-'+(x.id?String(x.id).replace(/[^a-zA-Z0-9_-]/g,''):String(i+1));
-      const aria=esc('Haber: '+String(x.title||'')+(date?' — '+date:''));
-      const img=x.image
-        ?`<div class="news-img pl-news-img has-image"><img src="${esc(x.image)}" alt=""></div>`
-        :`<div class="news-img pl-news-img">S</div>`;
-      return `<a class="card news-card pl-news-card" href="${href}" id="${esc(id)}" aria-label="${aria}">${img}<div class="news-body"><h3>${title}</h3>${date?`<p>${esc(date)}</p>`:''}</div></a>`;
-    }).join('');
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',render);
-  else render();
+(async function(){
+ if(!document.body.classList.contains('public-landing'))return;
+ const grid=document.getElementById('plNewsGrid');if(!grid)return;
+ const esc=v=>String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+ const date=v=>{const d=v?new Date(v):null;return d&&!Number.isNaN(d.getTime())?d.toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}):'';};
+ const href=v=>{try{const u=new URL(String(v||'events.html'),location.origin);return u.protocol==='https:'||u.origin===location.origin?u.href:'events.html';}catch(_){return 'events.html';}};
+ try{const response=await fetch('/api/content',{cache:'no-store'}),data=await response.json();if(!response.ok)throw Error();const news=(data.items||[]).filter(x=>x.kind==='news'&&x.published!==false).sort((x,y)=>new Date(y.createdAt||0)-new Date(x.createdAt||0)).slice(0,8);if(!news.length){grid.innerHTML='<div class="card news-card pl-news-card pl-news-empty" role="status"><div class="news-img pl-news-img">📰</div><div class="news-body"><h3>Henüz duyuru yok</h3><p>Yeni duyurular yayınlandığında burada görünecek.</p></div></div>';return;}grid.innerHTML=news.map((x,i)=>{const d=date(x.createdAt),img=x.image?'<div class="news-img pl-news-img has-image"><img src="'+esc(x.image)+'" alt=""></div>':'<div class="news-img pl-news-img">S</div>',id='pl-news-'+esc(String(x.id||i).replace(/[^a-zA-Z0-9_-]/g,''));return '<a class="card news-card pl-news-card" href="'+esc(href(x.link))+'" id="'+id+'" aria-label="'+esc('Haber: '+x.title+(d?' — '+d:''))+'">'+img+'<div class="news-body"><h3>'+esc(x.title)+'</h3>'+(d?'<p>'+esc(d)+'</p>':'')+'</div></a>';}).join('');}catch(_){grid.textContent='Duyurular şu anda yüklenemiyor.';}
 })();
 </script>
 </body>

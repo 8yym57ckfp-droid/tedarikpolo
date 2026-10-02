@@ -1,9 +1,9 @@
-﻿const http = require('http');
+const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 let Pool = null;
-try { ({ Pool } = require('pg')); } catch (_) { /* PostgreSQL is optional for local demo mode. */ }
+try { ({ Pool } = require('pg')); } catch (_) { /* PostgreSQL is optional for local development. */ }
 const { getMarketUsdtTry, getMarketSnapshot, calc, makeQuote } = require('./rates');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -12,8 +12,9 @@ const DATA = path.join(DATA_DIR, 'db.json');
 const MAINTENANCE_DATA = path.join(DATA_DIR, 'maintenance.json');
 const PORT = Number(process.env.PORT || 10000);
 const DATABASE_URL = process.env.DATABASE_URL || '';
-const USE_POSTGRES = process.env.USE_POSTGRES === 'true' && !!DATABASE_URL && !!Pool;
+const USE_POSTGRES = !!DATABASE_URL && !!Pool;
 const pool = USE_POSTGRES ? new Pool({ connectionString: DATABASE_URL, ssl: process.env.PGSSL === 'false' ? false : { rejectUnauthorized:false } }) : null;
+if(process.env.NODE_ENV==='production'&&!pool){throw new Error('A persistent PostgreSQL DATABASE_URL is required in production.');}
 const TTL = Number(process.env.SESSION_TTL_SECONDS || 3600) * 1000;
 const sessions = new Map();
 const resetTokens = new Map();
@@ -21,10 +22,10 @@ const passwordResetCodes = new Map(); // email -> {codeHash, expires, attempts, 
 const verificationCodes = new Map();
 const adminSessions = new Map();
 const auditLog = [];
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@safepays.local';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || (process.env.NODE_ENV === 'production' ? '' : 'Admin123!');
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const ADMIN_TOTP_SECRET = process.env.ADMIN_TOTP_SECRET || '';
-const ADMIN_TOTP_CODE = process.env.ADMIN_TOTP_CODE || (process.env.NODE_ENV === 'production' ? '' : '123456');
+const ADMIN_TOTP_CODE = process.env.ADMIN_TOTP_CODE || '';
 const ADMIN_COOKIE = 'sp_admin_session';
 const DEFAULT_RATE_SETTINGS = { usdTrySpread: 1, trc20FeeUsdt: 0, erc20FeeUsdt: 0, quoteTtlSeconds: 60, maxRateAgeSeconds: 300, minRate: 0, maxRate: 100000 };
 const TX_CONTROL = { autoRejectMinutes: 30, lockMinutes: 5, largeApprovalThreshold: 10000 };
@@ -34,26 +35,33 @@ const quoteStore = new Map();
 const requestCooldowns = new Map();
 const REQUEST_COOLDOWN_MS = 120000;
 const DEFAULT_MAINTENANCE = {
-  site: { enabled:false, until:null, message:'Sitemiz gÃ¼ncelleniyor. Daha iyi bir deneyim iÃ§in kÄ±sa bir bakÄ±m Ã§alÄ±ÅŸmasÄ± yapÄ±yoruz.' },
-  panel: { enabled:false, until:null, message:'YÃ¶netim paneli gÃ¼ncelleniyor. Ekip eriÅŸimi bakÄ±m tamamlandÄ±ÄŸÄ±nda yeniden aÃ§Ä±lacaktÄ±r.' }
+  site: { enabled:false, until:null, message:'Sitemiz güncelleniyor. Daha iyi bir deneyim için kısa bir bakım çalışması yapıyoruz.' },
+  panel: { enabled:false, until:null, message:'Yönetim paneli güncelleniyor. Ekip erişimi bakım tamamlandığında yeniden açılacaktır.' }
 };
-function getMaintenance(){
+async function getMaintenance(){
+  if(pool){const r=await pool.query('SELECT content FROM site_content WHERE id=$1',['maintenance']);const raw=r.rows[0]?.content||{};return {site:{...DEFAULT_MAINTENANCE.site,...(raw.site||{})},panel:{...DEFAULT_MAINTENANCE.panel,...(raw.panel||{})}};}
   try{ if(fs.existsSync(MAINTENANCE_DATA)){ const raw=JSON.parse(fs.readFileSync(MAINTENANCE_DATA,'utf8')); return {site:{...DEFAULT_MAINTENANCE.site,...(raw.site||{})},panel:{...DEFAULT_MAINTENANCE.panel,...(raw.panel||{})}}; } }catch(_){ }
   return JSON.parse(JSON.stringify(DEFAULT_MAINTENANCE));
 }
-function saveMaintenance(next){ fs.writeFileSync(MAINTENANCE_DATA,JSON.stringify(next,null,2)); return next; }
-function maintenanceScope(scope){ const m=getMaintenance(); return scope==='panel'?m.panel:m.site; }
+async function saveMaintenance(next){if(pool){await pool.query('INSERT INTO site_content (id,content,updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (id) DO UPDATE SET content=EXCLUDED.content,updated_at=NOW()',['maintenance',JSON.stringify(next)]);return next;}fs.writeFileSync(MAINTENANCE_DATA,JSON.stringify(next,null,2));return next;}
 
-function getRateSettings(){ const db=readDb(); return {...DEFAULT_RATE_SETTINGS,...(db.rateSettings||{})}; }
-function saveRateSettings(x){ const db=readDb(); db.rateSettings={...DEFAULT_RATE_SETTINGS,...x}; writeDb(db); }
+async function getRateSettings(){
+  if(pool){const r=await pool.query('SELECT content FROM site_content WHERE id=$1',['rate-settings']);return {...DEFAULT_RATE_SETTINGS,...(r.rows[0]?.content||{})};}
+  const db=readDb(); return {...DEFAULT_RATE_SETTINGS,...(db.rateSettings||{})};
+}
+async function saveRateSettings(x){
+  const value={...DEFAULT_RATE_SETTINGS,...x};
+  if(pool){await pool.query('INSERT INTO site_content (id,content,updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (id) DO UPDATE SET content=EXCLUDED.content,updated_at=NOW()',['rate-settings',JSON.stringify(value)]);return value;}
+  const db=readDb();db.rateSettings=value;writeDb(db);return value;
+}
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, {recursive:true});
 function readDb(){ return JSON.parse(fs.readFileSync(DATA,'utf8')); }
 function writeDb(db){ fs.writeFileSync(DATA, JSON.stringify(db,null,2)); }
-const DEFAULT_HOME_CONTENT={dailyDepositPercent:0,dailyDepositCap:0,referralPercent:0,firstDepositBonus:0,intro:'Güncel ödül oranlarını ve kampanya duyurularını burada inceleyin.',notices:[]};
-function cleanHomeContent(x={}){const num=(v,max)=>{const n=Number(v);return Number.isFinite(n)?Math.min(max,Math.max(0,n)):0};return {dailyDepositPercent:num(x.dailyDepositPercent,100),dailyDepositCap:num(x.dailyDepositCap,100000000),referralPercent:num(x.referralPercent,100),firstDepositBonus:num(x.firstDepositBonus,100000000),intro:String(x.intro||DEFAULT_HOME_CONTENT.intro).trim().slice(0,500),notices:(Array.isArray(x.notices)?x.notices:[]).map(v=>String(v||'').trim().slice(0,220)).filter(Boolean).slice(0,8),updatedAt:new Date().toISOString()};}
-async function getHomeContent(){if(pool){const r=await pool.query('SELECT content FROM site_content WHERE id=$1',['member-home']);return cleanHomeContent(r.rows[0]?.content||DEFAULT_HOME_CONTENT);}const db=readDb();return cleanHomeContent(db.memberHomeContent||DEFAULT_HOME_CONTENT);}
-async function saveHomeContent(value){const clean=cleanHomeContent(value);if(pool){await pool.query('INSERT INTO site_content (id,content,updated_at) VALUES ($1,$2,$3) ON CONFLICT (id) DO UPDATE SET content=EXCLUDED.content,updated_at=EXCLUDED.updated_at',['member-home',JSON.stringify(clean),clean.updatedAt]);}else{const db=readDb();db.memberHomeContent=clean;writeDb(db);}return clean;}
+function safeContentLink(value){const raw=String(value||'events.html').trim().slice(0,500);if(!raw||raw.startsWith('//')||raw.includes('\\'))return 'events.html';if(/^[a-z][a-z0-9+.-]*:/i.test(raw)&&!/^https:\/\//i.test(raw))return 'events.html';try{const url=new URL(raw,'https://safepays.invalid/');return url.origin==='https://safepays.invalid'||url.protocol==='https:'?raw:'events.html';}catch(_){return 'events.html';}}
+function cleanPublishedContent(items){return (Array.isArray(items)?items:[]).filter(x=>x&&['news','event'].includes(x.kind)).slice(0,100).map(x=>({id:String(x.id||`content-${crypto.randomUUID()}`).slice(0,80),kind:x.kind,title:String(x.title||'').trim().slice(0,140),excerpt:String(x.excerpt||'').trim().slice(0,700),image:/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(String(x.image||''))&&String(x.image).length<=1500000?String(x.image):'',cta:String(x.cta||'').trim().slice(0,80),link:safeContentLink(x.link),published:x.published!==false,reward:String(x.reward||'').trim().slice(0,100),deadline:String(x.deadline||'').trim().slice(0,100),createdAt:x.createdAt||new Date().toISOString()})).filter(x=>x.title.length>=3&&x.excerpt.length>=3);}
+async function getPublishedContent(){if(pool){const r=await pool.query('SELECT content FROM site_content WHERE id=$1',['published-content']);return cleanPublishedContent(r.rows[0]?.content||[]);}const db=readDb();return cleanPublishedContent(db.publishedContent||[]);}
+async function savePublishedContent(items){const clean=cleanPublishedContent(items);if(pool)await pool.query('INSERT INTO site_content (id,content,updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (id) DO UPDATE SET content=EXCLUDED.content,updated_at=NOW()',['published-content',JSON.stringify(clean)]);else{const db=readDb();db.publishedContent=clean;writeDb(db);}return clean;}
 
 async function pgInit(){
   if(!pool) return;
@@ -79,6 +87,16 @@ async function pgInit(){
     id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), type TEXT NOT NULL, amount NUMERIC(20,8) NOT NULL,
     currency TEXT NOT NULL DEFAULT 'USDT', network TEXT, status TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), tx_hash TEXT
   );`);
+  await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS address TEXT');
+  await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS wallet_id TEXT');
+  await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS request_key TEXT');
+  await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS locked_by TEXT');
+  await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS locked_at TIMESTAMPTZ');
+  await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS decision_by TEXT');
+  await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS decision_at TIMESTAMPTZ');
+  await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ');
+  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_request_key ON transactions(request_key) WHERE request_key IS NOT NULL');
+  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_tx_hash_unique ON transactions(LOWER(tx_hash)) WHERE tx_hash IS NOT NULL AND tx_hash <> \'\'');
   await pool.query(`CREATE TABLE IF NOT EXISTS ledger_entries (
     id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), transaction_id TEXT, direction TEXT NOT NULL,
     amount NUMERIC(20,8) NOT NULL, currency TEXT NOT NULL DEFAULT 'USDT', balance_before NUMERIC(20,8) NOT NULL,
@@ -89,6 +107,34 @@ async function pgInit(){
   await pool.query('CREATE TABLE IF NOT EXISTS site_content (id TEXT PRIMARY KEY, content JSONB NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS requested_amount NUMERIC(20,8)');
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS received_amount NUMERIC(20,8)');
+  await pool.query(`CREATE TABLE IF NOT EXISTS wallet_addresses (
+    id TEXT PRIMARY KEY, network TEXT NOT NULL CHECK (network IN ('TRC20','ERC20')), address TEXT NOT NULL,
+    label TEXT NOT NULL, active BOOLEAN NOT NULL DEFAULT TRUE, team_id TEXT,
+    created_by TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (network,address)
+  )`);
+  await pool.query('ALTER TABLE wallet_addresses ADD COLUMN IF NOT EXISTS use_count INTEGER NOT NULL DEFAULT 0');
+  await pool.query('ALTER TABLE wallet_addresses ADD COLUMN IF NOT EXISTS last_used_at TIMESTAMPTZ');
+  await pool.query(`CREATE TABLE IF NOT EXISTS deposit_intents (
+    id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), wallet_id TEXT NOT NULL REFERENCES wallet_addresses(id),
+    amount NUMERIC(20,8) NOT NULL, network TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL, used_at TIMESTAMPTZ
+  )`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS support_tickets (
+    id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), subject TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'open', created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS support_messages (
+    id TEXT PRIMARY KEY, ticket_id TEXT NOT NULL REFERENCES support_tickets(id) ON DELETE CASCADE,
+    sender_role TEXT NOT NULL CHECK (sender_role IN ('user','admin')), sender_id TEXT NOT NULL,
+    message TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_support_ticket_user_updated ON support_tickets(user_id,updated_at DESC)');
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_support_messages_ticket_created ON support_messages(ticket_id,created_at)');
+  await pool.query(`CREATE TABLE IF NOT EXISTS audit_logs (
+    id TEXT PRIMARY KEY, action TEXT NOT NULL, actor TEXT NOT NULL, meta JSONB NOT NULL DEFAULT '{}'::jsonb, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at DESC)');
 }
 async function getUsers(){
   if(!pool) return readDb().users;
@@ -97,7 +143,7 @@ async function getUsers(){
 }
 async function getTransactions(){
   if(!pool) return readDb().transactions;
-  const r=await pool.query('SELECT id, user_id AS "userId", type, amount, requested_amount AS "requestedAmount", received_amount AS "receivedAmount", currency, network, status, created_at AS "createdAt", tx_hash AS "txHash", request_key AS "requestKey", locked_by AS "lockedBy", locked_at AS "lockedAt", decision_by AS "decisionBy", decision_at AS "decisionAt", expires_at AS "expiresAt" FROM transactions ORDER BY created_at DESC');
+  const r=await pool.query('SELECT id, user_id AS "userId", type, amount, requested_amount AS "requestedAmount", received_amount AS "receivedAmount", currency, network, status, created_at AS "createdAt", tx_hash AS "txHash", address, wallet_id AS "walletId", request_key AS "requestKey", locked_by AS "lockedBy", locked_at AS "lockedAt", decision_by AS "decisionBy", decision_at AS "decisionAt", expires_at AS "expiresAt" FROM transactions ORDER BY created_at DESC');
   return r.rows;
 }
 async function getLedger(userId){
@@ -107,8 +153,10 @@ async function getLedger(userId){
 }
 async function addLedgerEntry({userId,transactionId=null,direction,amount,currency='USDT',reason,metadata={}} , client=null){
   const amt=Number(amount); if(!Number.isFinite(amt)||amt<=0) throw new Error('invalid_ledger_amount');
-  const user=await findUserById(userId); if(!user) throw new Error('user_not_found');
-  const before=Number(user.balance||0); const after=Number((direction==='credit'?before+amt:before-amt).toFixed(8));
+  let before;
+  if(pool){const q=client||pool;const result=await q.query(`SELECT balance FROM users WHERE id=$1${client?' FOR UPDATE':''}`,[userId]);if(!result.rows[0])throw new Error('user_not_found');before=Number(result.rows[0].balance||0);}
+  else{const user=await findUserById(userId);if(!user)throw new Error('user_not_found');before=Number(user.balance||0);}
+  const after=Number((direction==='credit'?before+amt:before-amt).toFixed(8));
   if(after<0) throw new Error('negative_balance');
   const entry={id:`LED-${crypto.randomBytes(5).toString('hex').toUpperCase()}`,userId,transactionId,direction,amount:amt,currency,balanceBefore:before,balanceAfter:after,reason,metadata,createdAt:new Date().toISOString()};
   if(pool){ const q=client||pool; await q.query('INSERT INTO ledger_entries (id,user_id,transaction_id,direction,amount,currency,balance_before,balance_after,reason,metadata,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)',[entry.id,userId,transactionId,direction,amt,currency,before,after,reason,JSON.stringify(metadata),entry.createdAt]); await q.query('UPDATE users SET balance=$1 WHERE id=$2',[after,userId]); }
@@ -132,7 +180,7 @@ function json(res,status,payload,extraHeaders={}){
   res.writeHead(status,headers);
   res.end(body);
 }
-function body(req){ return new Promise((resolve,reject)=>{let s='';req.on('data',c=>{s+=c;if(s.length>1e6) req.destroy();});req.on('end',()=>{try{resolve(s?JSON.parse(s):{})}catch(e){reject(e)}});req.on('error',reject)}); }
+function body(req){ return new Promise((resolve,reject)=>{let s='';req.on('data',c=>{s+=c;if(s.length>2e6) req.destroy();});req.on('end',()=>{try{resolve(s?JSON.parse(s):{})}catch(e){reject(e)}});req.on('error',reject)}); }
 function token(){return crypto.randomBytes(32).toString('hex');}
 function hashPassword(password, salt=crypto.randomBytes(16).toString('hex')){
   const hash=crypto.scryptSync(password,salt,64).toString('hex');
@@ -158,7 +206,23 @@ function adminAuth(req){
   const s=adminSessions.get(t); if(!s || s.expires<Date.now()){ if(t)adminSessions.delete(t); return null; }
   return s;
 }
-function addAudit(action,actor,meta={}){ auditLog.unshift({id:`AUD-${Date.now().toString().slice(-9)}`,action,actor,meta,createdAt:new Date().toISOString()}); if(auditLog.length>500)auditLog.pop(); }
+function addAudit(action,actor,meta={}){
+  const item={id:`AUD-${crypto.randomBytes(6).toString('hex').toUpperCase()}`,action,actor,meta,createdAt:new Date().toISOString()};auditLog.unshift(item);if(auditLog.length>500)auditLog.pop();
+  if(pool)pool.query('INSERT INTO audit_logs (id,action,actor,meta,created_at) VALUES ($1,$2,$3,$4,$5)',[item.id,item.action,item.actor,JSON.stringify(item.meta),item.createdAt]).catch(e=>console.error('Audit persistence failed',e));
+  else{try{const db=readDb();db.auditLog=db.auditLog||[];db.auditLog.unshift(item);db.auditLog=db.auditLog.slice(0,500);writeDb(db);}catch(e){console.error('Audit persistence failed',e);}}
+}
+async function getAuditLog(){
+  if(!pool)return readDb().auditLog||auditLog;
+  const r=await pool.query('SELECT id,action,actor,meta,created_at AS "createdAt" FROM audit_logs ORDER BY created_at DESC LIMIT 500');return r.rows;
+}
+function requestAuditMeta(req){
+  const ua=String(req.headers['user-agent']||'');
+  const forwarded=String(req.headers['x-forwarded-for']||'').split(',')[0].trim();
+  const ip=String(req.headers['x-nf-client-connection-ip']||forwarded||req.socket.remoteAddress||'unknown');
+  const device=/iPhone/i.test(ua)?'iPhone':/iPad/i.test(ua)?'iPad':/Android/i.test(ua)?'Android cihaz':/Windows/i.test(ua)?'Windows cihaz':/Mac OS X/i.test(ua)?'Mac':'Bilinmeyen cihaz';
+  const browser=/CriOS|Chrome/i.test(ua)?'Chrome':/FxiOS|Firefox/i.test(ua)?'Firefox':/Edg/i.test(ua)?'Edge':/Safari/i.test(ua)?'Safari':'Bilinmiyor';
+  return {ip,device,browser,userAgent:ua};
+}
 function auth(req){
   const h=req.headers.authorization||''; const t=h.startsWith('Bearer ')?h.slice(7):'';
   const s=sessions.get(t); if(!s || s.expires<Date.now()){ if(t)sessions.delete(t); return null; }
@@ -174,9 +238,23 @@ function sendFile(req,res){
   fs.stat(file,(err,st)=>{if(err||!st.isFile())return json(res,404,{error:'not_found'});const ext=path.extname(file).toLowerCase();const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml'};res.writeHead(200,{'Content-Type':types[ext]||'application/octet-stream'});fs.createReadStream(file).pipe(res);});
 }
 
-async function insertTransaction(tx){
+async function insertTransaction(tx, client=null){
   if(!pool){const db=readDb();db.transactions.unshift(tx);writeDb(db);return;}
-  await pool.query('INSERT INTO transactions (id,user_id,type,amount,requested_amount,received_amount,currency,network,status,created_at,tx_hash,request_key,locked_by,locked_at,decision_by,decision_at,expires_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)',[tx.id,tx.userId,tx.type,tx.amount,tx.requestedAmount??tx.amount,tx.receivedAmount??null,tx.currency,tx.network,tx.status,tx.createdAt,tx.txHash||null,tx.requestKey||null,tx.lockedBy||null,tx.lockedAt||null,tx.decisionBy||null,tx.decisionAt||null,tx.expiresAt||null]);
+  await (client||pool).query('INSERT INTO transactions (id,user_id,type,amount,requested_amount,received_amount,currency,network,status,created_at,tx_hash,address,wallet_id,request_key,locked_by,locked_at,decision_by,decision_at,expires_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)',[tx.id,tx.userId,tx.type,tx.amount,tx.requestedAmount??tx.amount,tx.receivedAmount??null,tx.currency,tx.network,tx.status,tx.createdAt,tx.txHash||null,tx.address||null,tx.walletId||null,tx.requestKey||null,tx.lockedBy||null,tx.lockedAt||null,tx.decisionBy||null,tx.decisionAt||null,tx.expiresAt||null]);
+}
+async function getWalletAddresses({activeOnly=false}={}){
+  if(!pool){const rows=readDb().walletAddresses||[];return rows.filter(x=>!activeOnly||x.active);}
+  const r=await pool.query(`SELECT id,network,address,label,active,team_id AS "teamId",created_by AS "createdBy",created_at AS "createdAt",updated_at AS "updatedAt",use_count AS "useCount",last_used_at AS "lastUsedAt" FROM wallet_addresses ${activeOnly?'WHERE active=TRUE':''} ORDER BY created_at DESC`);
+  return r.rows;
+}
+async function saveWalletAddress(wallet){
+  if(!pool){const db=readDb();db.walletAddresses=db.walletAddresses||[];const i=db.walletAddresses.findIndex(x=>x.id===wallet.id);if(i>=0)db.walletAddresses[i]={...db.walletAddresses[i],...wallet};else db.walletAddresses.unshift(wallet);writeDb(db);return wallet;}
+  await pool.query('INSERT INTO wallet_addresses (id,network,address,label,active,created_by,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (id) DO UPDATE SET network=EXCLUDED.network,address=EXCLUDED.address,label=EXCLUDED.label,active=EXCLUDED.active,updated_at=EXCLUDED.updated_at',[wallet.id,wallet.network,wallet.address,wallet.label,wallet.active,wallet.createdBy,wallet.createdAt,wallet.updatedAt]);
+  return wallet;
+}
+async function getDepositIntent(id,userId){
+  if(!pool)return (readDb().depositIntents||[]).find(x=>x.id===id&&x.userId===userId)||null;
+  const r=await pool.query('SELECT id,user_id AS "userId",wallet_id AS "walletId",amount,network,created_at AS "createdAt",expires_at AS "expiresAt",used_at AS "usedAt" FROM deposit_intents WHERE id=$1 AND user_id=$2',[id,userId]);return r.rows[0]||null;
 }
 function isValidNetwork(n){return n==='TRC20'||n==='ERC20';}
 function isValidAddress(n,a){
@@ -186,7 +264,7 @@ function isValidAddress(n,a){
 }
 function makeUserId(existing=[]){ let id=''; do{id=String(crypto.randomInt(10000000,100000000));}while(existing.some(u=>String(u.id)===id)); return id; }
 function makeTxId(){ const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; return Array.from({length:10},()=>chars[crypto.randomInt(0,chars.length)]).join(''); }
-function demoBalance(u){return Number(u.balance||0);}
+function currentBalance(u){return Number(u.balance||0);}
 async function requestCooldownRemaining(userId){
   const mem=Number(requestCooldowns.get(String(userId))||0);
   const now=Date.now();
@@ -222,15 +300,15 @@ async function route(req,res){
   if(req.method==='OPTIONS') return json(res,204,{});
   await refreshTransactionExpiry();
   if(req.url==='/api/health' && req.method==='GET') return json(res,200,{ok:true,service:'safepays-api',version:'35.0.0'});
-  if(req.url==='/api/system/maintenance' && req.method==='GET') return json(res,200,{maintenance:getMaintenance()});
-  if(req.url==='/api/home-content' && req.method==='GET') return json(res,200,{content:await getHomeContent()});
+  if(req.url==='/api/system/maintenance' && req.method==='GET') return json(res,200,{maintenance:await getMaintenance()});
+  if(req.url==='/api/content' && req.method==='GET')return json(res,200,{items:(await getPublishedContent()).filter(x=>x.published)});
 
   if(req.url==='/api/admin/login' && req.method==='POST'){
     const b=await body(req); const email=String(b.email||'').trim().toLowerCase(); const password=String(b.password||''); const code=String(b.code||'').trim();
-    if(email!==ADMIN_EMAIL.toLowerCase() || password!==ADMIN_PASSWORD) return json(res,401,{error:'invalid_admin_credentials'});
-    if(ADMIN_TOTP_SECRET ? !verifyTotp(ADMIN_TOTP_SECRET,code) : (!ADMIN_TOTP_CODE || code!==ADMIN_TOTP_CODE)) return json(res,401,{error:'invalid_2fa_code'});
+    if(!ADMIN_EMAIL||!ADMIN_PASSWORD||email!==ADMIN_EMAIL.toLowerCase() || password!==ADMIN_PASSWORD){addAudit('admin_login_failed',email||'unknown',{...requestAuditMeta(req),reason:'invalid_credentials'});return json(res,401,{error:'invalid_admin_credentials'});}
+    if(ADMIN_TOTP_SECRET ? !verifyTotp(ADMIN_TOTP_SECRET,code) : (!ADMIN_TOTP_CODE || code!==ADMIN_TOTP_CODE)){addAudit('admin_login_failed',email,{...requestAuditMeta(req),reason:'invalid_2fa'});return json(res,401,{error:'invalid_2fa_code'});}
     const t=token(); adminSessions.set(t,{adminId:'ADMIN-001',email:ADMIN_EMAIL,role:'super_admin',expires:Date.now()+TTL});
-    const ua=String(req.headers['user-agent']||''); const forwarded=String(req.headers['x-forwarded-for']||'').split(',')[0].trim(); const ip=String(req.headers['x-nf-client-connection-ip']||forwarded||req.socket.remoteAddress||'unknown'); const device=/iPhone/i.test(ua)?'iPhone':/iPad/i.test(ua)?'iPad':/Android/i.test(ua)?'Android cihaz':/Windows/i.test(ua)?'Windows cihaz':/Mac OS X/i.test(ua)?'Mac': 'Bilinmeyen cihaz'; const browser=/CriOS|Chrome/i.test(ua)?'Chrome':/FxiOS|Firefox/i.test(ua)?'Firefox':/Edg/i.test(ua)?'Edge':/Safari/i.test(ua)?'Safari':'Bilinmiyor'; addAudit('admin_login',ADMIN_EMAIL,{ip,device,browser,userAgent:ua});
+    addAudit('admin_login',ADMIN_EMAIL,requestAuditMeta(req));
     const cookie=`${ADMIN_COOKIE}=${encodeURIComponent(t)}; Max-Age=${Math.floor(TTL/1000)}; Path=/; HttpOnly; SameSite=Lax${process.env.NODE_ENV==='production' ? '; Secure' : ''}`;
     return json(res,200,{ok:true,admin:{id:'ADMIN-001',email:ADMIN_EMAIL,role:'super_admin'},expiresIn:TTL/1000},{'Set-Cookie':cookie});
   }
@@ -239,19 +317,19 @@ async function route(req,res){
   }
   const admin=adminAuth(req);
   if(req.url==='/api/admin/verify-2fa' && req.method==='POST'){if(!admin)return json(res,401,{error:'unauthorized'});const b=await body(req),code=String(b.code||'').trim(),valid=ADMIN_TOTP_SECRET?verifyTotp(ADMIN_TOTP_SECRET,code):(!ADMIN_TOTP_CODE?false:code===ADMIN_TOTP_CODE);if(!/^\d{6}$/.test(code)||!valid)return json(res,401,{error:'invalid_2fa_code'});addAudit('admin_sensitive_change_verified',admin.email,{});return json(res,200,{ok:true})}
-  if(req.url==='/api/admin/home-content' && req.method==='GET'){if(!admin)return json(res,401,{error:'unauthorized'});return json(res,200,{content:await getHomeContent()});}
-  if(req.url==='/api/admin/home-content' && req.method==='POST'){if(!admin)return json(res,401,{error:'unauthorized'});const clean=await saveHomeContent(await body(req));addAudit('member_home_content_updated',admin.email,{notices:clean.notices.length});return json(res,200,{ok:true,content:clean});}
+  if(req.url==='/api/admin/content' && req.method==='GET'){if(!admin)return json(res,401,{error:'unauthorized'});return json(res,200,{items:await getPublishedContent()});}
+  if(req.url==='/api/admin/content' && req.method==='POST'){if(!admin)return json(res,401,{error:'unauthorized'});const clean=await savePublishedContent((await body(req)).items);addAudit('published_content_updated',admin.email,{items:clean.length});return json(res,200,{ok:true,items:clean});}
 
   if(req.url==='/api/admin/maintenance' && req.method==='GET'){
     if(!admin)return json(res,401,{error:'unauthorized'});
-    return json(res,200,{maintenance:getMaintenance()});
+    return json(res,200,{maintenance:await getMaintenance()});
   }
   if(req.url==='/api/admin/maintenance' && req.method==='POST'){
     if(!admin)return json(res,401,{error:'unauthorized'});
     const b=await body(req);
     const clean=(x,fallback)=>({enabled:!!x?.enabled,until:x?.until?new Date(x.until).toISOString():null,message:String(x?.message||fallback).trim().slice(0,240)});
     const next={site:clean(b.site,DEFAULT_MAINTENANCE.site.message),panel:clean(b.panel,DEFAULT_MAINTENANCE.panel.message)};
-    saveMaintenance(next); addAudit('maintenance_update',admin.email,{maintenance:next});
+    await saveMaintenance(next); addAudit('maintenance_update',admin.email,{maintenance:next});
     return json(res,200,{ok:true,maintenance:next});
   }
   if(req.url==='/api/admin/me' && req.method==='GET'){
@@ -273,7 +351,7 @@ async function route(req,res){
     const kyc=users.filter(u=>u.kycStatus==='pending').map(u=>({userId:u.id,name:u.kycName,email:u.email,submittedAt:u.kycSubmittedAt,status:u.kycStatus}));
     return json(res,200,{users:rows,kycPending:kyc,totalUsers:users.length,pendingKyc:kyc.length});
   }
-  if(req.url.startsWith('/api/admin/user/') && req.method==='GET'){
+  if(req.url.startsWith('/api/admin/user/') && !req.url.endsWith('/security') && req.method==='GET'){
     if(!admin)return json(res,401,{error:'unauthorized'});
     const id=decodeURIComponent(req.url.split('/').pop()); const u=await findUserById(id); if(!u)return json(res,404,{error:'user_not_found'});
     const tx=(await getTransactions()).filter(x=>x.userId===id); const deposits=tx.filter(x=>x.type==='deposit'&&x.status==='approved').reduce((a,x)=>a+Number(x.amount||0),0); const withdrawals=tx.filter(x=>x.type==='withdrawal'&&x.status==='approved').reduce((a,x)=>a+Number(x.amount||0),0);
@@ -305,6 +383,49 @@ async function route(req,res){
   if(req.url==='/api/admin/ledger' && req.method==='GET'){
     if(!admin)return json(res,401,{error:'unauthorized'}); const urlObj=new URL(req.url,'http://localhost'); const userId=urlObj.searchParams.get('userId')||null; return json(res,200,{ledger:await getLedger(userId)});
   }
+  if(req.url==='/api/admin/wallet-addresses' && req.method==='GET'){
+    if(!admin)return json(res,401,{error:'unauthorized'});return json(res,200,{wallets:await getWalletAddresses()});
+  }
+  if(req.url==='/api/admin/wallet-addresses' && req.method==='POST'){
+    if(!admin)return json(res,401,{error:'unauthorized'});
+    const b=await body(req),action=String(b.action||'add');
+    if(action==='add'){
+      const network=String(b.network||'').toUpperCase(),address=String(b.address||'').trim(),label=String(b.label||'').trim().slice(0,80);
+      if(!isValidNetwork(network))return json(res,400,{error:'invalid_network'});
+      if(!isValidAddress(network,address))return json(res,400,{error:'invalid_address'});
+      if(!label)return json(res,400,{error:'invalid_label'});
+      if((await getWalletAddresses()).some(w=>w.network===network&&String(w.address).toLowerCase()===address.toLowerCase()))return json(res,409,{error:'wallet_exists'});
+      const now=new Date().toISOString(),wallet={id:`WLT-${crypto.randomBytes(6).toString('hex').toUpperCase()}`,network,address,label,active:b.active!==false,createdBy:admin.email,createdAt:now,updatedAt:now,useCount:0,lastUsedAt:null};
+      await saveWalletAddress(wallet);addAudit('wallet_address_created',admin.email,{walletId:wallet.id,network});return json(res,201,{ok:true,wallet});
+    }
+    const id=String(b.id||''),wallets=await getWalletAddresses(),current=wallets.find(w=>w.id===id);if(!current)return json(res,404,{error:'wallet_not_found'});
+    if(action==='delete'){
+      if((await getTransactions()).some(x=>x.walletId===id)){
+        if(pool)await pool.query('UPDATE wallet_addresses SET active=FALSE,updated_at=NOW() WHERE id=$1',[id]);else{const db=readDb();const w=(db.walletAddresses||[]).find(x=>x.id===id);w.active=false;w.updatedAt=new Date().toISOString();writeDb(db);}
+        addAudit('wallet_address_deactivated',admin.email,{walletId:id});return json(res,200,{ok:true,deleted:false,active:false});
+      }
+      if(pool)await pool.query('DELETE FROM wallet_addresses WHERE id=$1',[id]);else{const db=readDb();db.walletAddresses=(db.walletAddresses||[]).filter(x=>x.id!==id);writeDb(db);}
+      addAudit('wallet_address_deleted',admin.email,{walletId:id});return json(res,200,{ok:true,deleted:true});
+    }
+    if(action==='update'){
+      const network=String(b.network||current.network).toUpperCase(),address=String(b.address||current.address).trim(),label=String(b.label||current.label).trim().slice(0,80);
+      if(!isValidNetwork(network))return json(res,400,{error:'invalid_network'});if(!isValidAddress(network,address))return json(res,400,{error:'invalid_address'});if(!label)return json(res,400,{error:'invalid_label'});
+      if(wallets.some(w=>w.id!==id&&w.network===network&&String(w.address).toLowerCase()===address.toLowerCase()))return json(res,409,{error:'wallet_exists'});
+      const next={...current,network,address,label,active:b.active===undefined?current.active:!!b.active,updatedAt:new Date().toISOString()};await saveWalletAddress(next);addAudit('wallet_address_updated',admin.email,{walletId:id,network,active:next.active});return json(res,200,{ok:true,wallet:next});
+    }
+    return json(res,400,{error:'invalid_action'});
+  }
+  if(new URL(req.url,'http://localhost').pathname==='/api/admin/support/tickets' && req.method==='GET'){
+    if(!admin)return json(res,401,{error:'unauthorized'});
+    if(pool){const r=await pool.query('SELECT t.id,t.user_id AS "userId",t.subject,t.status,t.created_at AS "createdAt",t.updated_at AS "updatedAt",u.email,u.first_name AS "firstName",u.last_name AS "lastName" FROM support_tickets t JOIN users u ON u.id=t.user_id ORDER BY t.updated_at DESC');const ids=r.rows.map(x=>x.id);const m=ids.length?await pool.query('SELECT id,ticket_id AS "ticketId",sender_role AS "senderRole",sender_id AS "senderId",message,created_at AS "createdAt" FROM support_messages WHERE ticket_id=ANY($1::text[]) ORDER BY created_at',[ids]):{rows:[]};const byId=new Map();for(const msg of m.rows){if(!byId.has(msg.ticketId))byId.set(msg.ticketId,[]);byId.get(msg.ticketId).push(msg);}return json(res,200,{tickets:r.rows.map(x=>({...x,messages:byId.get(x.id)||[]}))});}
+    const db=readDb(),users=db.users||[],messages=db.supportMessages||[];return json(res,200,{tickets:(db.supportTickets||[]).map(t=>({...t,user:users.find(u=>u.id===t.userId)?safeUser(users.find(u=>u.id===t.userId)):null,messages:messages.filter(m=>m.ticketId===t.id)})).sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt))});
+  }
+  const adminSupportMatch=new URL(req.url,'http://localhost').pathname.match(/^\/api\/admin\/support\/tickets\/([^/]+)\/messages$/);
+  if(adminSupportMatch&&req.method==='POST'){
+    if(!admin)return json(res,401,{error:'unauthorized'});const ticketId=decodeURIComponent(adminSupportMatch[1]),b=await body(req),message=String(b.message||'').trim().slice(0,4000);if(!message)return json(res,400,{error:'empty_message'});
+    if(pool){const client=await pool.connect();try{await client.query('BEGIN');const ticket=await client.query("SELECT id FROM support_tickets WHERE id=$1 AND status<>'closed' FOR UPDATE",[ticketId]);if(!ticket.rows[0]){await client.query('ROLLBACK');return json(res,404,{error:'ticket_not_found'});}const item={id:`MSG-${crypto.randomBytes(8).toString('hex').toUpperCase()}`,ticketId,senderRole:'admin',senderId:admin.email,message,createdAt:new Date().toISOString()};await client.query('INSERT INTO support_messages (id,ticket_id,sender_role,sender_id,message,created_at) VALUES ($1,$2,$3,$4,$5,$6)',[item.id,ticketId,item.senderRole,item.senderId,item.message,item.createdAt]);await client.query("UPDATE support_tickets SET status='open',updated_at=$1 WHERE id=$2",[item.createdAt,ticketId]);await client.query('COMMIT');addAudit('support_reply',admin.email,{ticketId});return json(res,201,{ok:true,message:item});}catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}}
+    const db=readDb(),ticket=(db.supportTickets||[]).find(x=>x.id===ticketId&&x.status!=='closed');if(!ticket)return json(res,404,{error:'ticket_not_found'});const item={id:`MSG-${crypto.randomBytes(8).toString('hex').toUpperCase()}`,ticketId,senderRole:'admin',senderId:admin.email,message,createdAt:new Date().toISOString()};db.supportMessages=db.supportMessages||[];db.supportMessages.push(item);ticket.status='open';ticket.updatedAt=item.createdAt;writeDb(db);addAudit('support_reply',admin.email,{ticketId});return json(res,201,{ok:true,message:item});
+  }
   if(req.url==='/api/admin/kyc' && req.method==='GET'){
     if(!admin)return json(res,401,{error:'unauthorized'}); const users=await getUsers(); return json(res,200,{requests:users.filter(u=>u.kycStatus==='pending').map(u=>({userId:u.id,name:u.kycName,email:u.email,submittedAt:u.kycSubmittedAt,status:u.kycStatus}))});
   }
@@ -326,14 +447,16 @@ async function route(req,res){
     const all=await getTransactions(); const tx=all.find(x=>x.id===id); if(!tx)return json(res,404,{error:'transaction_not_found'}); if(tx.status!=='pending')return json(res,409,{error:'already_processed',status:tx.status});
     if(isLocked(tx) && tx.lockedBy!==admin.email)return json(res,409,{error:'transaction_locked',lockedBy:tx.lockedBy});
     const requestedAmount=Number(tx.requestedAmount??tx.requested_amount??tx.amount); const rawApproved=b.approvedAmount; const approvedAmount=decision==='approved' && rawApproved!==undefined && rawApproved!==null && rawApproved!==''?Number(rawApproved):Number(tx.amount); if(decision==='approved'&&(!Number.isFinite(approvedAmount)||approvedAmount<=0))return json(res,400,{error:'invalid_approved_amount'});
+    const payoutTxHash=tx.type==='withdrawal'&&decision==='approved'?String(b.payoutTxHash||'').trim():null;
+    if(payoutTxHash!==null&&payoutTxHash.length<16)return json(res,400,{error:'payout_tx_hash_required',message:'Çekimi onaylamadan önce gönderdiğiniz transferin işlem kimliğini girin.'});
     if(decision==='approved' && tx.type==='withdrawal'){const u=await findUserById(tx.userId);if(approvedAmount>Number(u.balance||0))return json(res,409,{error:'insufficient_balance_at_approval'});}
     const decisionAt=new Date().toISOString(); const amountChanged=Math.abs(approvedAmount-requestedAmount)>1e-8;
-    if(pool){const client=await pool.connect(); try {await client.query('BEGIN'); const lock=await client.query("SELECT status, locked_by FROM transactions WHERE id=$1 FOR UPDATE",[id]); if(!lock.rows[0]||lock.rows[0].status!=='pending'){await client.query('ROLLBACK');return json(res,409,{error:'already_processed'});} if(lock.rows[0].locked_by&&lock.rows[0].locked_by!==admin.email){await client.query('ROLLBACK');return json(res,409,{error:'transaction_locked',lockedBy:lock.rows[0].locked_by});} await client.query('UPDATE transactions SET status=$1,amount=$2,requested_amount=COALESCE(requested_amount,$3),received_amount=$4,decision_by=$5,decision_at=$6,locked_by=NULL,locked_at=NULL WHERE id=$7',[decision,approvedAmount,requestedAmount,approvedAmount,admin.email,decisionAt,id]); if(decision==='approved') await addLedgerEntry({userId:tx.userId,transactionId:tx.id,direction:tx.type==='deposit'?'credit':'debit',amount:approvedAmount,reason:tx.type==='deposit'?'deposit_approved':'withdrawal_approved',metadata:{network:tx.network,admin:admin.email,requestedAmount,approvedAmount,amountChanged}},client); await client.query('COMMIT');} catch(e){await client.query('ROLLBACK');throw e;} finally{client.release();}}
-    else{const db=readDb();const row=db.transactions.find(x=>x.id===id);if(!row||row.status!=='pending')return json(res,409,{error:'already_processed'});if(row.lockedBy&&row.lockedBy!==admin.email&&isLocked(row))return json(res,409,{error:'transaction_locked',lockedBy:row.lockedBy});row.requestedAmount=Number(row.requestedAmount??row.amount);row.receivedAmount=approvedAmount;row.amount=approvedAmount;row.status=decision;row.decisionBy=admin.email;row.decisionAt=decisionAt;row.lockedBy=null;row.lockedAt=null;if(decision==='approved'){const u=db.users.find(x=>x.id===tx.userId);const before=Number(u.balance||0);const credit=tx.type==='deposit';const after=Number((credit?before+approvedAmount:before-approvedAmount).toFixed(8));if(after<0)return json(res,409,{error:'negative_balance_at_approval'});u.balance=after;db.ledger=db.ledger||[];db.ledger.unshift({id:`LED-${crypto.randomBytes(5).toString('hex').toUpperCase()}`,userId:tx.userId,transactionId:tx.id,direction:credit?'credit':'debit',amount:approvedAmount,currency:tx.currency||'USDT',balanceBefore:before,balanceAfter:after,reason:credit?'deposit_approved':'withdrawal_approved',metadata:{network:tx.network,admin:admin.email,requestedAmount,approvedAmount,amountChanged},createdAt:decisionAt});}writeDb(db);}
-    addAudit('transaction_decision',admin.email,{transactionId:id,decision,requestedAmount,approvedAmount,amountChanged}); return json(res,200,{ok:true,status:decision,decisionBy:admin.email,decisionAt,requestedAmount,approvedAmount,amountChanged});
+    if(pool){const client=await pool.connect(); try {await client.query('BEGIN'); const lock=await client.query("SELECT status, locked_by FROM transactions WHERE id=$1 FOR UPDATE",[id]); if(!lock.rows[0]||lock.rows[0].status!=='pending'){await client.query('ROLLBACK');return json(res,409,{error:'already_processed'});} if(lock.rows[0].locked_by&&lock.rows[0].locked_by!==admin.email){await client.query('ROLLBACK');return json(res,409,{error:'transaction_locked',lockedBy:lock.rows[0].locked_by});} if(decision==='approved'&&tx.type==='withdrawal'){const lockedUser=await client.query('SELECT balance FROM users WHERE id=$1 FOR UPDATE',[tx.userId]);if(!lockedUser.rows[0]||approvedAmount>Number(lockedUser.rows[0].balance||0)){await client.query('ROLLBACK');return json(res,409,{error:'insufficient_balance_at_approval'});}} await client.query('UPDATE transactions SET status=$1,amount=$2,requested_amount=COALESCE(requested_amount,$3),received_amount=$4,decision_by=$5,decision_at=$6,locked_by=NULL,locked_at=NULL,tx_hash=COALESCE($7,tx_hash) WHERE id=$8',[decision,approvedAmount,requestedAmount,approvedAmount,admin.email,decisionAt,payoutTxHash,id]); if(decision==='approved') await addLedgerEntry({userId:tx.userId,transactionId:tx.id,direction:tx.type==='deposit'?'credit':'debit',amount:approvedAmount,reason:tx.type==='deposit'?'deposit_approved':'withdrawal_approved',metadata:{network:tx.network,admin:admin.email,requestedAmount,approvedAmount,amountChanged,payoutTxHash}},client); await client.query('COMMIT');} catch(e){await client.query('ROLLBACK');throw e;} finally{client.release();}}
+    else{const db=readDb();const row=db.transactions.find(x=>x.id===id);if(!row||row.status!=='pending')return json(res,409,{error:'already_processed'});if(row.lockedBy&&row.lockedBy!==admin.email&&isLocked(row))return json(res,409,{error:'transaction_locked',lockedBy:row.lockedBy});row.requestedAmount=Number(row.requestedAmount??row.amount);row.receivedAmount=approvedAmount;row.amount=approvedAmount;row.status=decision;row.decisionBy=admin.email;row.decisionAt=decisionAt;row.lockedBy=null;row.lockedAt=null;if(payoutTxHash)row.txHash=payoutTxHash;if(decision==='approved'){const u=db.users.find(x=>x.id===tx.userId);const before=Number(u.balance||0);const credit=tx.type==='deposit';const after=Number((credit?before+approvedAmount:before-approvedAmount).toFixed(8));if(after<0)return json(res,409,{error:'negative_balance_at_approval'});u.balance=after;db.ledger=db.ledger||[];db.ledger.unshift({id:`LED-${crypto.randomBytes(5).toString('hex').toUpperCase()}`,userId:tx.userId,transactionId:tx.id,direction:credit?'credit':'debit',amount:approvedAmount,currency:tx.currency||'USDT',balanceBefore:before,balanceAfter:after,reason:credit?'deposit_approved':'withdrawal_approved',metadata:{network:tx.network,admin:admin.email,requestedAmount,approvedAmount,amountChanged,payoutTxHash},createdAt:decisionAt});}writeDb(db);}
+    addAudit('transaction_decision',admin.email,{transactionId:id,userId:tx.userId,type:tx.type,decision,requestedAmount,approvedAmount,amountChanged,payoutTxHash}); return json(res,200,{ok:true,status:decision,decisionBy:admin.email,decisionAt,requestedAmount,approvedAmount,amountChanged,payoutTxHash});
   }
   if(req.url==='/api/admin/audit' && req.method==='GET'){
-    if(!admin)return json(res,401,{error:'unauthorized'}); return json(res,200,{audit:auditLog});
+    if(!admin)return json(res,401,{error:'unauthorized'}); return json(res,200,{audit:await getAuditLog()});
   }
 
   if(req.url.startsWith('/api/auth/check-username') && req.method==='GET'){
@@ -346,12 +469,12 @@ async function route(req,res){
     if(first.length<2 || last.length<2) return json(res,400,{error:'invalid_name'});
     if(!/^[a-z0-9_]{3,20}$/.test(username)) return json(res,400,{error:'invalid_username'});
     if(!validEmail(email)) return json(res,400,{error:'invalid_email'});
-    if(!validPhone(phone)) return json(res,400,{error:'invalid_phone',message:'Telefon +90XXXXXXXXXX formatÄ±nda olmalÄ±.'});
+    if(!validPhone(phone)) return json(res,400,{error:'invalid_phone',message:'Telefon +90XXXXXXXXXX formatında olmalı.'});
     if(password.length<8) return json(res,400,{error:'weak_password'});
     const users=await getUsers();
     if(users.some(u=>u.email.toLowerCase()===email)) return json(res,409,{error:'email_exists'});
     if(users.some(u=>normalizePhone(u.phone)===phone)) return json(res,409,{error:'phone_exists'});
-    if(users.some(u=>String(u.username||'').toLowerCase()===username)) return json(res,409,{error:'username_exists',message:'Bu kullanÄ±cÄ± adÄ± zaten kullanÄ±lÄ±yor.'});
+    if(users.some(u=>String(u.username||'').toLowerCase()===username)) return json(res,409,{error:'username_exists',message:'Bu kullanıcı adı zaten kullanılıyor.'});
     const user={id:makeUserId(users),firstName:first,lastName:last,username,email,phone,passwordHash:hashPassword(password),role:'user',balance:0,referralEarnings:0,referralCode:`SAFE-${crypto.randomBytes(3).toString('hex').toUpperCase()}`,twoFactorEnabled:false,phoneVerified:false,emailVerified:false,createdAt:new Date().toISOString()};
     if(referralCode) user.referredBy=referralCode;
     await insertUser(user);
@@ -363,17 +486,15 @@ async function route(req,res){
     const b=await body(req); const identifier=String(b.email||b.phone||'').trim(); const password=String(b.password||''); const users=await getUsers();
     const normalized=normalizePhone(identifier);
     const u=users.find(x=>x.email.toLowerCase()===identifier.toLowerCase() || normalizePhone(x.phone)===normalized);
-    const valid=u && (verifyPassword(password,u.passwordHash) || (u.email==='test@safepays.local' && password==='12345678'));
+    const valid=u && verifyPassword(password,u.passwordHash);
     if(!valid) return json(res,401,{error:'invalid_credentials'});
-    if(u.securityStatus==='locked') return json(res,403,{error:'account_locked',message:'HesabÄ±nÄ±z gÃ¼venlik nedeniyle kilitlenmiÅŸtir.'});
+    if(u.securityStatus==='locked') return json(res,403,{error:'account_locked',message:'Hesabınız güvenlik nedeniyle kilitlenmiştir.'});
     const t=token(); sessions.set(t,{userId:u.id,expires:Date.now()+TTL});
     return json(res,200,{token:t,user:safeUser(u),expiresIn:TTL/1000});
   }
 
   if(req.url==='/api/auth/send-verification' && req.method==='POST'){
-    const b=await body(req); const type=b.type==='phone'?'phone':'email'; const value=String(b.value||'').trim().toLowerCase();
-    const code=String(Math.floor(100000+Math.random()*900000)); const key=`${type}:${value}`; verificationCodes.set(key,{code,expires:Date.now()+10*60*1000});
-    return json(res,200,{ok:true,message:`Demo doÄŸrulama kodu oluÅŸturuldu.`,demoCode:code,expiresIn:600});
+    return json(res,503,{ok:false,error:'verification_provider_not_configured',message:'E-posta veya SMS doğrulama sağlayıcısı henüz yapılandırılmadı.'});
   }
   if(req.url==='/api/auth/verify' && req.method==='POST'){
     const b=await body(req); const type=b.type==='phone'?'phone':'email'; const value=String(b.value||'').trim().toLowerCase(); const code=String(b.code||''); const key=`${type}:${value}`; const item=verificationCodes.get(key);
@@ -382,10 +503,7 @@ async function route(req,res){
   }
 
   if(req.url==='/api/auth/forgot-password' && req.method==='POST'){
-    const b=await body(req); const identifier=String(b.email||'').trim().toLowerCase(); const u=await findUserByEmail(identifier);
-    // Demo: token is returned only so the local flow can be tested. Production must email it server-side.
-    const resetToken=token(); if(u) resetTokens.set(resetToken,{userId:u.id,expires:Date.now()+15*60*1000});
-    return json(res,200,{ok:true,message:'EÄŸer hesap mevcutsa ÅŸifre sÄ±fÄ±rlama baÄŸlantÄ±sÄ± gÃ¶nderilecektir.',demoToken:u?resetToken:null});
+    return json(res,503,{ok:false,error:'email_provider_not_configured',message:'Şifre sıfırlama e-postası şu anda gönderilemiyor; e-posta sağlayıcısı yapılandırılmalı.'});
   }
 
   // Self-contained password-reset flow (works on any Node host, incl. Render — no Netlify/email dependency required).
@@ -395,16 +513,7 @@ async function route(req,res){
     const b=await body(req); const action=String(b.action||''); const email=String(b.email||'').trim().toLowerCase();
     if(!validEmail(email)) return json(res,400,{error:'invalid_email'});
     if(action==='send'){
-      const existing=passwordResetCodes.get(email);
-      if(existing && existing.sentAt && Date.now()-existing.sentAt<60000) return json(res,200,{ok:true,status:'sent'});
-      const code=String(crypto.randomInt(0,1000000)).padStart(6,'0');
-      const record={codeHash:crypto.createHash('sha256').update(`${email}:${code}`).digest('hex'),sentAt:Date.now(),expires:Date.now()+10*60*1000,attempts:0};
-      passwordResetCodes.set(email,record);
-      const u=await findUserByEmail(email);
-      // No transactional email provider is configured in this project yet. We log the code server-side so an
-      // operator can relay it, and only ever return it in the response outside production so local/dev testing works.
-      console.log(`[password-reset] code for ${email}: ${u?code:'(no account — code withheld)'}`);
-      return json(res,200,{ok:true,status:'sent', demoCode: (process.env.NODE_ENV!=='production' && u) ? code : undefined});
+      return json(res,503,{ok:false,error:'email_provider_not_configured',message:'Şifre sıfırlama e-postası şu anda gönderilemiyor; e-posta sağlayıcısı yapılandırılmalı.'});
     }
     if(action==='verify'){
       const code=String(b.code||'').trim(); const newPassword=b.newPassword!==undefined?String(b.newPassword):null;
@@ -433,12 +542,62 @@ async function route(req,res){
   }
 
   const uid=auth(req);
+  if(req.url==='/api/support/tickets' && req.method==='GET'){
+    if(!uid)return json(res,401,{error:'unauthorized'});
+    if(pool){const r=await pool.query('SELECT id,user_id AS "userId",subject,status,created_at AS "createdAt",updated_at AS "updatedAt" FROM support_tickets WHERE user_id=$1 ORDER BY updated_at DESC',[uid]);const ids=r.rows.map(x=>x.id);const m=ids.length?await pool.query('SELECT id,ticket_id AS "ticketId",sender_role AS "senderRole",sender_id AS "senderId",message,created_at AS "createdAt" FROM support_messages WHERE ticket_id=ANY($1::text[]) ORDER BY created_at',[ids]):{rows:[]};const byId=new Map();for(const msg of m.rows){if(!byId.has(msg.ticketId))byId.set(msg.ticketId,[]);byId.get(msg.ticketId).push(msg);}return json(res,200,{tickets:r.rows.map(x=>({...x,messages:byId.get(x.id)||[]}))});}
+    const db=readDb();return json(res,200,{tickets:(db.supportTickets||[]).filter(x=>x.userId===uid).map(t=>({...t,messages:(db.supportMessages||[]).filter(m=>m.ticketId===t.id)})).sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt))});
+  }
+  if(req.url==='/api/support/tickets' && req.method==='POST'){
+    if(!uid)return json(res,401,{error:'unauthorized'});const b=await body(req),subject=String(b.subject||'').trim().slice(0,160),message=String(b.message||'').trim().slice(0,4000);if(subject.length<3||!message)return json(res,400,{error:'invalid_ticket'});
+    const now=new Date().toISOString(),ticket={id:`SUP-${crypto.randomBytes(7).toString('hex').toUpperCase()}`,userId:uid,subject,status:'open',createdAt:now,updatedAt:now},item={id:`MSG-${crypto.randomBytes(8).toString('hex').toUpperCase()}`,ticketId:ticket.id,senderRole:'user',senderId:uid,message,createdAt:now};
+    if(pool){const client=await pool.connect();try{await client.query('BEGIN');await client.query('INSERT INTO support_tickets (id,user_id,subject,status,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6)',[ticket.id,uid,ticket.subject,ticket.status,now,now]);await client.query('INSERT INTO support_messages (id,ticket_id,sender_role,sender_id,message,created_at) VALUES ($1,$2,$3,$4,$5,$6)',[item.id,ticket.id,item.senderRole,item.senderId,item.message,now]);await client.query('COMMIT');}catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}}
+    else{const db=readDb();db.supportTickets=db.supportTickets||[];db.supportMessages=db.supportMessages||[];db.supportTickets.unshift(ticket);db.supportMessages.push(item);writeDb(db);}
+    return json(res,201,{ok:true,ticket:{...ticket,messages:[item]}});
+  }
+  const memberSupportMatch=new URL(req.url,'http://localhost').pathname.match(/^\/api\/support\/tickets\/([^/]+)(?:\/(messages|close))?$/);
+  if(memberSupportMatch){
+    if(!uid)return json(res,401,{error:'unauthorized'});const ticketId=decodeURIComponent(memberSupportMatch[1]),sub=memberSupportMatch[2]||'';
+    if(!sub&&req.method==='GET'){
+      if(pool){const r=await pool.query('SELECT id,user_id AS "userId",subject,status,created_at AS "createdAt",updated_at AS "updatedAt" FROM support_tickets WHERE id=$1 AND user_id=$2',[ticketId,uid]);if(!r.rows[0])return json(res,404,{error:'ticket_not_found'});const m=await pool.query('SELECT id,ticket_id AS "ticketId",sender_role AS "senderRole",sender_id AS "senderId",message,created_at AS "createdAt" FROM support_messages WHERE ticket_id=$1 ORDER BY created_at',[ticketId]);return json(res,200,{ticket:{...r.rows[0],messages:m.rows}});}
+      const db=readDb(),ticket=(db.supportTickets||[]).find(x=>x.id===ticketId&&x.userId===uid);if(!ticket)return json(res,404,{error:'ticket_not_found'});return json(res,200,{ticket:{...ticket,messages:(db.supportMessages||[]).filter(m=>m.ticketId===ticketId)}});
+    }
+    if(sub==='messages'&&req.method==='POST'){
+      const b=await body(req),message=String(b.message||'').trim().slice(0,4000);if(!message)return json(res,400,{error:'empty_message'});
+      const item={id:`MSG-${crypto.randomBytes(8).toString('hex').toUpperCase()}`,ticketId,senderRole:'user',senderId:uid,message,createdAt:new Date().toISOString()};
+      if(pool){const client=await pool.connect();try{await client.query('BEGIN');const t=await client.query("SELECT id FROM support_tickets WHERE id=$1 AND user_id=$2 AND status<>'closed' FOR UPDATE",[ticketId,uid]);if(!t.rows[0]){await client.query('ROLLBACK');return json(res,404,{error:'ticket_not_found'});}await client.query('INSERT INTO support_messages (id,ticket_id,sender_role,sender_id,message,created_at) VALUES ($1,$2,$3,$4,$5,$6)',[item.id,ticketId,item.senderRole,item.senderId,item.message,item.createdAt]);await client.query('UPDATE support_tickets SET updated_at=$1 WHERE id=$2',[item.createdAt,ticketId]);await client.query('COMMIT');}catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}}
+      else{const db=readDb(),t=(db.supportTickets||[]).find(x=>x.id===ticketId&&x.userId===uid&&x.status!=='closed');if(!t)return json(res,404,{error:'ticket_not_found'});db.supportMessages=db.supportMessages||[];db.supportMessages.push(item);t.updatedAt=item.createdAt;writeDb(db);}
+      return json(res,201,{ok:true,message:item});
+    }
+    if(sub==='close'&&req.method==='POST'){
+      if(pool){const r=await pool.query("UPDATE support_tickets SET status='closed',updated_at=NOW() WHERE id=$1 AND user_id=$2 RETURNING status",[ticketId,uid]);if(!r.rows[0])return json(res,404,{error:'ticket_not_found'});return json(res,200,{ok:true,status:'closed'});}
+      const db=readDb(),t=(db.supportTickets||[]).find(x=>x.id===ticketId&&x.userId===uid);if(!t)return json(res,404,{error:'ticket_not_found'});t.status='closed';t.updatedAt=new Date().toISOString();writeDb(db);return json(res,200,{ok:true,status:'closed'});
+    }
+    return json(res,405,{error:'method_not_allowed'});
+  }
   if(req.url==='/api/auth/me' && req.method==='GET'){
     if(!uid)return json(res,401,{error:'unauthorized'}); const u=await findUserById(uid); return json(res,200,{user:safeUser(u)});
   }
+  if(req.url==='/api/auth/change-password' && req.method==='POST'){
+    if(!uid)return json(res,401,{error:'unauthorized'});
+    const b=await body(req),currentPassword=String(b.currentPassword||''),newPassword=String(b.newPassword||'');
+    if(newPassword.length<8)return json(res,400,{error:'weak_password',message:'Yeni şifre en az 8 karakter olmalı.'});
+    const user=await findUserById(uid);
+    if(!user||!verifyPassword(currentPassword,user.passwordHash))return json(res,403,{error:'invalid_current_password',message:'Mevcut şifre hatalı.'});
+    const passwordHash=hashPassword(newPassword);
+    if(pool)await pool.query('UPDATE users SET password_hash=$1 WHERE id=$2',[passwordHash,uid]);
+    else{const db=readDb(),row=db.users.find(x=>x.id===uid);if(!row)return json(res,404,{error:'user_not_found'});row.passwordHash=passwordHash;writeDb(db);}
+    addAudit('user_password_changed',uid,{});
+    return json(res,200,{ok:true});
+  }
+  if(req.url==='/api/referrals' && req.method==='GET'){
+    if(!uid)return json(res,401,{error:'unauthorized'});
+    const user=await findUserById(uid),users=await getUsers(),tx=await getTransactions();
+    const referrals=users.filter(x=>x.referredBy===uid).map(x=>{const own=tx.filter(t=>t.userId===x.id);return {id:x.id,name:[x.firstName,x.lastName].filter(Boolean).join(' '),createdAt:x.createdAt,hasApprovedDeposit:own.some(t=>t.type==='deposit'&&t.status==='approved')};});
+    return json(res,200,{referralCode:user?.referralCode||null,total:referrals.length,active:referrals.filter(x=>x.hasApprovedDeposit).length,earnings:Number(user?.referralEarnings||0),referrals});
+  }
 
   if(req.url==='/api/rates' && req.method==='GET'){
-    const snap=await getMarketSnapshot(); const settings=getRateSettings();
+    const snap=await getMarketSnapshot(); const settings=await getRateSettings();
     const market=Number(snap.market); const safepays=calc(market,settings.usdTrySpread);
     if(settings.minRate && safepays<settings.minRate)return json(res,503,{error:'rate_below_configured_min'});
     if(settings.maxRate && safepays>settings.maxRate)return json(res,503,{error:'rate_above_configured_max'});
@@ -447,7 +606,7 @@ async function route(req,res){
   if(req.url==='/api/quote' && req.method==='POST'){
     const b=await body(req); const tryAmount=Number(b.tryAmount); const usdtAmount=Number(b.usdtAmount); const network=String(b.network||'TRC20').toUpperCase();
     if(!isValidNetwork(network))return json(res,400,{error:'invalid_network'});
-    const snap=await getMarketSnapshot(); const settings=getRateSettings(); const market=Number(snap.market); const safepays=calc(market,settings.usdTrySpread);
+    const snap=await getMarketSnapshot(); const settings=await getRateSettings(); const market=Number(snap.market); const safepays=calc(market,settings.usdTrySpread);
     if(!Number.isFinite(safepays)||safepays<=0)return json(res,503,{error:'rate_unavailable'});
     const fee=Number(settings[network==='TRC20'?'trc20FeeUsdt':'erc20FeeUsdt']);
     const quote=makeQuote({marketRate:Number(market.toFixed(4)),safepaysRate:Number(safepays.toFixed(4)),network,feeUsdt:fee,spread:Number(settings.usdTrySpread),ttlSeconds:Math.min(300,Math.max(15,Number(settings.quoteTtlSeconds)||60))});
@@ -460,51 +619,91 @@ async function route(req,res){
   }
   if(req.url==='/api/convert' && req.method==='POST'){
     const b=await body(req); const tryAmount=Number(b.tryAmount); const usdtAmount=Number(b.usdtAmount); const network=String(b.network||'TRC20').toUpperCase();
-    const market=await getMarketUsdtTry(); const settings=getRateSettings(); const safepays=calc(market,settings.usdTrySpread);
+    const market=await getMarketUsdtTry(); const settings=await getRateSettings(); const safepays=calc(market,settings.usdTrySpread);
     if(!isValidNetwork(network))return json(res,400,{error:'invalid_network'});
     if(Number.isFinite(tryAmount)&&tryAmount>0) return json(res,200,{ok:true,direction:'TRY_TO_USDT',tryAmount,usdtAmount:Number((tryAmount/safepays).toFixed(6)),marketRate:Number(market.toFixed(4)),safepaysRate:Number(safepays.toFixed(4)),network,feeUsdt:Number(settings[network==='TRC20'?'trc20FeeUsdt':'erc20FeeUsdt'])});
     if(Number.isFinite(usdtAmount)&&usdtAmount>0) return json(res,200,{ok:true,direction:'USDT_TO_TRY',usdtAmount,tryAmount:Number((usdtAmount*safepays).toFixed(2)),marketRate:Number(market.toFixed(4)),safepaysRate:Number(safepays.toFixed(4)),network,feeUsdt:Number(settings[network==='TRC20'?'trc20FeeUsdt':'erc20FeeUsdt'])});
     return json(res,400,{error:'invalid_amount'});
   }
   if(req.url==='/api/admin/rates' && req.method==='GET'){
-    const a=adminAuth(req); if(!a)return json(res,401,{error:'unauthorized'}); const snap=await getMarketSnapshot(); const settings=getRateSettings(); return json(res,200,{marketRate:snap.market,safepaysRate:calc(snap.market,settings.usdTrySpread),source:snap.source,stale:!!snap.stale,rateAgeSeconds:Math.round((snap.ageMs||0)/1000),...settings});
+    const a=adminAuth(req); if(!a)return json(res,401,{error:'unauthorized'}); const snap=await getMarketSnapshot(); const settings=await getRateSettings(); return json(res,200,{marketRate:snap.market,safepaysRate:calc(snap.market,settings.usdTrySpread),source:snap.source,stale:!!snap.stale,rateAgeSeconds:Math.round((snap.ageMs||0)/1000),...settings});
   }
   if(req.url==='/api/admin/rates' && req.method==='POST'){
-    const a=adminAuth(req); if(!a)return json(res,401,{error:'unauthorized'}); const b=await body(req); const usdTrySpread=Math.max(0,Number(b.usdTrySpread)); const trc20FeeUsdt=Math.max(0,Number(b.trc20FeeUsdt)); const erc20FeeUsdt=Math.max(0,Number(b.erc20FeeUsdt)); const quoteTtlSeconds=Math.min(300,Math.max(15,Number(b.quoteTtlSeconds||60))); const maxRateAgeSeconds=Math.min(3600,Math.max(30,Number(b.maxRateAgeSeconds||300))); const minRate=Math.max(0,Number(b.minRate||0)); const maxRate=Math.max(minRate,Number(b.maxRate||100000)); if(![usdTrySpread,trc20FeeUsdt,erc20FeeUsdt,quoteTtlSeconds,maxRateAgeSeconds,minRate,maxRate].every(Number.isFinite))return json(res,400,{error:'invalid_rate_settings'}); saveRateSettings({usdTrySpread,trc20FeeUsdt,erc20FeeUsdt,quoteTtlSeconds,maxRateAgeSeconds,minRate,maxRate}); addAudit('rate_settings_update',a.email,{usdTrySpread,trc20FeeUsdt,erc20FeeUsdt,quoteTtlSeconds,maxRateAgeSeconds,minRate,maxRate}); const snap=await getMarketSnapshot(); return json(res,200,{ok:true,marketRate:snap.market,safepaysRate:calc(snap.market,usdTrySpread),source:snap.source,usdTrySpread,trc20FeeUsdt,erc20FeeUsdt,quoteTtlSeconds,maxRateAgeSeconds,minRate,maxRate});
+    const a=adminAuth(req); if(!a)return json(res,401,{error:'unauthorized'}); const b=await body(req); const usdTrySpread=Math.max(0,Number(b.usdTrySpread)); const trc20FeeUsdt=Math.max(0,Number(b.trc20FeeUsdt)); const erc20FeeUsdt=Math.max(0,Number(b.erc20FeeUsdt)); const quoteTtlSeconds=Math.min(300,Math.max(15,Number(b.quoteTtlSeconds||60))); const maxRateAgeSeconds=Math.min(3600,Math.max(30,Number(b.maxRateAgeSeconds||300))); const minRate=Math.max(0,Number(b.minRate||0)); const maxRate=Math.max(minRate,Number(b.maxRate||100000)); if(![usdTrySpread,trc20FeeUsdt,erc20FeeUsdt,quoteTtlSeconds,maxRateAgeSeconds,minRate,maxRate].every(Number.isFinite))return json(res,400,{error:'invalid_rate_settings'}); await saveRateSettings({usdTrySpread,trc20FeeUsdt,erc20FeeUsdt,quoteTtlSeconds,maxRateAgeSeconds,minRate,maxRate}); addAudit('rate_settings_update',a.email,{usdTrySpread,trc20FeeUsdt,erc20FeeUsdt,quoteTtlSeconds,maxRateAgeSeconds,minRate,maxRate}); const snap=await getMarketSnapshot(); return json(res,200,{ok:true,marketRate:snap.market,safepaysRate:calc(snap.market,usdTrySpread),source:snap.source,usdTrySpread,trc20FeeUsdt,erc20FeeUsdt,quoteTtlSeconds,maxRateAgeSeconds,minRate,maxRate});
   }
 
+  if(req.url==='/api/deposits/prepare' && req.method==='POST'){
+    if(!uid)return json(res,401,{error:'unauthorized'});
+    const b=await body(req),amount=Number(b.amount),network=String(b.network||'').toUpperCase(),user=await findUserById(uid);
+    if(user?.securityStatus==='locked'||user?.securityStatus==='suspended'||user?.depositFrozen)return json(res,403,{error:'deposits_blocked'});
+    if(!Number.isFinite(amount)||amount<10)return json(res,400,{error:'invalid_amount'});if(!isValidNetwork(network))return json(res,400,{error:'invalid_network'});
+    const available=(await getWalletAddresses({activeOnly:true})).filter(w=>w.network===network);if(!available.length)return json(res,409,{error:'wallet_unavailable',message:'Bu ağ için aktif yatırım adresi henüz yapılandırılmadı.'});
+    const now=new Date(),expiresAt=new Date(now.getTime()+20*60*1000).toISOString();let wallet,intent;
+    if(pool){
+      const client=await pool.connect();
+      try{
+        await client.query('BEGIN');
+        const picked=await client.query('SELECT id,network,address,label FROM wallet_addresses WHERE network=$1 AND active=TRUE ORDER BY last_used_at NULLS FIRST,use_count,created_at FOR UPDATE SKIP LOCKED LIMIT 1',[network]);
+        if(!picked.rows[0]){await client.query('ROLLBACK');return json(res,409,{error:'wallet_unavailable'});}
+        wallet=picked.rows[0];await client.query('UPDATE wallet_addresses SET use_count=use_count+1,last_used_at=$1,updated_at=$1 WHERE id=$2',[now.toISOString(),wallet.id]);
+        intent={id:`DPI-${crypto.randomBytes(12).toString('hex').toUpperCase()}`,userId:uid,walletId:wallet.id,amount,network,createdAt:now.toISOString(),expiresAt};
+        await client.query('INSERT INTO deposit_intents (id,user_id,wallet_id,amount,network,created_at,expires_at) VALUES ($1,$2,$3,$4,$5,$6,$7)',[intent.id,uid,wallet.id,amount,network,intent.createdAt,intent.expiresAt]);await client.query('COMMIT');
+      }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
+    }else{
+      wallet=available.sort((a,b)=>Number(a.useCount||0)-Number(b.useCount||0)||new Date(a.lastUsedAt||0)-new Date(b.lastUsedAt||0))[0];
+      const db=readDb(),saved=(db.walletAddresses||[]).find(w=>w.id===wallet.id);saved.useCount=Number(saved.useCount||0)+1;saved.lastUsedAt=now.toISOString();saved.updatedAt=now.toISOString();
+      intent={id:`DPI-${crypto.randomBytes(12).toString('hex').toUpperCase()}`,userId:uid,walletId:wallet.id,amount,network,createdAt:now.toISOString(),expiresAt,usedAt:null};db.depositIntents=db.depositIntents||[];db.depositIntents.unshift(intent);writeDb(db);
+    }
+    return json(res,201,{ok:true,intentId:intent.id,amount,network,address:wallet.address,label:wallet.label,walletId:wallet.id,createdAt:intent.createdAt,expiresAt:intent.expiresAt});
+  }
   if(req.url==='/api/deposits' && req.method==='POST'){
     if(!uid)return json(res,401,{error:'unauthorized'});
-    const b=await body(req); const amount=Number(b.amount); const network=String(b.network||'').toUpperCase(); const txHash=String(b.txHash||'').trim(); const currentUser=await findUserById(uid); if(currentUser?.securityStatus==='locked'||currentUser?.securityStatus==='suspended'||currentUser?.depositFrozen) return json(res,403,{error:'deposits_blocked',message:'YatÄ±rÄ±m talepleri gÃ¼venlik nedeniyle geÃ§ici olarak dondurulmuÅŸtur.'}); const requestKey=getRequestKey(req,b) || `AUTO-${crypto.randomUUID()}`;
+    const b=await body(req); const amount=Number(b.amount); const network=String(b.network||'').toUpperCase(); const txHash=String(b.txHash||'').trim(); const currentUser=await findUserById(uid); if(currentUser?.securityStatus==='locked'||currentUser?.securityStatus==='suspended'||currentUser?.depositFrozen) return json(res,403,{error:'deposits_blocked',message:'Yatırım talepleri güvenlik nedeniyle geçici olarak dondurulmuştur.'}); const requestKey=getRequestKey(req,b) || `AUTO-${crypto.randomUUID()}`;
     if(requestKey){const existingKey=(await getTransactions()).find(x=>x.requestKey===requestKey && x.userId===uid); if(existingKey)return json(res,200,{ok:true,idempotent:true,transaction:existingKey});}
-    if(!Number.isFinite(amount)||amount<10)return json(res,400,{error:'invalid_amount',message:'Minimum yatÄ±rÄ±m 10 USDT.'});
+    if(!Number.isFinite(amount)||amount<10)return json(res,400,{error:'invalid_amount',message:'Minimum yatırım 10 USDT.'});
     if(!isValidNetwork(network))return json(res,400,{error:'invalid_network'});
     if(txHash.length<16)return json(res,400,{error:'invalid_tx_hash'});
+    const intent=await getDepositIntent(String(b.intentId||''),uid);
+    if(!intent||intent.usedAt||new Date(intent.expiresAt).getTime()<=Date.now()||Number(intent.amount)!==amount||intent.network!==network)return json(res,400,{error:'invalid_deposit_intent'});
+    const wallet=(await getWalletAddresses()).find(w=>w.id===intent.walletId);if(!wallet)return json(res,400,{error:'wallet_unavailable'});
     const existing=(await getTransactions()).find(x=>x.txHash&&x.txHash.toLowerCase()===txHash.toLowerCase());
     if(existing)return json(res,409,{error:'duplicate_tx_hash',transactionId:existing.id});
     const cooldown=await requestCooldownRemaining(uid);
-    if(cooldown>0)return json(res,429,{error:'request_cooldown',cooldownSeconds:Math.ceil(cooldown/1000),message:'Yeni yatÄ±rÄ±m veya Ã§ekim talebi iÃ§in '+Math.ceil(cooldown/1000)+' saniye beklemelisiniz.'});
-    startRequestCooldown(uid);
-    const createdAt=new Date(); const tx={id:makeTxId(),userId:uid,type:'deposit',amount,requestedAmount:amount,receivedAmount:null,currency:'USDT',network,status:'pending',createdAt:createdAt.toISOString(),txHash,requestKey,expiresAt:new Date(createdAt.getTime()+TX_CONTROL.autoRejectMinutes*60000).toISOString()};
-    await insertTransaction(tx); addAudit('deposit_request',uid,{transactionId:tx.id,amount,network});
-    return json(res,201,{ok:true,transaction:tx,requestKey,message:'YatÄ±rÄ±m talebi alÄ±ndÄ±. Yeni talep oluÅŸturabilirsiniz; her talep ayrÄ± iÅŸlem ID ile kaydedilir.'});
+    if(cooldown>0)return json(res,429,{error:'request_cooldown',cooldownSeconds:Math.ceil(cooldown/1000),message:'Yeni yatırım veya çekim talebi için '+Math.ceil(cooldown/1000)+' saniye beklemelisiniz.'});
+    const createdAt=new Date(); const tx={id:makeTxId(),userId:uid,type:'deposit',amount,requestedAmount:amount,receivedAmount:null,currency:'USDT',network,status:'pending',createdAt:createdAt.toISOString(),txHash,address:wallet.address,walletId:wallet.id,requestKey,expiresAt:new Date(createdAt.getTime()+TX_CONTROL.autoRejectMinutes*60000).toISOString()};
+    if(pool){
+      const client=await pool.connect();
+      try{
+        await client.query('BEGIN');
+        const claimed=await client.query('UPDATE deposit_intents SET used_at=NOW() WHERE id=$1 AND user_id=$2 AND used_at IS NULL AND expires_at>NOW() RETURNING id',[intent.id,uid]);
+        if(!claimed.rows[0]){await client.query('ROLLBACK');return json(res,400,{error:'invalid_deposit_intent'});}
+        await insertTransaction(tx,client);
+        await client.query('COMMIT');
+      }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
+    }else{
+      const db=readDb(),row=(db.depositIntents||[]).find(x=>x.id===intent.id&&x.userId===uid);
+      if(!row||row.usedAt||new Date(row.expiresAt).getTime()<=Date.now())return json(res,400,{error:'invalid_deposit_intent'});
+      row.usedAt=new Date().toISOString();db.transactions.unshift(tx);writeDb(db);
+    }
+    startRequestCooldown(uid); addAudit('deposit_request',uid,{transactionId:tx.id,amount,network});
+    return json(res,201,{ok:true,transaction:tx,requestKey,message:'Yatırım talebi alındı. Yeni talep oluşturabilirsiniz; her talep ayrı işlem ID ile kaydedilir.'});
   }
   if(req.url==='/api/withdrawals' && req.method==='POST'){
     if(!uid)return json(res,401,{error:'unauthorized'});
-    const b=await body(req); const amount=Number(b.amount); const network=String(b.network||'').toUpperCase(); const address=String(b.address||'').trim(); const u=await findUserById(uid); if(u?.securityStatus==='locked'||u?.securityStatus==='suspended'||u?.withdrawalFrozen) return json(res,403,{error:'withdrawals_blocked',message:'Ã‡ekim talepleri gÃ¼venlik nedeniyle geÃ§ici olarak dondurulmuÅŸtur.'}); const requestKey=getRequestKey(req,b) || `AUTO-${crypto.randomUUID()}`;
+    const b=await body(req); const amount=Number(b.amount); const network=String(b.network||'').toUpperCase(); const address=String(b.address||'').trim(); const u=await findUserById(uid); if(u?.securityStatus==='locked'||u?.securityStatus==='suspended'||u?.withdrawalFrozen) return json(res,403,{error:'withdrawals_blocked',message:'Çekim talepleri güvenlik nedeniyle geçici olarak dondurulmuştur.'}); const requestKey=getRequestKey(req,b) || `AUTO-${crypto.randomUUID()}`;
     if(requestKey){const existingKey=(await getTransactions()).find(x=>x.requestKey===requestKey && x.userId===uid); if(existingKey)return json(res,200,{ok:true,idempotent:true,transaction:existingKey});}
-    if(!Number.isFinite(amount)||amount<10)return json(res,400,{error:'invalid_amount',message:'Minimum Ã§ekim 10 USDT.'});
+    if(!Number.isFinite(amount)||amount<10)return json(res,400,{error:'invalid_amount',message:'Minimum çekim 10 USDT.'});
     if(!isValidNetwork(network))return json(res,400,{error:'invalid_network'});
-    if(!isValidAddress(network,address))return json(res,400,{error:'invalid_address',message:'CÃ¼zdan adresi seÃ§ilen aÄŸ ile uyumlu deÄŸil.'});
-    if(amount>demoBalance(u))return json(res,400,{error:'insufficient_balance'});
+    if(!isValidAddress(network,address))return json(res,400,{error:'invalid_address',message:'Cüzdan adresi seçilen ağ ile uyumlu değil.'});
+    if(amount>currentBalance(u))return json(res,400,{error:'insufficient_balance'});
     const pending=(await getTransactions()).filter(x=>x.userId===uid&&x.type==='withdrawal'&&x.status==='pending').reduce((a,x)=>a+Number(x.amount||0),0);
-    if(amount+pending>demoBalance(u))return json(res,400,{error:'insufficient_available_balance'});
+    if(amount+pending>currentBalance(u))return json(res,400,{error:'insufficient_available_balance'});
     const cooldown=await requestCooldownRemaining(uid);
-    if(cooldown>0)return json(res,429,{error:'request_cooldown',cooldownSeconds:Math.ceil(cooldown/1000),message:'Yeni yatÄ±rÄ±m veya Ã§ekim talebi iÃ§in '+Math.ceil(cooldown/1000)+' saniye beklemelisiniz.'});
+    if(cooldown>0)return json(res,429,{error:'request_cooldown',cooldownSeconds:Math.ceil(cooldown/1000),message:'Yeni yatırım veya çekim talebi için '+Math.ceil(cooldown/1000)+' saniye beklemelisiniz.'});
     startRequestCooldown(uid);
     const createdAt=new Date(); const tx={id:makeTxId(),userId:uid,type:'withdrawal',amount,requestedAmount:amount,receivedAmount:null,currency:'USDT',network,status:'pending',createdAt:createdAt.toISOString(),txHash:null,address,requestKey,expiresAt:new Date(createdAt.getTime()+TX_CONTROL.autoRejectMinutes*60000).toISOString()};
     await insertTransaction(tx); addAudit('withdrawal_request',uid,{transactionId:tx.id,amount,network});
-    return json(res,201,{ok:true,transaction:tx,requestKey,message:'Ã‡ekim talebi alÄ±ndÄ±. Yeni talep oluÅŸturabilirsiniz; her talep ayrÄ± iÅŸlem ID ile kaydedilir.'});
+    return json(res,201,{ok:true,transaction:tx,requestKey,message:'Çekim talebi alındı. Yeni talep oluşturabilirsiniz; her talep ayrı işlem ID ile kaydedilir.'});
   }
 
   if(req.url==='/api/transactions' && req.method==='GET'){

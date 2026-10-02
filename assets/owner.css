@@ -122,7 +122,7 @@ body.admin-body .search-row input{border-color:#4b2270!important}
 body.admin-body .error-box,
 body.admin-body #error{background:rgba(110,25,45,.32)!important;border:1px solid #78334a!important;color:#ff9aa8!important;border-radius:10px}
 body.admin-body .security-note,
-body.admin-body .demo-login-note,
+body.admin-body .admin-login-note,
 body.admin-body .image-upload-error{background:linear-gradient(145deg,#21102f,#160a22)!important;border:1px solid #5b2b7f!important;color:#d9c7e8!important}
 body.admin-body .content-tab{background:#12071f!important;color:#bda9cc!important}
 body.admin-body .content-tab.active,
@@ -260,7 +260,7 @@ body.admin-body.owner-page td{color:#e9dff1!important;border-bottom-color:#29133
 body.admin-body.owner-page .role,
 body.admin-body.owner-page .badge{background:#211038!important;border-color:#5b2a86!important;color:#d9c5ec!important}
 body.admin-body.owner-page .security-note,
-body.admin-body.owner-page .demo-login-note,
+body.admin-body.owner-page .admin-login-note,
 body.admin-body.owner-page .image-upload-error{
   background:linear-gradient(145deg,#21102f,#160a22)!important;
   border-color:#5b2b7f!important;

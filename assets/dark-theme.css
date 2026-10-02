@@ -115,7 +115,7 @@ input,select,textarea{background:#050505!important;color:#eef3f8!important;borde
  .welcome p{font-size:28px!important}
  .balance-amount{font-size:31px!important}
 }
-/* Hide obsolete demo/status decorations */
+/* Hide obsolete status decorations */
 #apiStatus{display:none!important}
 .recent-activity{margin-top:0!important}.recent-row{display:grid;grid-template-columns:58px 1fr auto;align-items:center;gap:14px;padding:14px 0;border-top:1px solid #17263a}.recent-icon{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-size:27px;font-weight:900}.recent-icon.deposit{background:rgba(15,201,154,.2);color:#12d7a4}.recent-icon.withdraw{background:rgba(255,61,75,.18);color:#ff5662}.recent-copy strong{display:block;color:#f4f7fb;font-size:16px}.recent-copy span{display:block;color:#8fa4bb;font-size:12px;margin-top:3px}.recent-amount{text-align:right;font-weight:900;font-size:15px}.recent-amount.plus{color:#13d7a4}.recent-amount.minus{color:#ff5662}@media(max-width:600px){.recent-row{grid-template-columns:50px 1fr auto}.recent-icon{width:46px;height:46px}.recent-amount{font-size:12px}}
 
@@ -528,7 +528,7 @@ html.dark-theme .mobile-nav .nav-svg svg{width:22px!important;height:22px!import
   html.dark-theme .mobile-nav{left:10px!important;right:10px!important;height:68px!important}
 }
 
-/* public/auth: no demo credentials exposed in the UI */
+/* public/auth: no credentials exposed in the UI */
 html.dark-theme .auth-page .auth{max-width:500px!important;border-radius:22px!important}
 html.dark-theme .auth-page .social .btn{min-height:58px!important;background:#020202!important;border-color:#1c3852!important}
 html.dark-theme .auth-page .field input{background:#020202!important;border-color:#1c3852!important}

@@ -1696,7 +1696,7 @@ Canlı Destek
 <script>
 /* =====================================================
    GERÇEK BACKEND'E BAĞLANDI (server/server.js)
-   Önceden bu sayfa SafepaysDemo (localStorage demo mağazası) kullanıyordu;
+   Bu sayfa işlem verilerini sunucu API’sinden yükler;
    yatırım/çekim işlemleri artık /api/transactions ve /api/auth/me üzerinden
    gerçek sunucudan okunuyor.
 ===================================================== */
@@ -1713,6 +1713,7 @@ let txCache=[];
 function money(n){
   return Number(n || 0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:8}) + ' USDT';
 }
+function escHtml(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]))}
 
 function statusLabel(status){
   if(status==='approved') return 'Onaylandı';
@@ -1776,9 +1777,9 @@ function renderTx(){
 <td><b>${x.id}</b></td>
 <td>${date}</td>
 <td>${type}</td>
-<td><span class="network-inline ${x.network==='TRC20'?'trc':'erc'}">${x.network}</span></td>
+<td><span class="network-inline ${x.network==='TRC20'?'trc':'erc'}">${escHtml(x.network)}</span></td>
 <td class="amount-cell">${sign}${Number(x.amount).toLocaleString('tr-TR',{maximumFractionDigits:8})}</td>
-<td class="address">${x.txHash||x.address||'Bekleniyor'}</td>
+<td class="address">${escHtml(x.txHash||x.address||'Bekleniyor')}</td>
 <td>${timer}</td>
 <td><span class="badge ${cls}">${label}</span></td>
 </tr>`;
@@ -1822,7 +1823,7 @@ async function loadTransactions(){
   }catch(e){
     if(e.status===401){ location.href='login.html'; return; }
     const rows=document.getElementById('txRows');
-    if(rows) rows.innerHTML = `<tr><td colspan="8" class="muted">İşlemler yüklenemedi: ${e.message}</td></tr>`;
+    if(rows) rows.innerHTML = `<tr><td colspan="8" class="muted">İşlemler yüklenemedi: ${escHtml(e.message)}</td></tr>`;
     return;
   }
   renderPending();

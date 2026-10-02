@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Safepays — Canlı Destek</title>
+  <title>Safepays — Destek Talepleri</title>
 
   <script>
     (function(){
@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="assets/support.css">
 
-  <script src="assets/demo-store.js"></script>
+
   <script src="assets/app.js"></script>
   <script src="assets/i18n.js"></script>
 
@@ -1464,7 +1464,7 @@
           </div>
 
           <h1>
-            AI + Canlı Destek
+            Destek talebi oluşturun
           </h1>
 
         </div>
@@ -1626,21 +1626,7 @@
           </div>
 
 
-          <div class="support-list-footer">
-
-            <span>
-              7/24 otomatik yardım
-            </span>
-
-            <span>
-              •
-            </span>
-
-            <span>
-              Gerekirse insan desteğine aktarılır
-            </span>
-
-          </div>
+          <div class="support-list-footer"><span>Destek talepleri sunucuya kaydedilir</span><span>•</span><span>Yanıtlar aynı konuşmada görünür</span></div>
 
         </section>
 
@@ -1671,22 +1657,20 @@
             <div class="agent">
 
               <div class="avatar">
-                AI
+                SP
               </div>
 
               <div>
 
                 <strong>
-                  Safepays AI
+                  Destek Ekibi
                 </strong>
 
                 <small>
 
                   <span class="agent-status">
-                    ● Aktif
+                    ● Talep desteği
                   </span>
-
-                  · Hesap bağlamına erişimli
 
                 </small>
 
@@ -1754,12 +1738,7 @@
 
           <div class="support-compose">
 
-            <button
-              class="attach"
-              onclick="toast('Demo: Dosya ekleme alanı hazır.')"
-            >
-              ＋
-            </button>
+
 
 
             <input
@@ -1823,38 +1802,7 @@
           </div>
 
 
-          <div class="context-card">
-
-            <div class="label">
-              Toplam bakiye
-            </div>
-
-            <div class="value">
-              8,450.00 USDT
-            </div>
-
-            <div class="sub">
-              Demo hesap bakiyesi
-            </div>
-
-          </div>
-
-
-          <div class="context-card">
-
-            <div class="label">
-              Bekleyen işlem
-            </div>
-
-            <div class="value">
-              1,200 USDT
-            </div>
-
-            <div class="sub">
-              Q4M8Z2K7P1 · ERC20
-            </div>
-
-          </div>
+          <div class="context-card"><div class="label">Toplam bakiye</div><div class="value" id="supportBalance">—</div><div class="sub">Sunucu hesabınızdan alınır</div></div><div class="context-card"><div class="label">Bekleyen işlemler</div><div class="value" id="supportPending">Yükleniyor…</div></div>
 
 
           <div class="context-title">
@@ -1874,7 +1822,7 @@
 
             <input
               id="txSearch"
-              placeholder="A7K29M4XQ8"
+              placeholder="İşlem ID veya TX hash"
             >
 
             <button
@@ -1904,14 +1852,7 @@
       </div>
 
 
-      <p class="support-note">
-
-        Safepays AI yalnızca bilgi amaçlı demo yanıtlar üretir.
-        Finansal kayıtlar, bakiye değişiklikleri, çekim onayları ve
-        blockchain transferleri gerçek backend yetkilendirmesi olmadan
-        gerçekleştirilemez.
-
-      </p>
+      <p class="support-note">Mesajlar destek talebi olarak sunucuya kaydedilir. Finansal işlemler bu ekrandan başlatılmaz veya onaylanmaz.</p>
 
 
     </div>
@@ -2070,7 +2011,7 @@
       </b>
 
       <span>
-        Canlı Destek
+        Destek
       </span>
 
     </a>
@@ -2079,392 +2020,4 @@
   </nav>
 
 
-  <script>
-
-  function openSupportChat(title,desc){
-
-    const panel =
-      document.getElementById(
-        'supportChatPanel'
-      );
-
-    const list =
-      document.getElementById(
-        'supportList'
-      );
-
-    const ctx =
-      document.getElementById(
-        'supportContext'
-      );
-
-    const topic =
-      document.getElementById(
-        'selectedSupportTopic'
-      );
-
-    const titleEl =
-      document.getElementById(
-        'supportTicketTitle'
-      );
-
-    const shell =
-      document.getElementById(
-        'supportShell'
-      ) ||
-      document.querySelector(
-        '.support-shell'
-      );
-
-
-    if(!panel)
-      return;
-
-
-    if(titleEl)
-      titleEl.textContent=title;
-
-
-    if(topic){
-
-      topic.innerHTML=
-        '<b>'+
-        escapeHtml(title)+
-        '</b>'+
-        '<span>'+
-        escapeHtml(desc)+
-        '</span>';
-
-    }
-
-
-    /*
-      KONU LİSTESİNİ KAPAT
-    */
-
-    if(list)
-      list.hidden=true;
-
-
-    /*
-      HESAP ÖZETİNİ KAPAT
-    */
-
-    if(ctx)
-      ctx.hidden=true;
-
-
-    /*
-      CHAT MODUNA GEÇ
-    */
-
-    if(shell)
-      shell.classList.add(
-        'chat-open'
-      );
-
-
-    /*
-      CHATİ GÖSTER
-    */
-
-    panel.hidden=false;
-
-
-    const box =
-      document.getElementById(
-        'supportMessages'
-      );
-
-
-    if(box){
-
-      box.innerHTML=
-        '<div class="bubble">'+
-
-        '<span class="bubble-label">'+
-        'SAFEPAYS AI · şimdi'+
-        '</span>'+
-
-        'Merhaba. <b>'+
-        escapeHtml(title)+
-        '</b> konusunda size yardımcı olabilirim. '+
-
-        'Sorununuzu yazabilir veya aşağıdaki hızlı seçeneklerden '+
-        'birini seçebilirsiniz.'+
-
-        '</div>';
-
-
-      box.scrollTop=
-        box.scrollHeight;
-
-    }
-
-
-    setTimeout(
-      function(){
-
-        const input =
-          document.getElementById(
-            'chatInput'
-          );
-
-        if(input)
-          input.focus();
-
-      },
-      50
-    );
-
-  }
-
-
-  function closeSupportChat(){
-
-    const panel =
-      document.getElementById(
-        'supportChatPanel'
-      );
-
-    const list =
-      document.getElementById(
-        'supportList'
-      );
-
-    const ctx =
-      document.getElementById(
-        'supportContext'
-      );
-
-    const shell =
-      document.getElementById(
-        'supportShell'
-      ) ||
-      document.querySelector(
-        '.support-shell'
-      );
-
-
-    /*
-      CHATİ KAPAT
-    */
-
-    if(panel)
-      panel.hidden=true;
-
-
-    /*
-      KONULARI GERİ GETİR
-    */
-
-    if(list)
-      list.hidden=false;
-
-
-    /*
-      HESAP ÖZETİNİ GERİ GETİR
-    */
-
-    if(ctx)
-      ctx.hidden=false;
-
-
-    /*
-      NORMAL GRID MODUNA GERİ DÖN
-    */
-
-    if(shell)
-      shell.classList.remove(
-        'chat-open'
-      );
-
-  }
-
-
-  /* =====================================================
-     İNSAN DESTEĞİ
-  ===================================================== */
-
-  function requestHuman(){
-
-    openSupportChat(
-      'İnsan desteği talebi',
-      'İlgili ekibe iletilmek üzere yardım konusu'
-    );
-
-
-    const title =
-      document.getElementById(
-        'supportTicketTitle'
-      );
-
-
-    if(title)
-      title.textContent=
-        'İnsan Desteği Talebi';
-
-
-    const agent =
-      document.querySelector(
-        '#supportChatPanel .agent strong'
-      );
-
-
-    if(agent)
-      agent.textContent=
-        'İnsan Desteği Talebi';
-
-
-    const status =
-      document.querySelector(
-        '#supportChatPanel .agent-status'
-      );
-
-
-    if(status)
-      status.textContent=
-        '● Talep taslağı';
-
-
-    const box =
-      document.getElementById(
-        'supportMessages'
-      );
-
-
-    if(box){
-
-      box.replaceChildren();
-
-
-      const note =
-        document.createElement(
-          'div'
-        );
-
-
-      note.className=
-        'bubble';
-
-
-      note.textContent=
-        'Talebinizi hazırlamak için konunuzu ve varsa işlem ID’nizi yazın. '+
-        'Bu sürümde canlı temsilci kuyruğu bağlı olmadığı için mesajınız gönderilmez; '+
-        'ekrandaki sohbet demo AI yanıtları verir.';
-
-
-      box.appendChild(
-        note
-      );
-
-    }
-
-
-    const input =
-      document.getElementById(
-        'chatInput'
-      );
-
-
-    if(input){
-
-      input.placeholder=
-        'Konu ve varsa işlem ID’si…';
-
-      input.focus();
-
-    }
-
-  }
-
-
-  /* =====================================================
-     BAKİYE
-  ===================================================== */
-
-  (function(){
-
-    try{
-
-      const keys=[
-        'safepays_demo_current_user',
-        'safepays_current_user',
-        'safepays_user'
-      ];
-
-
-      let user=null;
-
-
-      for(
-        const key of keys
-      ){
-
-        const raw =
-          localStorage.getItem(
-            key
-          );
-
-
-        if(!raw)
-          continue;
-
-
-        try{
-
-          user=
-            JSON.parse(raw);
-
-
-          if(user)
-            break;
-
-        }catch(e){}
-
-      }
-
-
-      if(user){
-
-        const balance =
-          Number(
-            user.balance ||
-            user.walletBalance ||
-            user.totalBalance ||
-            0
-          );
-
-
-        const el =
-          document.getElementById(
-            'headerBalance'
-          );
-
-
-        if(el){
-
-          el.innerHTML=
-            balance.toLocaleString(
-              'tr-TR',
-              {
-                minimumFractionDigits:2,
-                maximumFractionDigits:2
-              }
-            )+
-            ' <em>USDT</em>';
-
-        }
-
-      }
-
-    }catch(e){}
-
-  })();
-
-  </script>
-
-</div>
-
-</body>
-</html>
+  <script src="assets/support-client.js"></script></div></body></html>

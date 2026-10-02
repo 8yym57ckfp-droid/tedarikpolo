@@ -124,7 +124,6 @@ function toast(msg){
 // Safepays'teki kullanıcı uyarıları tarayıcının native alert penceresi yerine
 // ortak marka modalını kullanır. Böylece tüm sayfalarda aynı deneyim korunur.
 window.alert=function(message){toast(message)};
-function demoSubmit(e,msg){e.preventDefault();toast(msg);return false}
 function normalizeSafepaysUser(u){
   if(!u||typeof u!=='object')return null;
   let first=String(u.firstName||u.first_name||'').trim();
@@ -144,26 +143,22 @@ function syncSafepaysHeaderUser(){
     if(!u)return;
     const first=String(u.firstName||'').trim(), last=String(u.lastName||'').trim();
     const initials=((first[0]||'')+(last[0]||'')).toUpperCase()||'SP';
-    let balance=Number(u.balance||0);
-    try{if(window.SafepaysDemo?.balance) balance=Number(window.SafepaysDemo.balance()); else {const uid=String(u.id||u.userId||'').trim(); if(uid){const raw=localStorage.getItem('safepays_demo_balance_v37_'+uid); if(raw!==null) balance=Number(raw)||0;}}}catch(e){}
     document.querySelectorAll('.avatar-sm').forEach(el=>el.textContent=initials);
     const paintBalance=(val)=>{
       document.querySelectorAll('.wallet-balance-pill').forEach(el=>{
         const value=el.querySelector('span:last-child b');
-        if(value)value.innerHTML=Number.isFinite(val)?val.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' <em>USDT</em>':'0.00 <em>USDT</em>';
+        if(value)value.innerHTML=Number.isFinite(val)?val.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' <em>USDT</em>':'— <em>USDT</em>';
       });
     };
-    paintBalance(balance); // paint cached/local value immediately so the pill isn't empty while we fetch
+    paintBalance(null);
     document.querySelectorAll('.wallet-balance-pill small').forEach(el=>el.textContent='Cüzdan Bakiyesi');
-    // GERÇEK BACKEND'E BAĞLANDI: bu pill artık sadece localStorage'daki eski/demo değeri değil, gerçek
-    // sunucu bakiyesini (/api/auth/me) gösteriyor — böylece bir yatırım onaylandığında site genelindeki
-    // bakiye rakamı da gerçekten güncellenir.
+    // Refresh the displayed balance from the authenticated server session.
     const token=localStorage.getItem('safepays_api_token');
-    if(token && token!=='demo-token' && !token.startsWith('demo-')){
+    if(token){
       fetch('/api/auth/me',{headers:{Authorization:'Bearer '+token}})
         .then(r=>r.ok?r.json():null)
-        .then(d=>{ if(d && d.user && Number.isFinite(Number(d.user.balance))) paintBalance(Number(d.user.balance)); })
-        .catch(()=>{ /* keep the cached value painted above if the network call fails */ });
+        .then(d=>{ if(d && d.user && Number.isFinite(Number(d.user.balance))) paintBalance(Number(d.user.balance)); else paintBalance(null); })
+        .catch(()=>paintBalance(null));
     }
   }catch(e){console.warn('Safepays header kullanıcı senkronizasyonu başarısız',e)}
 }
@@ -172,35 +167,12 @@ document.addEventListener('DOMContentLoaded', syncSafepaysHeaderUser);
 
 function getSafepaysCurrentUser(){
   try{
-    const raw=localStorage.getItem('safepays_demo_current_user');
+    const raw=localStorage.getItem('safepays_current_user');
     if(raw){const u=JSON.parse(raw); if(u && (u.email||u.firstName||u.lastName)) return u;}
   }catch(e){}
   return null;
 }
-function ensureSafepaysReferralCode(user){
-  if(!user) return '';
-  let code=String(user.referralCode||'').trim().toUpperCase();
-  const invalid=!/^SAFE-[A-Z0-9]{6}$/.test(code) || code==='SAFE-VYSI82';
-  if(invalid){
-    const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let candidate='';
-    for(let i=0;i<6;i++) candidate+=alphabet[Math.floor(Math.random()*alphabet.length)];
-    code='SAFE-'+candidate;
-    try{
-      const key='safepays_demo_registered_users_v113';
-      const users=JSON.parse(localStorage.getItem(key)||'[]');
-      while(users.some(u=>String(u.referralCode||'').toUpperCase()===code)){
-        candidate=''; for(let i=0;i<6;i++) candidate+=alphabet[Math.floor(Math.random()*alphabet.length)];
-        code='SAFE-'+candidate;
-      }
-      const idx=users.findIndex(u=>u.email===user.email);
-      if(idx>=0){users[idx]={...users[idx],referralCode:code};localStorage.setItem(key,JSON.stringify(users));}
-    }catch(e){}
-    user={...user,referralCode:code};
-    try{localStorage.setItem('safepays_demo_current_user',JSON.stringify(user));}catch(e){}
-  }
-  return code;
-}
+function ensureSafepaysReferralCode(user){return String(user?.referralCode||'').trim().toUpperCase();}
 async function copyText(text){
   const value=String(text??'').trim();
   if(!value)return false;
@@ -220,26 +192,26 @@ async function copyText(text){
   if(ok) toast('Referans kodu kopyalandı'); else toast('Kopyalama başarısız. Kodu basılı tutarak kopyalayabilirsiniz.');
   return ok;
 }
-function sendChat(){const i=document.getElementById("chatInput"),box=document.getElementById("messages");if(!i||!i.value.trim())return;const m=document.createElement("div");m.className="msg me";m.textContent=i.value;box.appendChild(m);i.value="";setTimeout(()=>{const a=document.createElement("div");a.className="msg";a.textContent="Demo AI: Talebinizi aldım. Gerçek hesap verileri ve finansal işlemler backend bağlantısı eklendiğinde güvenli şekilde kontrol edilecektir.";box.appendChild(a);box.scrollTop=box.scrollHeight},500)}
+function sendChat(){location.href='support.html';}
 
-function supportRoutingContext(){try{if(window.SafepaysDemo){const tx=window.SafepaysDemo.expirePending().find(x=>x.routingTeamId)||window.SafepaysDemo.read().find(x=>x.routingTeamId); if(tx){const t=window.SafepaysDemo.teamById(tx.routingTeamId); return {teamId:tx.routingTeamId,teamName:tx.relatedTeamName||(t&& (t.name||t.teamName||t.role))||'İlgili Ekip'};}}}catch(e){} return null;}
-function requestHuman(){const r=supportRoutingContext();toast(r?('Demo: '+r.teamName+' destek ekibine aktarım talebi oluşturuldu. Ortalama yanıt 5–10 dk.'):'Demo: İnsan destek ekibine aktarım talebi oluşturuldu. Ortalama yanıt 5–10 dk.') }
+function supportRoutingContext(){return null;}
+function requestHuman(){location.href='support.html?topic=human';}
 function toggleSupportList(btn){const list=document.getElementById('supportList'); if(list){list.classList.toggle('open');btn.classList.toggle('active')}}
 function toggleSupportSummary(btn){const panel=document.getElementById('mobileSupportSummary');if(!panel)return;const open=panel.hidden;panel.hidden=!open;document.querySelectorAll('.support-mobile-tabs button').forEach(b=>b.classList.remove('active'));if(open){btn?.classList.add('active');renderMobileSupportSummary()}else{document.querySelector('.support-mobile-tabs button:first-child')?.classList.add('active')}}
-function renderMobileSupportSummary(){const u=getSafepaysCurrentUser?.()||{};const bal=Number(u.balance||0);const b=document.getElementById('mobileSupportBalance');if(b)b.textContent=(Number.isFinite(bal)?bal:0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' USDT';const ref=ensureSafepaysReferralCode(u)||'—';const r=document.getElementById('mobileSupportReferral');if(r)r.textContent=ref;const pending=document.getElementById('mobileSupportPending');const sub=document.getElementById('mobileSupportPendingSub');let total=0,count=0;try{const raw=JSON.parse(localStorage.getItem('safepays_demo_transactions_v37')||'[]');raw.filter(x=>x&&x.status==='pending'&&(!u.id||String(x.userId)===String(u.id))).forEach(x=>{total+=Number(x.amount||0);count++})}catch(e){}if(pending)pending.textContent=total.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' USDT';if(sub)sub.textContent=count?count+' bekleyen işlem':'Bekleyen işlem yok'}
-function quickAsk(text){const i=document.getElementById('chatInput');if(i){i.value=text;sendSupportMessage()}}
-function getSupportUserKey(){const u=getSafepaysCurrentUser?.();const id=(u&&(u.email||u.userId||u.phone))||'guest';return 'safepays_support_messages_v1_'+String(id).toLowerCase().replace(/[^a-z0-9._@+-]/g,'_')}
-function readSupportMessages(){try{return JSON.parse(localStorage.getItem(getSupportUserKey())||'[]')||[]}catch(e){return []}}
-function saveSupportMessage(role,text){try{const a=readSupportMessages();a.push({role,text:String(text||''),ts:Date.now()});localStorage.setItem(getSupportUserKey(),JSON.stringify(a.slice(-100)))}catch(e){}}
-function renderSupportMessages(){const box=document.getElementById('supportMessages');if(!box)return;const u=getSafepaysCurrentUser?.();const isDemo=!!u&&String(u.email||'').toLowerCase()==='test@safepays.local';const saved=readSupportMessages();if(saved.length){box.innerHTML='';saved.forEach(x=>{const m=document.createElement('div');m.className='bubble '+(x.role==='me'?'me':'');m.innerHTML='<span class="bubble-label">'+(x.role==='me'?'SİZ':'SAFEPAYS AI')+' · '+new Date(x.ts||Date.now()).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})+'</span>'+escapeHtml(x.text);box.appendChild(m)});box.scrollTop=box.scrollHeight;return}
-if(!isDemo){const name=[u?.firstName||u?.first_name,u?.lastName||u?.last_name].filter(Boolean).join(' ')||u?.fullName||u?.full_name||u?.displayName||u?.name||'';box.innerHTML='<div class="bubble"><span class="bubble-label">SAFEPAYS AI · şimdi</span>Merhaba '+escapeHtml(name)+'. Canlı destekten hesap ve işlemleriniz hakkında bilgi alabilirsiniz.</div>';return}}
-function sendSupportMessage(){const i=document.getElementById('chatInput'),box=document.getElementById('supportMessages');if(!i||!i.value.trim()||!box)return;const text=i.value.trim();const m=document.createElement('div');m.className='bubble me';m.innerHTML='<span class="bubble-label">SİZ · şimdi</span>'+escapeHtml(text);box.appendChild(m);saveSupportMessage('me',text);i.value='';box.scrollTop=box.scrollHeight;setTimeout(()=>{const reply=supportReply(text);const a=document.createElement('div');a.className='bubble';a.innerHTML='<span class="bubble-label">SAFEPAYS AI · şimdi</span>'+reply;box.appendChild(a);saveSupportMessage('ai',reply.replace(/<[^>]+>/g,''));box.scrollTop=box.scrollHeight},450)}
-function supportReply(t){const s=t.toLowerCase().trim();if(/^(merhaba|selam|selamlar|hello|hi|hey|sa|s\.a\.?|iyi (sabahlar|akşamlar|günler))([!. ]|$)/i.test(s))return 'Merhaba! Safepays Canlı Destek alanına hoş geldiniz. Size nasıl yardımcı olabilirim? Yatırım, çekim, cüzdan, işlem durumu veya hesabınızla ilgili sorularınızı yazabilirsiniz.';if(s.includes('teşekkür'))return 'Rica ederim. Başka bir konuda yardımcı olmamı ister misiniz?';if(s.includes('çekim'))return 'Çekim talebiniz için işlem kimliğini paylaşırsanız işlem durumunu kontrol edebilirim.';if(s.includes('yatırım')||s.includes('depozit'))return 'Yatırım işleminizle ilgili yardımcı olabilirim. İşlem ID veya hangi ağdan işlem yaptığınızı (TRC20/ERC20) yazabilirsiniz.';if(s.includes('tx')||s.includes('hash'))return 'TX hash, işlemin blockchain üzerindeki kimliğidir. Hashi paylaşırsanız hangi bilgilerin kontrol edilmesi gerektiğini açıklayabilirim.';if(s.includes('referans'))return 'Referans kazancınızla ilgili bilgi verebilirim. Referans kodunuzu veya hangi işlemi öğrenmek istediğinizi yazabilirsiniz.';return 'Talebinizi aldım. Size hesap, cüzdan ve işlemler hakkında bilgi verebilirim. Finansal işlem değiştirme, bakiye düzenleme veya transfer başlatma işlemleri için yetkim yok.'}
-function escapeHtml(s){return s.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-function searchSupportTx(){const input=document.getElementById('txSearch'),out=document.getElementById('txResult');if(!input||!out)return;const id=input.value.trim().toUpperCase();const data={
-'A7K29M4XQ8':{type:'Yatırım',amount:'+5,000 USDT',network:'TRC20',status:'Onaylandı',time:'19.09.2026 10:24:31',hash:'8c4a0e9f...91d2'},
-'Q4M8Z2K7P1':{type:'Çekim',amount:'-1,200 USDT',network:'ERC20',status:'Beklemede',time:'19.09.2026 10:05:12',hash:'—'},
-'N6R3T9B2L5':{type:'Çekim',amount:'-750 USDT',network:'TRC20',status:'Reddedildi',time:'18.09.2026 21:44:12',hash:'—'}}[id];if(!data){out.innerHTML='<div class="support-note">İşlem bulunamadı. Demo için A7K29M4XQ8, Q4M8Z2K7P1 veya N6R3T9B2L5 deneyin.</div>';return}out.innerHTML='<div class="context-card"><div class="label">'+data.type+' · '+id+'</div><div class="value">'+data.amount+'</div><div class="sub">'+data.network+' · '+data.status+'</div></div><div class="timeline-row"><b>Talep oluşturuldu</b><br>'+data.time+'</div><div class="timeline-row"><b>Ağ kontrolü</b><br>'+data.hash+'</div><div class="timeline-row"><b>Son durum</b><br>'+data.status+'</div>'}
+function renderMobileSupportSummary(){
+  const token=localStorage.getItem('safepays_api_token')||'';
+  fetch('/api/auth/me',{headers:{Authorization:'Bearer '+token},cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{const u=d?.user||{},balance=document.getElementById('mobileSupportBalance'),ref=document.getElementById('mobileSupportReferral');if(balance)balance.textContent=Number(u.balance||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+' USDT';if(ref)ref.textContent=u.referralCode||'—';}).catch(()=>{});
+  fetch('/api/transactions',{headers:{Authorization:'Bearer '+token},cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{const rows=(d?.transactions||[]).filter(x=>x.status==='pending'),total=rows.reduce((n,x)=>n+Number(x.amount||0),0),pending=document.getElementById('mobileSupportPending'),sub=document.getElementById('mobileSupportPendingSub');if(pending)pending.textContent=total.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+' USDT';if(sub)sub.textContent=rows.length?rows.length+' bekleyen işlem':'Bekleyen işlem yok';}).catch(()=>{});
+}
+function quickAsk(text){const input=document.getElementById('chatInput');if(input){input.value=String(text||'');if(typeof sendSupportMessage==='function')sendSupportMessage();}}
+function getSupportUserKey(){return '';}
+function readSupportMessages(){return [];}
+function saveSupportMessage(){}
+function renderSupportMessages(){const box=document.getElementById('supportMessages');if(box)box.textContent='Mesajlarınızı Destek sayfasından destek ekibine iletin.';}
+function sendSupportMessage(){location.href='support.html';}
+function supportReply(){return 'Mesajınızı Destek sayfasından destek ekibine iletin.';}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function searchSupportTx(){const input=document.getElementById('txSearch'),out=document.getElementById('txResult');if(!input||!out)return;try{const t=localStorage.getItem('safepays_api_token')||'',r=await fetch('/api/transactions',{headers:{Authorization:'Bearer '+t},cache:'no-store'}),d=await r.json(),q=input.value.trim().toLowerCase(),tx=(d.transactions||[]).find(x=>String(x.id||'').toLowerCase()===q||String(x.txHash||'').toLowerCase()===q);out.textContent=tx?tx.type+' · '+tx.id+' · '+tx.status+' · '+tx.amount+' USDT':'Bu hesapta eşleşen işlem bulunamadı.';}catch(_){out.textContent='İşlem bilgisi alınamadı.';}}
 
 /* Safepays v73 — unified, touch-safe language + theme controls */
 (function(){

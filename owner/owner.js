@@ -43,7 +43,7 @@
       ['GENEL',[['dashboard.html','home','Genel Bakış']]],
       ['İŞLEMLER',[['requests.html','clock','Beklenen İşlemler'],['withdrawal-pool.html','wallet','Çekim Havuzu'],['history.html?status=approved','check','Onaylanan İşlemler'],['history.html?status=rejected','x','Reddedilen İşlemler'],['reconciliation.html','handshake','Mutabakat'],['reports.html','chart','Raporlar']]],
       ['FİNANS',[['wallet-addresses.html','wallet','Cüzdan Hesapları'],['team-accounts.html','team','Ekip Hesapları'],['earnings.html','coins','Kazanç & Bonuslar']]],
-      ['KULLANICILAR',[['member-operations.html','users','Üye Operasyonları']]],
+      ['KULLANICILAR',[['member-operations.html','users','Üye Operasyonları'],['../admin/support.html','news','Destek Talepleri']]],
       ['İÇERİK',[['content.html','news','İçerik Merkezi']]],
       ['SİSTEM',[['panel-site-management.html','settings','Panel & Site Yönetimi'],['audit.html','shield','İşlem / Audit Logları'],['settings.html','settings','Ayarlar'],['profile.html','user','Profilim'],['../index.html','back','Siteye Dön']]]
     ];

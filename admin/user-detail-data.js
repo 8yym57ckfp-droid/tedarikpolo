@@ -1,0 +1,13 @@
+(async function(){
+const id=new URLSearchParams(location.search).get('user');const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const money=v=>Number(v||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:8})+' USDT';const date=v=>v?new Date(v).toLocaleString('tr-TR'):'—';
+if(!id){document.getElementById('userName').textContent='Kullanıcı seçilmedi';return;}
+try{
+ const data=await adminFetch('/user/'+encodeURIComponent(id)),u=data.user,sec=(await adminFetch('/user/'+encodeURIComponent(id)+'/security')).security;
+ document.getElementById('userName').textContent=[u.firstName,u.lastName].filter(Boolean).join(' ')||u.email;document.getElementById('userMeta').textContent=`${u.email} · ${u.phone||'telefon yok'} · ${u.id}`;
+ document.getElementById('balance').textContent=money(u.balance);document.getElementById('deposits').textContent=money(data.summary.deposits);document.getElementById('withdrawals').textContent=money(data.summary.withdrawals);document.getElementById('pending').textContent=money(data.summary.pending);document.getElementById('created').textContent=date(u.createdAt);document.getElementById('security').textContent=`${sec.status||'active'} · yatırma ${sec.depositFrozen?'donduruldu':'açık'} · çekim ${sec.withdrawalFrozen?'donduruldu':'açık'}`;
+ const tx=(data.transactions||[]).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));document.getElementById('transactions').innerHTML=tx.length?tx.map(x=>`<tr><td>${esc(x.id)}</td><td>${x.type==='deposit'?'Yatırım':'Çekim'}</td><td>${money(x.amount)}</td><td>${esc(x.network||'—')}</td><td>${esc(x.status)}</td><td>${date(x.createdAt)}</td><td>${esc(x.txHash||x.address||'—')}</td></tr>`).join(''):'<tr><td colspan="7">İşlem yok.</td></tr>';
+ const ledger=(data.ledger||[]).slice(0,30);document.getElementById('ledger').innerHTML=ledger.length?ledger.map(x=>`<tr><td>${date(x.createdAt)}</td><td>${esc(x.reason)}</td><td>${esc(x.direction)}</td><td>${money(x.amount)}</td><td>${money(x.balanceBefore)} → ${money(x.balanceAfter)}</td></tr>`).join(''):'<tr><td colspan="5">Bakiye hareketi yok.</td></tr>';
+ document.getElementById('historyLink').href='history.html?user='+encodeURIComponent(id);
+ window.userSecurityAction=async action=>{const reason=prompt('İşlem gerekçesini yazın:');if(reason===null)return;try{await adminFetch('/user/'+encodeURIComponent(id)+'/security',{method:'POST',body:JSON.stringify({action,reason})});location.reload();}catch(e){alert(e.message||'Güvenlik durumu değiştirilemedi.');}};
+}catch(e){document.getElementById('userName').textContent='Kullanıcı bilgisi alınamadı';document.getElementById('userMeta').textContent=e.message||'Sunucu hatası';}
+})();

@@ -1,32 +1,8 @@
-<!doctype html><html lang="tr"><head><script>(function(){try{var p=location.pathname,s=p.includes('/admin/')?'admin':(p.includes('/owner/')?'owner':'member'),k='safepays-'+s+'-theme';if(localStorage.getItem(k)==='dark')document.documentElement.classList.add('dark-theme')}catch(e){}})();</script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Safepays Admin</title><link rel="stylesheet" href="../assets/styles.css"><link rel="stylesheet" href="admin.css"><script src="../assets/app.js"></script><script src="admin-store.js"></script><script src="admin-api.js"></script><link rel="stylesheet" href="../assets/dark-theme.css"><script src="../assets/maintenance.js"></script></head><body class="admin-body"><div class="admin-login"><div class="admin-card"><div class="logo">Safe<span>Pays</span></div><h1>Admin Girişi</h1><p class="admin-muted">Yönetim paneli • Ekip hesabı + 2FA</p><form id="f"><input id="email" type="email" placeholder="Ekip e-postası" required><input id="password" type="password" placeholder="Şifre" required><input id="code" inputmode="numeric" maxlength="6" placeholder="2FA kodu (aktifse zorunlu)"><button class="admin-btn primary">Giriş Yap</button><div id="err" class="admin-muted"></div></form><div class="demo-login-note">Ekip hesabı Owner → Ekip Hesapları bölümünden oluşturulur. Super Admin girişi sunucu oturumu + 2FA ile doğrulanır.</div></div></div><script>
-async function getSecurityContext(){
-  const ua=navigator.userAgent||'';
-  let ip='Alınamadı';
-  try{const r=await fetch('/.netlify/functions/audit-context',{cache:'no-store'});if(r.ok){const d=await r.json();ip=d.ip||ip}}catch(e){}
-  let os='Bilinmiyor',device='Bilinmiyor',browser='Bilinmiyor';
-  if(/iPhone/i.test(ua)){device='iPhone';os=(ua.match(/OS ([0-9_]+)/i)||[])[1]?.replace(/_/g,'.')||'iOS';}
-  else if(/iPad/i.test(ua)){device='iPad';os=(ua.match(/OS ([0-9_]+)/i)||[])[1]?.replace(/_/g,'.')||'iPadOS';}
-  else if(/Android/i.test(ua)){os='Android';device=(ua.match(/Android[^;)]*;\s*(?:wv;\s*)?([^;)]+?)(?:\s+Build\/[^;)]+)?[;)]/i)||[])[1]?.trim()||'Android cihaz';}
-  else if(/Windows/i.test(ua))os='Windows'; else if(/Mac OS X/i.test(ua))os='macOS';
-  if(/CriOS/i.test(ua))browser='Chrome';else if(/FxiOS/i.test(ua))browser='Firefox';else if(/EdgiOS|Edg/i.test(ua))browser='Edge';else if(/Safari/i.test(ua))browser='Safari';else if(/Chrome/i.test(ua))browser='Chrome';
-  return {ip,device,os,browser,userAgent:ua,platform:navigator.platform||''};
-}
-f.onsubmit=async e=>{e.preventDefault();err.textContent='Güvenlik bilgileri kontrol ediliyor…';
-  const context=await getSecurityContext();
-  try{
-    // Super Admin is authenticated by the server. Team accounts remain on the existing team-store flow until their account CRUD is migrated to the backend.
-    if(String(email.value).trim().toLowerCase()==='admin@safepays.local'){
-      const backend=await adminLogin(email.value,password.value,code.value);
-      SafeAdmin.setSessionProfile({id:backend.admin.id,email:backend.admin.email,role:'Super Admin',name:'Super Admin'});
-      localStorage.setItem('safepays_portal','owner');
-      location.href='../owner/dashboard.html';
-      return;
-    }
-    const account=await SafeAdmin.login(email.value,password.value,code.value);
-    localStorage.setItem('safepays_portal','staff');
-    SafeAdmin.setSessionProfile(account);
-    SafeAdmin.recordSecurityEvent({type:'login',status:'success',actorId:account.id,actor:account.name||account.email,email:account.email,role:account.role,ip:context.ip,device:context.device,os:context.os,browser:context.browser,userAgent:context.userAgent});
-    location.href='dashboard.html'
-  }catch(x){SafeAdmin.recordSecurityEvent({type:'login',status:'failed',actorId:null,actor:String(email.value||'').trim(),email:String(email.value||'').trim(),role:'Bilinmiyor',ip:context.ip,device:context.device,os:context.os,browser:context.browser,userAgent:context.userAgent,error:String(x.message||'Giriş başarısız')});err.textContent=x.message==='invalid_2fa_code'?'2FA kodu hatalı.':x.message==='invalid_admin_credentials'?'E-posta veya şifre hatalı.':x.message}
+<!doctype html><html lang="tr"><head><script>(function(){try{var p=location.pathname,s=p.includes('/admin/')?'admin':(p.includes('/owner/')?'owner':'member'),k='safepays-'+s+'-theme';if(localStorage.getItem(k)==='dark')document.documentElement.classList.add('dark-theme')}catch(e){}})();</script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Safepays Admin</title><link rel="stylesheet" href="../assets/styles.css"><link rel="stylesheet" href="admin.css"><script src="../assets/app.js"></script><script src="admin-store.js"></script><script src="admin-api.js"></script><link rel="stylesheet" href="../assets/dark-theme.css"><script src="../assets/maintenance.js"></script></head><body class="admin-body"><div class="admin-login"><div class="admin-card"><div class="logo">Safe<span>Pays</span></div><h1>Admin Girişi</h1><p class="admin-muted">Yönetici oturumu • Sunucu doğrulaması + 2FA</p><form id="f"><input id="email" type="email" placeholder="Yönetici e-postası" required><input id="password" type="password" placeholder="Şifre" required><input id="code" inputmode="numeric" maxlength="6" placeholder="Google Authenticator kodu" required><button class="admin-btn primary">Giriş Yap</button><div id="err" class="admin-muted"></div></form><div class="admin-login-note">Giriş bilgileri sunucuda doğrulanır. İki aşamalı doğrulama zorunludur.</div></div></div><script>
+const form=document.getElementById('f'),errorBox=document.getElementById('err');
+form.onsubmit=async event=>{
+  event.preventDefault();errorBox.textContent='Yönetici oturumu doğrulanıyor…';
+  try{const result=await adminLogin(document.getElementById('email').value,document.getElementById('password').value,document.getElementById('code').value);if(window.SafeAdmin?.setSessionProfile)SafeAdmin.setSessionProfile({id:result.admin.id,email:result.admin.email,role:'Super Admin',name:'Super Admin'});localStorage.setItem('safepays_portal','owner');location.href='dashboard.html';}
+  catch(error){errorBox.textContent=error.message==='invalid_2fa_code'?'2FA kodu hatalı.':error.message==='invalid_admin_credentials'?'E-posta veya şifre hatalı.':error.message||'Yönetici girişi başarısız.';}
 };
 </script></body></html>
