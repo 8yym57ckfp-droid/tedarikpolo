@@ -183,6 +183,7 @@
     localStorage.setItem('safepays_api_token',data.token);localStorage.setItem('safepays_current_user',JSON.stringify(data.user));location.href='dashboard.html';
   }catch(error){status.textContent=error.message==='Failed to fetch'?'Sunucuya bağlanılamadı. Lütfen tekrar deneyin.':error.message||'Kayıt sırasında bir hata oluştu.';status.style.color='#d34b63';btn.disabled=false;btn.textContent='Hesap Oluştur';}
 });
+})();
 </script>
 <script src="assets/member-premium.js?v=5" defer></script></body>
 </html>
