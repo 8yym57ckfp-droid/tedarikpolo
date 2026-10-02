@@ -37,14 +37,15 @@ function renderWalletData(){
 }
 async function addAddress(){
   const button=document.querySelector('.add-grid button');button.disabled=true;
-  try{const data=await adminFetch('/wallet-addresses',{method:'POST',body:JSON.stringify({action:'add',network:$('newNetwork').value,label:$('newLabel').value.trim(),address:$('newAddress').value.trim(),active:$('newActive').checked})});$('msg').textContent=data.wallet.network+' adresi sunucuya kaydedildi.';$('msg').style.color='#138654';$('newLabel').value='';$('newAddress').value='';await loadWalletData();}
+  try{const data=await adminFetch('/wallet-addresses',{method:'POST',body:JSON.stringify({action:'add',network:$('newNetwork').value,label:$('newLabel').value.trim(),address:$('newAddress').value.trim(),active:$('newActive').checked})});$('msg').textContent=data.wallet.network+' adresi sunucuya kaydedildi.';$('msg').style.color='#138654';$('newLabel').value='';$('newAddress').value='';await refreshWalletDataAfterWrite();}
   catch(e){$('msg').textContent=e.message==='wallet_exists'?'Bu ağ ve adres zaten kayıtlı.':e.message==='invalid_address'?'Adres biçimi seçilen ağla uyuşmuyor.':'Kayıt yapılamadı: '+e.message;$('msg').style.color='#d74754';}
   finally{button.disabled=false;}
 }
-async function updateWallet(id,payload){await adminFetch('/wallet-addresses',{method:'POST',body:JSON.stringify({action:'update',id,...payload})});await loadWalletData();}
+async function refreshWalletDataAfterWrite(){try{await loadWalletData()}catch(e){const msg=$('loadMsg');if(msg){msg.textContent='İşlem kaydedildi; cüzdan listesi yenilenemedi: '+e.message;msg.style.color='#b7791f';}}}
+async function updateWallet(id,payload){await adminFetch('/wallet-addresses',{method:'POST',body:JSON.stringify({action:'update',id,...payload})});await refreshWalletDataAfterWrite();}
 async function toggleWallet(id,active){try{await updateWallet(id,{active});}catch(e){alert('Adres durumu güncellenemedi: '+e.message);}}
 async function editWallet(id){const w=wallets.find(x=>x.id===id);if(!w)return;const label=prompt('Hesap adı:',w.label);if(label===null)return;const address=prompt('Cüzdan adresi:',w.address);if(address===null)return;try{await updateWallet(id,{label:label.trim(),address:address.trim()});}catch(e){alert('Adres güncellenemedi: '+e.message);}}
-async function removeWallet(id){const w=wallets.find(x=>x.id===id);if(!w||!confirm(`${w.label} kaldırılsın mı? Geçmiş işlemlerde kullanılan adres pasif yapılır.`))return;try{await adminFetch('/wallet-addresses',{method:'POST',body:JSON.stringify({action:'delete',id})});await loadWalletData();}catch(e){alert('Adres kaldırılamadı: '+e.message);}}
+async function removeWallet(id){const w=wallets.find(x=>x.id===id);if(!w||!confirm(`${w.label} kaldırılsın mı? Geçmiş işlemlerde kullanılan adres pasif yapılır.`))return;try{await adminFetch('/wallet-addresses',{method:'POST',body:JSON.stringify({action:'delete',id})});await refreshWalletDataAfterWrite();}catch(e){alert('Adres kaldırılamadı: '+e.message);}}
 window.addAddress=addAddress;window.toggleWallet=toggleWallet;window.editWallet=editWallet;window.removeWallet=removeWallet;
 loadWalletData().catch(e=>{const msg=$('msg');if(msg){msg.textContent='Sunucu verileri yüklenemedi: '+e.message;msg.style.color='#d74754';}});
 setInterval(()=>loadWalletData().catch(()=>{}),15000);
