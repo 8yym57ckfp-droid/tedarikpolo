@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="room" cx="28%" cy="18%" r="90%">
+      <stop offset="0" stop-color="#24252a"/>
+      <stop offset=".48" stop-color="#101115"/>
+      <stop offset="1" stop-color="#07080a"/>
+    </radialGradient>
+    <linearGradient id="fold" x1="0" y1="0" x2="1" y2=".8">
+      <stop offset="0" stop-color="#08090b"/>
+      <stop offset=".2" stop-color="#292a2f"/>
+      <stop offset=".34" stop-color="#111216"/>
+      <stop offset=".52" stop-color="#34353a"/>
+      <stop offset=".66" stop-color="#0b0c0f"/>
+      <stop offset=".82" stop-color="#202126"/>
+      <stop offset="1" stop-color="#08090b"/>
+    </linearGradient>
+    <linearGradient id="ridge" x1="0" y1="0" x2=".8" y2="1">
+      <stop offset="0" stop-color="#f5f5f7" stop-opacity="0"/>
+      <stop offset=".2" stop-color="#d9dade" stop-opacity=".2"/>
+      <stop offset=".37" stop-color="#fff" stop-opacity=".05"/>
+      <stop offset=".58" stop-color="#d4d5da" stop-opacity=".28"/>
+      <stop offset=".73" stop-color="#090a0c" stop-opacity=".7"/>
+      <stop offset=".88" stop-color="#bfc0c5" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#08090b" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="crease" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+      <stop offset=".28" stop-color="#fff" stop-opacity=".08"/>
+      <stop offset=".5" stop-color="#050608" stop-opacity=".72"/>
+      <stop offset=".73" stop-color="#fff" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="shade" x="-30%" y="-40%" width="160%" height="180%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="28" result="blur"/>
+      <feOffset dy="26" result="offset"/>
+      <feComponentTransfer><feFuncA type="linear" slope=".6"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soft" x="-20%" y="-30%" width="140%" height="160%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#room)"/>
+  <ellipse cx="1380" cy="130" rx="480" ry="340" fill="#fff" opacity=".035" filter="url(#soft)"/>
+  <path d="M-170 840C122 750 140 394 393 235S757 197 915 414s301 345 511 211 317-235 433-161v610H-170Z" fill="url(#fold)" filter="url(#shade)"/>
+  <path d="M-170 840C122 750 140 394 393 235S757 197 915 414s301 345 511 211 317-235 433-161" fill="none" stroke="#050608" stroke-width="192" stroke-linecap="round" opacity=".78"/>
+  <path d="M-170 840C122 750 140 394 393 235S757 197 915 414s301 345 511 211 317-235 433-161" fill="none" stroke="url(#ridge)" stroke-width="136" stroke-linecap="round"/>
+  <path d="M-170 840C122 750 140 394 393 235S757 197 915 414s301 345 511 211 317-235 433-161" fill="none" stroke="url(#crease)" stroke-width="64" stroke-linecap="round" opacity=".7"/>
+  <path d="M-100 1060C147 843 233 643 407 558s286-44 428 91 265 164 439 55 232-204 410-232" fill="none" stroke="#050608" stroke-width="170" stroke-linecap="round" opacity=".9"/>
+  <path d="M-100 1060C147 843 233 643 407 558s286-44 428 91 265 164 439 55 232-204 410-232" fill="none" stroke="url(#ridge)" stroke-width="118" stroke-linecap="round" opacity=".8"/>
+  <path d="M-120 222C105 300 216 376 319 475s211 135 327 79 187-203 316-221 205 147 307 204 190 28 451-151" fill="none" stroke="#050608" stroke-width="138" stroke-linecap="round" opacity=".72"/>
+  <path d="M-120 222C105 300 216 376 319 475s211 135 327 79 187-203 316-221 205 147 307 204 190 28 451-151" fill="none" stroke="url(#crease)" stroke-width="88" stroke-linecap="round" opacity=".45"/>
+  <rect width="1600" height="1000" fill="url(#room)" opacity=".34"/>
+</svg>

@@ -2,7 +2,7 @@
   if(!document.body)return;
   const body=document.body;
   body.classList.add('member-premium');
-  body.dataset.memberTheme='solar';
+  body.dataset.memberTheme='graphite';
 
   const ambient=document.createElement('div');
   ambient.className='member-depth-ambient';
@@ -29,6 +29,10 @@
       const app=document.querySelector('.app,.dashboard-shell');
       (app||body).prepend(rail);
     }
+    document.querySelectorAll('.side nav a').forEach(link=>{
+      const label=link.textContent.replace(/\s+/g,' ').trim();
+      if(label){link.dataset.memberLabel=label;link.setAttribute('aria-label',label);}
+    });
     if(!document.querySelector('.mobile-nav')){
       const nav=document.createElement('nav');nav.className='mobile-nav member-shared-mobile-nav';nav.setAttribute('aria-label','Ana menü');
       for(const [href,label,icon] of [['dashboard.html','Ana Sayfa','⌂'],['wallet.html','Cüzdan','◈'],['events.html','Etkinlik','✦'],['finance.html','Yatır / Çek','↕'],['support.html','Destek','?']]){
