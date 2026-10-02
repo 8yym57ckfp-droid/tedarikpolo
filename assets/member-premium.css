@@ -662,3 +662,9 @@ html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-ca
   html body.member-premium .member-depth-card,html body.member-premium .member-depth-card.member-depth-visible,html body.member-premium .member-depth-card.member-depth-visible:hover{opacity:1!important;transform:none!important;transition:none!important;will-change:auto!important}
   body.public-landing .pl-logo-ticker-track{animation:none!important}
 }
+
+/* Keep the animated depth layers monochrome across every member route. */
+html body.member-premium:not(.auth-public) .member-depth-orb.one{background:radial-gradient(circle at 36% 34%,rgba(245,245,247,.34),rgba(151,153,159,.08) 57%,transparent 73%)!important;opacity:.3!important}
+html body.member-premium:not(.auth-public) .member-depth-orb.two{background:radial-gradient(circle at 40% 38%,rgba(224,225,228,.24),rgba(141,143,149,.06) 58%,transparent 74%)!important;opacity:.26!important}
+html body.member-premium:not(.auth-public) .member-depth-orb.three{background:radial-gradient(circle at 40% 38%,rgba(233,234,237,.18),rgba(133,135,141,.05) 60%,transparent 75%)!important;opacity:.22!important}
+html body.member-premium:not(.auth-public) .member-depth-ring,html body.member-premium:not(.auth-public) .member-depth-ring.ring-two{border-color:rgba(225,226,229,.1)!important;box-shadow:0 0 54px rgba(255,255,255,.035),inset 0 0 38px rgba(255,255,255,.025)!important}
