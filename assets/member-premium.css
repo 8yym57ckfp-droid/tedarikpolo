@@ -76,12 +76,14 @@ html body.member-premium .btn:not(.secondary),html body.member-premium button.pr
 html body.member-premium .btn:not(.secondary):hover,html body.member-premium button.primary:hover,html body.member-premium button[type=submit]:hover,html body.member-premium .auth-submit:hover{filter:saturate(1.18) brightness(1.05);transform:translateY(-2px);box-shadow:0 17px 36px rgba(20,88,255,.36)!important}
 html body.member-premium .btn.secondary{border:1px solid #d6dfec!important;border-radius:14px!important;background:#fffdf7!important;color:var(--solar-ink)!important;box-shadow:0 8px 20px rgba(12,25,60,.1)!important}
 html body.member-premium .mobile-nav{z-index:90!important;border:1px solid rgba(255,255,255,.74)!important;border-radius:23px!important;background:rgba(255,253,247,.96)!important;box-shadow:0 18px 48px rgba(0,0,0,.3)!important;backdrop-filter:blur(20px)!important}
+@media(min-width:761px){html body.member-premium .mobile-nav{display:none!important}}
 html body.member-premium .mobile-nav a{color:#77829a!important}
 html body.member-premium .mobile-nav a.active{color:#1458ff!important}
 html body.member-premium .modal,html body.member-premium .modal-backdrop,html body.member-premium .drawer-backdrop,html body.member-premium .sp-confirm-backdrop,html body.member-premium .sp-forgot-backdrop{z-index:120!important}
 
 /* Dashboard is an editorial overview, not a stack of identical boxes. */
 html body.member-premium .dash-content{display:grid!important;grid-template-columns:repeat(12,minmax(0,1fr))!important;align-content:start!important;gap:18px!important;width:min(100%,1430px)!important;max-width:1430px!important;margin:0 auto!important;padding:8px 24px 132px!important;box-sizing:border-box!important}
+html body.member-premium .dash-content>*{grid-column:1/-1!important;width:100%!important;min-width:0!important}
 html body.member-premium .dash-content>.welcome,html body.member-premium .dash-content>.balance-grid,html body.member-premium .dash-content>.dashboard-published-feed,html body.member-premium .dash-content>.member-earning-guide,html body.member-premium .dash-content>.network-invest,html body.member-premium .dash-content>.quick-grid,html body.member-premium .dash-content>.dash-two,html body.member-premium .dash-content>.tx-card{grid-column:1/-1!important;width:100%!important;min-width:0}
 html body.member-premium .dash-content>.assets-summary{grid-column:span 6!important;min-width:0;min-height:176px!important;padding:22px!important}
 html body.member-premium .dash-content>.welcome{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:20px!important;margin:3px 0 1px!important}
@@ -313,10 +315,10 @@ body.member-premium main,body.member-premium .dash-main,body.member-premium .mai
   html body.auth-public .auth-scene{position:relative!important;top:auto!important;min-height:0!important;padding:19px 5px 18px!important}
   html body.auth-public .auth-scene-brand img{width:42px;height:42px}
   html body.auth-public .auth-scene-brand span{font-size:20px}
-  html body.auth-public .auth-scene-kicker{margin:22px 0 8px;font-size:9px}
-  html body.auth-public .auth-scene h2{max-width:540px;font-size:clamp(33px,9vw,50px);line-height:1.02}
-  html body.auth-public .auth-scene-copy{margin:11px 0 0;font-size:13px}
-  html body.auth-public .auth-visual-stage{min-height:190px;margin:18px 0 0;border-radius:22px}
+  html body.auth-public .auth-scene-kicker{margin:18px 0 7px;font-size:9px}
+  html body.auth-public .auth-scene h2{max-width:540px;font-size:clamp(31px,6.8vw,42px);line-height:.99}
+  html body.auth-public .auth-scene-copy{margin:8px 0 0;font-size:12px;line-height:1.5}
+  html body.auth-public .auth-visual-stage{min-height:150px;margin:14px 0 0;border-radius:22px}
   html body.auth-public .auth-visual-sphere{width:105px;height:105px}
   html body.auth-public .auth-coin{width:42px;height:42px;font-size:20px}
   html body.auth-public .auth-scene-points{margin-top:10px}
