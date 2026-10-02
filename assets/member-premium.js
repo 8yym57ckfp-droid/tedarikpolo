@@ -1,5 +1,5 @@
 (()=>{
-  if(!document.body||document.body.classList.contains('public-landing'))return;
+  if(!document.body)return;
   document.body.classList.add('member-premium');
   document.body.dataset.memberTheme='solar';
 
@@ -15,7 +15,7 @@
   }
 
   const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const selector='.card,.dash-card,.assets-summary,.balance-card,.finance-card,.network-invest,.network-invest-card,.quick,.ref-banner,.transaction-card,.history-card,.profile,.support-card,.support-panel,.chat-panel,.context-card,.support-categories,.support-category,.support-compose,.security-card,.security-row,.security-grid,.security-hero,.account-card,.account-grid,.danger-zone,.notice-card,.event-card,.panel,.wallet-card,.wallet-summary-card,.wallet-secure-panel,.wallet-activity-panel,.form-card,.auth-card,.auth,.member-earning-guide,.wallet-layout-grid>section,.activity-panel,.balance-panel,.transactions-card,.pending-card,.ref-card,.ref-page,.ref-stat,.recent-card,.campaign,.overview-hero,.quick-action,.quick-actions,.balance-history-panel,.table-wrap,.stat-card,.info-card,.ticket,.session';
+  const selector='.card,.dash-card,.assets-summary,.balance-card,.finance-card,.network-invest,.network-invest-card,.quick,.ref-banner,.transaction-card,.history-card,.profile,.support-card,.support-panel,.chat-panel,.context-card,.support-categories,.support-category,.support-compose,.security-card,.security-row,.security-grid,.security-hero,.account-card,.account-grid,.danger-zone,.notice-card,.event-card,.panel,.wallet-card,.wallet-summary-card,.wallet-secure-panel,.wallet-activity-panel,.form-card,.auth-card,.auth,.member-earning-guide,.wallet-layout-grid>section,.activity-panel,.balance-panel,.transactions-card,.pending-card,.ref-card,.ref-page,.ref-stat,.recent-card,.campaign,.overview-hero,.quick-action,.quick-actions,.balance-history-panel,.table-wrap,.stat-card,.info-card,.ticket,.session,.pl-globe-stage,.pl-join-card';
   const cards=new Set(),visible=new Set();
   let raf=0;
 

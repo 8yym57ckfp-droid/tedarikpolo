@@ -15,7 +15,7 @@
 <script src="assets/i18n.js"></script>
 <link rel="stylesheet" href="assets/dark-theme.css">
 <script src="assets/maintenance.js"></script>
-<link rel="stylesheet" href="assets/member-premium.css?v=5"></head>
+<link rel="stylesheet" href="assets/member-premium.css?v=6"></head>
 <body class="auth-public">
 <div class="pl-ambient-bg" aria-hidden="true">
   <span class="pl-ambient-orb pl-ambient-orb-a"></span>
@@ -36,8 +36,8 @@
 
       <form onsubmit="return testLogin(event)">
         <div class="field">
-          <label for="loginEmail">E-posta veya Telefon</label>
-          <input id="loginEmail" required placeholder="E-posta veya +90 telefon numarası" autocomplete="username">
+          <label for="loginEmail">E-posta, kullanıcı adı veya telefon</label>
+          <input id="loginEmail" required placeholder="E-posta, kullanıcı adı veya telefon" autocomplete="username">
         </div>
         <div class="field">
           <label for="loginPassword">Şifre</label>
@@ -47,7 +47,7 @@
           <label class="hint auth-remember"><input type="checkbox"> Beni hatırla</label>
           <a class="hint auth-forgot" href="#" onclick="openForgotPassword(event)">Şifremi Unuttum</a>
         </div>
-        <button class="btn full auth-submit">Giriş Yap</button>
+        <button type="submit" class="btn full auth-submit">Giriş Yap</button>
       </form>
       <p class="center auth-switch">Hesabın yok mu? <a href="register.html">Kayıt Ol</a></p>
     </div>
@@ -60,7 +60,7 @@ async function testLogin(e){
   try{
     const payload={password};if(phone)payload.phone=phone;else payload.email=raw.toLowerCase();
     const response=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const data=await response.json().catch(()=>({}));
-    if(!response.ok||!data.token||!data.user)throw new Error(data.error==='invalid_credentials'?'E-posta/telefon veya şifre hatalı.':data.message||'Giriş yapılamadı.');
+    if(!response.ok||!data.token||!data.user)throw new Error(data.error==='invalid_credentials'?'Giriş bilgileri hatalı. E-posta, kullanıcı adı veya telefon ile şifrenizi kontrol edin.':data.message||'Giriş yapılamadı.');
     localStorage.setItem('safepays_api_token',data.token);localStorage.setItem('safepays_current_user',JSON.stringify(data.user));location.href='dashboard.html';
   }catch(error){showErrorModal('Giriş yapılamadı',error.message==='Failed to fetch'?'Sunucuya bağlanılamadı. Biraz sonra tekrar deneyin.':error.message||'Bağlantı hatası. Lütfen tekrar deneyin.');}
   return false;
@@ -137,5 +137,5 @@ async function completeForgotPassword(){
 }
 </script>
 
-<script src="assets/member-premium.js?v=5" defer></script></body>
+<script src="assets/member-premium.js?v=6" defer></script></body>
 </html>

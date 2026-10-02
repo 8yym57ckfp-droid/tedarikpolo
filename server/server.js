@@ -538,7 +538,8 @@ async function route(req,res){
   if(req.url==='/api/auth/login' && req.method==='POST'){
     const b=await body(req); const identifier=String(b.email||b.phone||'').trim(); const password=String(b.password||''); const users=await getUsers();
     const normalized=normalizePhone(identifier);
-    const u=users.find(x=>x.email.toLowerCase()===identifier.toLowerCase() || normalizePhone(x.phone)===normalized);
+    const loginName=identifier.toLowerCase().replace(/^@/,'');
+    const u=users.find(x=>String(x.email||'').toLowerCase()===loginName || normalizePhone(x.phone)===normalized || String(x.username||'').toLowerCase()===loginName);
     const valid=u && verifyPassword(password,u.passwordHash);
     if(!valid) return json(res,401,{error:'invalid_credentials'});
     if(u.securityStatus==='locked') return json(res,403,{error:'account_locked',message:'Hesabınız güvenlik nedeniyle kilitlenmiştir.'});
