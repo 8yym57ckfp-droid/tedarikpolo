@@ -28,7 +28,10 @@
         card.style.setProperty('--member-depth-y',shift.toFixed(2)+'px');
         card.style.setProperty('--member-depth-r',tilt.toFixed(2)+'deg');
       }
-      document.body.style.setProperty('--member-scroll-depth',(scrollY||0)+'px');
+      const pageScroll=scrollY||0;
+      document.body.style.setProperty('--member-scroll-depth',pageScroll+'px');
+      ambient.style.setProperty('--member-parallax-y',(-pageScroll*.22).toFixed(2)+'px');
+      ambient.style.setProperty('--member-grid-y',(-pageScroll*.12).toFixed(2)+'px');
     });
   }
   const observer=reduced||!('IntersectionObserver'in window)?null:new IntersectionObserver(entries=>{
