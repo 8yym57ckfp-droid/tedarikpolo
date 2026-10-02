@@ -28,7 +28,8 @@ Render web servisi `render.yaml` dosyasını kullanır. Üretim başlangıcı `D
 - Yönetici cüzdan adresleri, içerik, bakım ayarları, kur, destek biletleri ve audit kayıtları PostgreSQL’e yazılır.
 - Üye yatırım başlatınca aktif yönetici adreslerinden biri sunucuda atanır. Üye zincir işlem kimliğini gönderir; yatırım admin tarafından elle incelenir.
 - Çekim talebi sunucuya kaydolur. Gönderim uygulama tarafından otomatik yapılmaz: yönetici dış cüzdandan transferi yaptıktan sonra işlem kimliğini girerek talebi onaylar.
-- Bu sürüm blokzincir gezgini üzerinden yatırımı/çekimi otomatik doğrulamaz ve saklama cüzdanı ya da ödeme sağlayıcısı içermez. Gerçek fonları kullanmadan önce seçilen ağa uygun doğrulama/ödeme sağlayıcısı ve gerekli operasyon prosedürü ayrıca kurulmalıdır.
+- Bekleyen yatırım ve çekim taleplerinde admin, USDT transferini TRON solidified receipt veya Ethereum finalized receipt üzerinden salt okunur olarak kontrol edebilir. Bu kontrol bakiye değiştirmez ve talebi otomatik onaylamaz; son karar adminindir. TRON için `TRONGRID_API_KEY` (düşük hacimde anahtarsız sınırlı erişim de mümkündür), Ethereum için `ETHEREUM_RPC_URL` gerekir.
+- Bu sürüm saklama cüzdanı veya otomatik ödeme gönderimi içermez. Çekim transferini yönetici dış cüzdandan yapar ve işlem kimliğini talebi onaylarken kaydeder.
 - Şifre sıfırlama e-postası, SMS doğrulama, OAuth girişi, otomatik bonus/komisyon ödemesi ve çok kullanıcılı ekip rolleri sağlayıcı/arka uç bağlantıları olmadığı için etkin değildir. Arayüz bu işlemlerin tamamlandığını iddia etmez.
 
 ## Yönetim ekranları

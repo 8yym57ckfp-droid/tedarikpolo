@@ -5,6 +5,7 @@ const crypto = require('crypto');
 let Pool = null;
 try { ({ Pool } = require('pg')); } catch (_) { /* PostgreSQL is optional for local development. */ }
 const { getMarketUsdtTry, getMarketSnapshot, calc, makeQuote } = require('./rates');
+const { verifyUsdtTransfer } = require('./chain-verification');
 
 const ROOT = path.resolve(__dirname, '..');
 const DATA_DIR = path.join(__dirname, 'data');
@@ -379,6 +380,19 @@ async function route(req,res){
   }
   if(req.url==='/api/admin/transactions' && req.method==='GET'){
     if(!admin)return json(res,401,{error:'unauthorized'}); return json(res,200,{transactions:await getTransactions()});
+  }
+  if(req.url==='/api/admin/transactions/verify-chain' && req.method==='POST'){
+    if(!admin)return json(res,401,{error:'unauthorized'});
+    const b=await body(req),id=String(b.transactionId||''),transactions=await getTransactions(),tx=transactions.find(x=>x.id===id);
+    if(!tx)return json(res,404,{error:'transaction_not_found'});
+    if(!['deposit','withdrawal'].includes(tx.type))return json(res,400,{error:'unsupported_transaction_type'});
+    const txHash=tx.type==='deposit'?String(tx.txHash||''):String(b.txHash||'').trim();
+    const amount=Number(b.amount??tx.amount);
+    if(!txHash)return json(res,400,{error:'tx_hash_required'});
+    if(!Number.isFinite(amount)||amount<=0)return json(res,400,{error:'invalid_amount'});
+    const verification=await verifyUsdtTransfer({network:tx.network,txHash,recipient:tx.address,amount});
+    addAudit('chain_transfer_check',admin.email,{transactionId:id,network:tx.network,type:tx.type,txHash,status:verification.status,reason:verification.reason,blockNumber:verification.blockNumber||null});
+    return json(res,200,{ok:true,verification});
   }
   if(req.url==='/api/admin/ledger' && req.method==='GET'){
     if(!admin)return json(res,401,{error:'unauthorized'}); const urlObj=new URL(req.url,'http://localhost'); const userId=urlObj.searchParams.get('userId')||null; return json(res,200,{ledger:await getLedger(userId)});

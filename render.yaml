@@ -18,5 +18,9 @@ services:
         sync: false
       - key: ADMIN_TOTP_SECRET
         sync: false
+      - key: TRONGRID_API_KEY
+        sync: false
+      - key: ETHEREUM_RPC_URL
+        sync: false
       - key: ALLOWED_ORIGINS
         sync: false
