@@ -97,7 +97,7 @@ html:not(.dark-theme) .live-refresh{background:#f7fbff;border-color:#d7e3ef;colo
 GERÇEK BACKEND'E BAĞLANDI (server/server.js)
 ====================================================
 Bu sayfa sunucudaki işlem verilerini
-/api/admin/transactions ve /api/admin/transactions/decision uçlarıyla çalışıyor.
+/api/owner/transactions ve /api/owner/transactions/decision uçlarıyla çalışıyor.
 Onayladığınız/reddettiğiniz bir işlem artık gerçekten kullanıcının ledger'ına
 ve bakiyesine işleniyor (server.js -> addLedgerEntry).
 
@@ -126,7 +126,7 @@ function copyRequestInfo(id){const x=all.find(t=>String(t.id)===String(id));if(!
 function fallbackRequestCopy(text){const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');alert('İşlem bilgileri kopyalandı.')}catch(e){alert('Kopyalama başarısız.')}ta.remove()}
 
 // Real user directory cache (id -> {firstName,lastName,email,phone,kycStatus,createdAt}), built from
-// GET /api/admin/users so the drawer/table can show real names instead of browser-local profiles.
+// GET /api/owner/users so the drawer/table can show real names instead of browser-local profiles.
 let userCache={};
 async function loadUserCache(){try{const d=await adminFetch('/users');userCache={};(d.users||[]).forEach(u=>{userCache[u.id]=u;});}catch(e){/* handled by caller */}}
 function displayName(x){const u=userCache[x.userId];return u?`${u.firstName||''} ${u.lastName||''}`.trim()||'—':'—'}

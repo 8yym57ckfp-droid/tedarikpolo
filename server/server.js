@@ -244,7 +244,7 @@ function sendFile(req,res){
   let url=decodeURIComponent(req.url.split('?')[0]); if(url==='/') url='/index.html';
   if(url.includes('..')) return json(res,400,{error:'bad_path'});
   const file=path.join(ROOT,url);
-  fs.stat(file,(err,st)=>{if(err||!st.isFile())return json(res,404,{error:'not_found'});const ext=path.extname(file).toLowerCase();const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml'};res.writeHead(200,{'Content-Type':types[ext]||'application/octet-stream'});fs.createReadStream(file).pipe(res);});
+  fs.stat(file,(err,st)=>{if(err||!st.isFile())return json(res,404,{error:'not_found'});const ext=path.extname(file).toLowerCase();const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml'};res.writeHead(200,{'Content-Type':types[ext]||'application/octet-stream','Cache-Control':'no-store'});fs.createReadStream(file).pipe(res);});
 }
 function redirect(res,location){res.writeHead(302,{'Location':location,'Cache-Control':'no-store'});res.end();}
 
@@ -341,12 +341,12 @@ async function route(req,res){
   if(req.url==='/api/owner/logout' && req.method==='POST'){
     const c=parseCookies(req)[OWNER_COOKIE]||'';if(c)ownerSessions.delete(c);return json(res,200,{ok:true},{'Set-Cookie':clearCookie(OWNER_COOKIE)});
   }
-  const owner=ownerAuth(req),teamAdmin=adminAuth(req),admin=owner||teamAdmin;
+  const owner=ownerAuth(req),teamAdmin=adminAuth(req);
   if(req.url==='/api/owner/me' && req.method==='GET'){
-    if(!owner)return json(res,401,{error:'unauthorized'});return json(res,200,{owner:{id:owner.ownerId,email:owner.email,role:owner.role}});
+    if(!owner)return json(res,teamAdmin?403:401,{error:teamAdmin?'owner_only':'unauthorized'});return json(res,200,{owner:{id:owner.ownerId,email:owner.email,role:owner.role}});
   }
   if(req.url==='/api/owner/team-accounts' && req.method==='GET'){
-    if(!owner)return json(res,401,{error:'unauthorized'});
+    if(!owner)return json(res,teamAdmin?403:401,{error:teamAdmin?'owner_only':'unauthorized'});
     const configured=!!(TEAM_ADMIN_EMAIL&&TEAM_ADMIN_PASSWORD&&TEAM_ADMIN_TOTP_SECRET);
     const credentialsOverlap=!!(TEAM_ADMIN_EMAIL.toLowerCase()===ADMIN_EMAIL.toLowerCase()||TEAM_ADMIN_PASSWORD===ADMIN_PASSWORD||TEAM_ADMIN_TOTP_SECRET===ADMIN_TOTP_SECRET);
     const status=!configured?'not_configured':credentialsOverlap?'credentials_conflict':'active';
@@ -354,8 +354,17 @@ async function route(req,res){
     return json(res,200,{accounts,configured:status==='active'});
   }
   if(req.url==='/api/admin/me' && req.method==='GET'){
-    if(!teamAdmin)return json(res,401,{error:'unauthorized'});return json(res,200,{admin:{id:teamAdmin.adminId,email:teamAdmin.email,role:teamAdmin.role}});
+    if(!teamAdmin)return json(res,owner?403:401,{error:owner?'team_admin_only':'unauthorized'});return json(res,200,{admin:{id:teamAdmin.adminId,email:teamAdmin.email,role:teamAdmin.role}});
   }
+  const requestedApiPath=new URL(req.url,'http://localhost').pathname;
+  const ownerApiRequest=requestedApiPath==='/api/owner'||requestedApiPath.startsWith('/api/owner/');
+  const teamApiRequest=requestedApiPath==='/api/admin'||requestedApiPath.startsWith('/api/admin/');
+  if(ownerApiRequest&&teamAdmin)return json(res,403,{error:'owner_only'});
+  if(ownerApiRequest&&!owner)return json(res,401,{error:'owner_unauthorized'});
+  if(teamApiRequest&&owner)return json(res,403,{error:'team_admin_only'});
+  if(teamApiRequest&&!teamAdmin)return json(res,401,{error:'team_admin_unauthorized'});
+  if(ownerApiRequest)req.url=req.url.replace(/^\/api\/owner(?=\/|$)/,'/api/admin');
+  const admin=ownerApiRequest?owner:teamAdmin;
   const adminPath=new URL(req.url,'http://localhost').pathname;
   const ownerOnlyAdminRequest=adminPath==='/api/admin/content'||adminPath==='/api/admin/maintenance'||(adminPath.startsWith('/api/admin/user/')&&adminPath.endsWith('/security'))||(adminPath==='/api/admin/rates'&&req.method==='POST');
   if(teamAdmin&&!owner&&ownerOnlyAdminRequest)return json(res,403,{error:'owner_only'});
@@ -792,12 +801,12 @@ async function route(req,res){
   const staticPath=new URL(req.url,'http://localhost').pathname;
   if(req.method==='GET'&&staticPath.endsWith('.html')){
     if(staticPath.startsWith('/owner/')){
-      if(teamAdmin&&!owner)return redirect(res,'/admin/team-dashboard.html');
+      if(teamAdmin)return json(res,403,{error:'owner_portal_forbidden'});
       if(owner&&staticPath==='/owner/login.html')return redirect(res,'/owner/dashboard.html');
       if(!owner&&staticPath!=='/owner/login.html')return redirect(res,'/owner/login.html');
     }
     if(staticPath.startsWith('/admin/')){
-      if(owner)return redirect(res,'/owner/dashboard.html');
+      if(owner)return json(res,403,{error:'team_admin_portal_forbidden'});
       if(teamAdmin&&staticPath==='/admin/dashboard.html')return redirect(res,'/admin/team-dashboard.html');
       if(teamAdmin&&staticPath==='/admin/login.html')return redirect(res,'/admin/team-dashboard.html');
       if(!teamAdmin&&staticPath!=='/admin/login.html')return redirect(res,'/admin/login.html');
