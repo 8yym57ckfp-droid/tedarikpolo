@@ -196,6 +196,12 @@ body.admin-body.owner-page .admin-side .logo{
   border-bottom-color:#32104f!important;
   color:#fff!important;
 }
+body.admin-body.owner-page .admin-side .logo{display:grid!important;grid-template-columns:42px minmax(0,1fr);grid-template-rows:auto auto;column-gap:8px;align-items:center;min-height:54px}
+body.admin-body.owner-page .admin-side .logo:before{grid-column:1;grid-row:1/span 2;align-self:center}
+body.admin-body.owner-page .admin-side .logo .owner-brand-wordmark{grid-column:2;grid-row:1;font-size:20px;font-weight:900;letter-spacing:-1px;line-height:1}
+body.admin-body.owner-page .admin-side .logo .owner-brand-wordmark{color:#fff!important}
+body.admin-body.owner-page .admin-side .logo .owner-brand-wordmark>span{color:#a43cff!important}
+body.admin-body.owner-page .admin-side .logo small{grid-column:2;grid-row:2;display:block;margin-top:4px;color:#bca5d1!important;font-size:9px;font-weight:850;letter-spacing:.16em;line-height:1.2}
 body.admin-body.owner-page .admin-side .logo span{color:#a43cff!important}
 body.admin-body.owner-page .admin-nav a{color:#b8a7cc!important}
 body.admin-body.owner-page .admin-nav a:hover,

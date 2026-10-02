@@ -39,6 +39,8 @@
   }
   function nav(){
     const el=document.querySelector('.admin-nav'); if(!el)return;
+    const brand=document.querySelector('.admin-side .logo');
+    if(brand){brand.href='dashboard.html';brand.innerHTML='<span class="owner-brand-wordmark">Safe<span>Pays</span></span><small>OWNER PANEL</small>';}
     const items=[
       ['GENEL',[['dashboard.html','home','Genel Bakış']]],
       ['İŞLEMLER',[['requests.html','clock','Beklenen İşlemler'],['withdrawal-pool.html','wallet','Çekim Havuzu'],['history.html?status=approved','check','Onaylanan İşlemler'],['history.html?status=rejected','x','Reddedilen İşlemler'],['reconciliation.html','handshake','Mutabakat'],['reports.html','chart','Raporlar']]],

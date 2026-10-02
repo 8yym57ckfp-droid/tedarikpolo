@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     const isOwner=ownerPortal&&a?.role==='Super Admin';
     localStorage.setItem('safepays_portal',isOwner?'owner':'admin');
     const items=isOwner?ownerItems:staffItems;
-    document.querySelectorAll('.admin-nav').forEach(nav=>{
+    if(!ownerPortal) document.querySelectorAll('.admin-nav').forEach(nav=>{
       nav.replaceChildren(...items.map(([href,ico,label])=>{const el=document.createElement('a');el.href=href;el.innerHTML=icon(ico)+'<span>'+label+'</span>';return el;}));
       const path=location.pathname.split('/').pop()||'dashboard.html';
       nav.querySelectorAll('a').forEach(el=>{const u=new URL(el.href,location.href);const samePath=u.pathname.split('/').pop()===path;const wantedStatus=new URLSearchParams(u.search).get('status');const currentStatus=new URLSearchParams(location.search).get('status');const sameStatus=(wantedStatus===null&&currentStatus===null)||(wantedStatus!==null&&wantedStatus===currentStatus);el.classList.toggle('active',samePath&&sameStatus)});

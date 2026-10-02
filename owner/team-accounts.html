@@ -1,3 +1,47 @@
 <!doctype html>
-<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Safepays Owner — Ekip Hesabı</title><link rel="stylesheet" href="../assets/styles.css"><link rel="stylesheet" href="../admin/admin.css"><link rel="stylesheet" href="../assets/dark-theme.css"><link rel="stylesheet" href="../assets/owner.css"><script src="../admin/admin-store.js"></script><script src="owner.js"></script></head>
-<body class="admin-body owner-page"><div class="admin-layout"><aside class="admin-side"><a class="logo" href="dashboard.html">Safe<span>Pays</span><small>OWNER PANEL</small></a><nav class="admin-nav"></nav></aside><main class="admin-main"><div class="admin-head"><div><div class="admin-muted">OWNER CONTROL CENTER</div><h1>Admin ekip girişi</h1><div class="admin-muted">Ekip girişi Owner hesabından bağımsız yapılandırılır.</div></div><div class="owner-badge">● OWNER</div></div><section class="admin-card"><h2>Admin hesabını ayrı tut</h2><p>Admin ekip girişi, Owner e-postası, şifresi ve 2FA anahtarını kabul etmez. Admin için farklı bilgiler Render’daki ortam değişkenlerine eklenmelidir.</p><ul><li><code>TEAM_ADMIN_EMAIL</code> — Admin ekip e-postası</li><li><code>TEAM_ADMIN_PASSWORD</code> — Owner şifresinden farklı güçlü şifre</li><li><code>TEAM_ADMIN_TOTP_SECRET</code> — Ayrı Authenticator kurulumu için gizli anahtar</li></ul><p>Bu değerlerin hiçbiri Owner panelinde gösterilmez. Değerleri Render’da ayarlayıp servisi yeniden yayınlayınca ekip <code>/admin/login.html</code> adresinden giriş yapar.</p><a class="admin-btn primary" href="https://dashboard.render.com/env-group/evg-davhn77avr4c73c2ic5g" target="_blank" rel="noopener noreferrer">Render ortam değişkenlerini aç</a></section><section class="admin-card" style="margin-top:14px"><b>Owner giriş bilgilerini ekip hesabında kullanma.</b><p class="admin-muted">Owner girişi yalnızca <code>/owner/login.html</code> adresinde çalışır. Admin oturumu Owner paneline veya Owner API işlemlerine erişemez.</p></section></main></div></body></html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Safepays Owner — Ekip Hesapları</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+  <link rel="stylesheet" href="../admin/admin.css">
+  <link rel="stylesheet" href="../assets/dark-theme.css">
+  <link rel="stylesheet" href="../assets/owner.css">
+  <script src="../admin/admin-store.js"></script>
+  <script src="owner.js"></script>
+  <style>
+    .team-account-card{margin-top:4px;padding:22px;border:1px solid #4b1d78;border-radius:17px;background:linear-gradient(145deg,#170a27,#10051d)}
+    .team-account-intro{max-width:800px;margin:8px 0 19px;color:#c0b1d1;line-height:1.65;font-size:12px}
+    .team-account-table-wrap{overflow:auto}
+    .team-account-table{width:100%;min-width:580px;border-collapse:collapse}
+    .team-account-table th,.team-account-table td{padding:13px 10px;border-bottom:1px solid #351750;text-align:left;font-size:12px}
+    .team-account-table th{color:#a88dbc;font-size:9px;letter-spacing:.07em;text-transform:uppercase}
+    .team-account-table td{color:#f0e8f8}
+    .team-account-email{font-weight:850}
+    .team-account-badge{display:inline-flex;padding:5px 9px;border-radius:999px;background:rgba(53,224,160,.12);color:#62efbb;font-size:10px;font-weight:850}
+    .team-account-badge.is-warning{background:rgba(255,196,71,.12);color:#ffd66a}
+    .team-account-badge.is-error{background:rgba(255,102,123,.12);color:#ff9aa4}
+    .team-account-state{padding:18px;border:1px dashed #5a2a88;border-radius:12px;color:#c0b1d1;font-size:12px;line-height:1.6}
+    .team-account-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:17px}
+    .team-account-footnote{margin:17px 0 0;color:#a88dbc;font-size:10px;line-height:1.6}
+    @media(max-width:600px){.team-account-card{padding:16px}}
+  </style>
+</head>
+<body class="admin-body owner-page">
+  <div class="admin-layout">
+    <aside class="admin-side"><a class="logo" href="dashboard.html"><span class="owner-brand-wordmark">Safe<span>Pays</span></span><small>OWNER PANEL</small></a><nav class="admin-nav" aria-label="Owner yönetim menüsü"></nav></aside>
+    <main class="admin-main">
+      <header class="admin-head"><div><div class="admin-muted">OWNER CONTROL CENTER</div><h1>Ekip Hesapları</h1><div class="admin-muted">Render’da yapılandırılmış ekip girişini ve durumunu görüntüle.</div></div><div class="owner-badge">● OWNER</div></header>
+      <section class="team-account-card">
+        <h2>Admin ekip girişi</h2>
+        <p class="team-account-intro">Admin hesabı Render’daki <code>TEAM_ADMIN_…</code> ortam değişkenlerinden yönetilir. Burada yalnızca giriş e-postası ve yapılandırma durumu gösterilir; şifre ile 2FA gizli anahtarı hiçbir zaman gösterilmez.</p>
+        <div id="teamAccountContent" class="team-account-state" role="status" aria-live="polite">Ekip hesabı bilgisi yükleniyor…</div>
+        <div class="team-account-actions"><a class="admin-btn primary" href="https://dashboard.render.com/env-group/evg-davhn77avr4c73c2ic5g" target="_blank" rel="noopener noreferrer">Render ortam değişkenlerini aç</a><a class="admin-btn dark" href="../admin/login.html">Ekip giriş sayfası</a></div>
+        <p class="team-account-footnote">Ekip giriş bilgileri Owner girişinden tamamen ayrıdır. Ekip hesabı <code>/admin/login.html</code> adresini; Owner ise yalnızca <code>/owner/login.html</code> adresini kullanır.</p>
+      </section>
+    </main>
+  </div>
+  <script src="team-accounts-data.js"></script>
+</body>
+</html>

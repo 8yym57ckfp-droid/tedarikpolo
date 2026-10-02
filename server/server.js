@@ -345,6 +345,14 @@ async function route(req,res){
   if(req.url==='/api/owner/me' && req.method==='GET'){
     if(!owner)return json(res,401,{error:'unauthorized'});return json(res,200,{owner:{id:owner.ownerId,email:owner.email,role:owner.role}});
   }
+  if(req.url==='/api/owner/team-accounts' && req.method==='GET'){
+    if(!owner)return json(res,401,{error:'unauthorized'});
+    const configured=!!(TEAM_ADMIN_EMAIL&&TEAM_ADMIN_PASSWORD&&TEAM_ADMIN_TOTP_SECRET);
+    const credentialsOverlap=!!(TEAM_ADMIN_EMAIL.toLowerCase()===ADMIN_EMAIL.toLowerCase()||TEAM_ADMIN_PASSWORD===ADMIN_PASSWORD||TEAM_ADMIN_TOTP_SECRET===ADMIN_TOTP_SECRET);
+    const status=!configured?'not_configured':credentialsOverlap?'credentials_conflict':'active';
+    const accounts=TEAM_ADMIN_EMAIL?[{id:'TEAM-ADMIN-001',email:TEAM_ADMIN_EMAIL,role:'team_admin',status,twoFactorEnabled:!!TEAM_ADMIN_TOTP_SECRET,source:'render_environment'}]:[];
+    return json(res,200,{accounts,configured:status==='active'});
+  }
   if(req.url==='/api/admin/me' && req.method==='GET'){
     if(!teamAdmin)return json(res,401,{error:'unauthorized'});return json(res,200,{admin:{id:teamAdmin.adminId,email:teamAdmin.email,role:teamAdmin.role}});
   }
@@ -789,6 +797,7 @@ async function route(req,res){
     }
     if(staticPath.startsWith('/admin/')){
       if(owner)return redirect(res,'/owner/dashboard.html');
+      if(teamAdmin&&staticPath==='/admin/dashboard.html')return redirect(res,'/admin/team-dashboard.html');
       if(teamAdmin&&staticPath==='/admin/login.html')return redirect(res,'/admin/team-dashboard.html');
       if(!teamAdmin&&staticPath!=='/admin/login.html')return redirect(res,'/admin/login.html');
     }

@@ -1,0 +1,20 @@
+/* Premium member experience: restrained 3D depth and scroll reveal. */
+body.member-premium{isolation:isolate;overflow-x:clip}
+.member-depth-ambient{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;perspective:1100px;contain:strict}
+.member-depth-ambient:before{content:"";position:absolute;inset:-12%;background:radial-gradient(ellipse at 14% 18%,rgba(34,130,255,.16),transparent 31%),radial-gradient(ellipse at 86% 38%,rgba(123,68,255,.13),transparent 30%),radial-gradient(ellipse at 48% 100%,rgba(26,198,210,.09),transparent 35%);transform:translate3d(0,calc(var(--member-scroll-depth,0px)*-.14),-40px);will-change:transform}
+.member-depth-orb{position:absolute;display:block;border-radius:50%;filter:blur(1px);opacity:.22;transform-style:preserve-3d;will-change:transform}
+.member-depth-orb.one{width:min(34vw,440px);height:min(34vw,440px);left:-12vw;top:15vh;background:radial-gradient(circle at 35% 35%,rgba(88,172,255,.42),rgba(71,74,230,.08) 55%,transparent 72%);animation:member-orbit-one 19s ease-in-out infinite alternate}
+.member-depth-orb.two{width:min(30vw,390px);height:min(30vw,390px);right:-11vw;top:48vh;background:radial-gradient(circle at 40% 38%,rgba(173,91,255,.32),rgba(53,108,239,.07) 58%,transparent 73%);animation:member-orbit-two 23s ease-in-out infinite alternate}
+.member-depth-orb.three{width:min(24vw,300px);height:min(24vw,300px);left:38vw;bottom:-15vh;background:radial-gradient(circle at 40% 38%,rgba(62,219,211,.22),rgba(34,115,255,.05) 58%,transparent 73%);animation:member-orbit-three 25s ease-in-out infinite alternate}
+body.member-premium>.member-depth-ambient~*:not(script):not(style){position:relative;z-index:1}
+body.member-premium .mobile-nav{z-index:50}
+body.member-premium .modal,body.member-premium .modal-backdrop,body.member-premium .drawer-backdrop,body.member-premium .sp-confirm-backdrop{z-index:100}
+.member-depth-card{transform-origin:50% 35%;transform-style:preserve-3d;backface-visibility:hidden;will-change:transform,opacity;opacity:0;transform:perspective(1150px) translate3d(0,25px,-10px) rotateX(3deg) scale(.99);transition:opacity .68s ease,transform .78s cubic-bezier(.2,.75,.2,1),border-color .2s,box-shadow .2s}
+.member-depth-card.member-depth-visible{opacity:1;transform:perspective(1150px) translate3d(0,var(--member-depth-y,0px),0) rotateX(var(--member-depth-r,0deg)) scale(1)}
+.member-depth-card.member-depth-visible:hover{transform:perspective(1150px) translate3d(0,calc(var(--member-depth-y,0px) - 3px),0) rotateX(var(--member-depth-r,0deg)) scale(1.006)}
+.member-premium .dash-content,.member-premium main,.member-premium .dash-main,.member-premium .page-content,.member-premium .dashboard-shell{transform-style:preserve-3d}
+@keyframes member-orbit-one{from{transform:translate3d(0,0,-70px) rotateX(8deg) rotateY(-14deg)}to{transform:translate3d(5vw,5vh,20px) rotateX(-5deg) rotateY(12deg)}}
+@keyframes member-orbit-two{from{transform:translate3d(0,0,-30px) rotateX(-9deg) rotateY(10deg)}to{transform:translate3d(-4vw,-5vh,50px) rotateX(8deg) rotateY(-12deg)}}
+@keyframes member-orbit-three{from{transform:translate3d(0,0,-90px) rotateX(8deg)}to{transform:translate3d(3vw,-3vh,15px) rotateX(-7deg)}}
+@media(max-width:700px){.member-depth-orb.one{width:66vw;height:66vw;left:-27vw}.member-depth-orb.two{width:58vw;height:58vw;right:-30vw}.member-depth-orb.three{display:none}.member-depth-card{transform:perspective(1000px) translate3d(0,18px,-5px) rotateX(2deg) scale(.995)}}
+@media(prefers-reduced-motion:reduce){.member-depth-orb{animation:none!important}.member-depth-card,.member-depth-card.member-depth-visible,.member-depth-card.member-depth-visible:hover{opacity:1!important;transform:none!important;transition:none!important;will-change:auto!important}}

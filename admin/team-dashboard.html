@@ -1,1 +1,94 @@
-<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=dashboard.html"><title>Yönlendiriliyor</title></head><body><p>Yönetim paneline yönlendiriliyorsunuz. <a href="dashboard.html">Devam et</a></p></body></html>
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SafePays Admin — Yönetim Merkezi</title>
+  <script>(function(){try{if(localStorage.getItem('safepays-admin-theme')==='dark')document.documentElement.classList.add('dark-theme')}catch(_){}})();</script>
+  <link rel="stylesheet" href="../assets/styles.css">
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="../assets/dark-theme.css">
+  <script src="admin-api.js"></script>
+  <script src="admin.js"></script>
+  <script src="../assets/app.js"></script>
+  <script src="../assets/maintenance.js"></script>
+  <style>
+    .team-overview-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:18px 0}
+    .team-stat{position:relative;overflow:hidden;min-height:125px;padding:18px;border:1px solid #dfe7f1;border-radius:16px;background:#fff;box-sizing:border-box}
+    .team-stat:after{content:"";position:absolute;width:95px;height:95px;border-radius:50%;right:-24px;top:-28px;background:var(--stat-glow,rgba(62,142,255,.1))}
+    .team-stat-label{color:#71839a;font-size:12px;font-weight:750}
+    .team-stat-value{position:relative;z-index:1;margin-top:13px;font-size:30px;line-height:1;font-weight:900;letter-spacing:-.04em;color:#122b46;font-variant-numeric:tabular-nums}
+    .team-stat-note{margin-top:9px;color:#8292a7;font-size:11px}
+    .team-stat.blue{--stat-glow:rgba(62,142,255,.13)}.team-stat.green{--stat-glow:rgba(49,194,133,.13)}.team-stat.amber{--stat-glow:rgba(245,176,55,.15)}.team-stat.purple{--stat-glow:rgba(137,108,255,.14)}
+    .overview-columns{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(260px,.8fr);gap:14px}
+    .overview-card{min-width:0;padding:19px;border:1px solid #dfe7f1;border-radius:16px;background:#fff}
+    .overview-card h2{margin:0;font-size:16px;color:#152c46}
+    .overview-card p{margin:6px 0 15px;color:#8090a4;font-size:11px}
+    .overview-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+    .overview-link{display:inline-flex;align-items:center;justify-content:center;min-height:35px;padding:0 12px;border:1px solid #d9e4f0;border-radius:10px;color:#216db8;text-decoration:none;font-size:11px;font-weight:850;white-space:nowrap}
+    .overview-table-wrap{overflow:auto}
+    .overview-table{width:100%;min-width:620px;border-collapse:collapse}
+    .overview-table th,.overview-table td{padding:11px 8px;border-bottom:1px solid #e9eef4;text-align:left;font-size:11px;white-space:nowrap}
+    .overview-table th{color:#8190a3;font-size:9px;text-transform:uppercase;letter-spacing:.06em}
+    .overview-table td{color:#33485f}
+    .overview-status{display:inline-flex;padding:5px 8px;border-radius:999px;background:#f0f4f8;color:#52657b;font-weight:800;font-size:9px}
+    .overview-status.pending{background:#fff5d9;color:#9a6a05}.overview-status.approved{background:#e8f8ef;color:#128253}.overview-status.rejected{background:#fff0f1;color:#ca4350}
+    .overview-empty{text-align:center!important;padding:28px!important;color:#8391a3!important}
+    .quick-links{display:grid;gap:9px}
+    .quick-link{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px;border:1px solid #e3eaf2;border-radius:12px;color:#20364d;text-decoration:none;background:#fff;transition:border-color .15s,transform .15s}
+    .quick-link:hover{border-color:#8dbdff;transform:translateY(-1px)}
+    .quick-link b{display:block;font-size:12px}.quick-link small{display:block;margin-top:4px;color:#8796a8;font-size:10px}.quick-link .arrow{color:#2786e8;font-size:19px}
+    .overview-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:13px;color:#8391a3;font-size:10px}
+    .refresh-button{border:0;background:transparent;color:#1976d2;font:inherit;font-weight:800;cursor:pointer}
+    html.dark-theme .team-stat,html.dark-theme .overview-card,html.dark-theme .quick-link{background:#0b1b30;border-color:#1d3550;color:#e8eef7;box-shadow:none}
+    html.dark-theme .team-stat-value,html.dark-theme .overview-card h2,html.dark-theme .quick-link{color:#e8eef7}
+    html.dark-theme .team-stat-label,html.dark-theme .team-stat-note,html.dark-theme .overview-card p,html.dark-theme .overview-table td,html.dark-theme .quick-link small,html.dark-theme .overview-footer{color:#92a8c0}
+    html.dark-theme .overview-table th{color:#7890aa}html.dark-theme .overview-table th,html.dark-theme .overview-table td{border-color:#1b324c}
+    html.dark-theme .overview-link{border-color:#29415d;color:#8fc4ff}html.dark-theme .overview-status{background:#152941;color:#b0c1d3}
+    html.dark-theme .overview-status.pending{background:#392f15;color:#ffd66a}html.dark-theme .overview-status.approved{background:#0c2a20;color:#5ee3aa}html.dark-theme .overview-status.rejected{background:#32171b;color:#ff8893}
+    @media(max-width:1050px){.team-overview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.overview-columns{grid-template-columns:1fr}}
+    @media(max-width:520px){.team-overview-grid{gap:8px}.team-stat{padding:13px;min-height:112px}.team-stat-value{font-size:25px}.overview-card{padding:14px}.overview-head{flex-direction:column}}
+  </style>
+</head>
+<body class="admin-body">
+  <div class="admin-layout">
+    <aside class="admin-side">
+      <a class="logo" href="team-dashboard.html">Safe<span>Pays</span></a>
+      <nav class="admin-nav" aria-label="Ekip yönetim menüsü"></nav>
+    </aside>
+    <main class="admin-main">
+      <header class="admin-head">
+        <div>
+          <div class="admin-muted">EKİP YÖNETİMİ</div>
+          <h1>Yönetim Merkezi</h1>
+          <div class="admin-muted">Bekleyen işlemleri ve hesap durumunu tek ekrandan takip et.</div>
+        </div>
+        <a class="admin-btn" href="requests.html">Bekleyen işlemleri aç</a>
+      </header>
+      <section class="team-overview-grid" aria-label="Güncel özet">
+        <article class="team-stat blue"><div class="team-stat-label">Üye hesabı</div><div class="team-stat-value" id="userCount">—</div><div class="team-stat-note">Kayıtlı toplam üye</div></article>
+        <article class="team-stat amber"><div class="team-stat-label">Bekleyen işlem</div><div class="team-stat-value" id="pendingCount">—</div><div class="team-stat-note" id="pendingNote">Yatırım ve çekim talepleri</div></article>
+        <article class="team-stat green"><div class="team-stat-label">Onaylanan işlem</div><div class="team-stat-value" id="approvedCount">—</div><div class="team-stat-note">Toplam onay kaydı</div></article>
+        <article class="team-stat purple"><div class="team-stat-label">Bekleyen kimlik kontrolü</div><div class="team-stat-value" id="kycCount">—</div><div class="team-stat-note">İnceleme bekleyen üyeler</div></article>
+      </section>
+      <div class="overview-columns">
+        <section class="overview-card">
+          <div class="overview-head"><div><h2>Son işlemler</h2><p>En son oluşturulan yatırım ve çekim talepleri.</p></div><a class="overview-link" href="requests.html">Tüm işlemleri gör</a></div>
+          <div class="overview-table-wrap"><table class="overview-table"><thead><tr><th>İşlem</th><th>Tür</th><th>Ağ</th><th>Tutar</th><th>Durum</th><th>Tarih</th></tr></thead><tbody id="recentRows"><tr><td class="overview-empty" colspan="6">Yükleniyor…</td></tr></tbody></table></div>
+          <div class="overview-footer"><span id="updatedAt">Bilgiler yükleniyor</span><button class="refresh-button" id="refreshOverview" type="button">Yenile</button></div>
+        </section>
+        <section class="overview-card">
+          <h2>Hızlı erişim</h2><p>Günlük ekip işlemlerine doğrudan geç.</p>
+          <div class="quick-links">
+            <a class="quick-link" href="requests.html"><span><b>Bekleyen işlemler</b><small>Yatırım ve çekim taleplerini incele</small></span><span class="arrow" aria-hidden="true">›</span></a>
+            <a class="quick-link" href="withdrawal-pool.html"><span><b>Çekim havuzu</b><small>Ödeme bekleyen çekimleri yönet</small></span><span class="arrow" aria-hidden="true">›</span></a>
+            <a class="quick-link" href="user-center.html"><span><b>Kullanıcılar</b><small>Üye hesaplarını ve durumlarını görüntüle</small></span><span class="arrow" aria-hidden="true">›</span></a>
+            <a class="quick-link" href="audit.html"><span><b>İşlem kayıtları</b><small>Yönetim hareketlerini takip et</small></span><span class="arrow" aria-hidden="true">›</span></a>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script src="team-dashboard-data.js"></script>
+</body>
+</html>
