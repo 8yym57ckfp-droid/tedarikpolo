@@ -1,21 +1,65 @@
 (()=>{
   if(!document.body)return;
-  document.body.classList.add('member-premium');
-  document.body.dataset.memberTheme='solar';
+  const body=document.body;
+  body.classList.add('member-premium');
+  body.dataset.memberTheme='solar';
 
   const ambient=document.createElement('div');
   ambient.className='member-depth-ambient';
   ambient.setAttribute('aria-hidden','true');
   ambient.innerHTML='<i class="member-depth-orb one"></i><i class="member-depth-orb two"></i><i class="member-depth-orb three"></i><i class="member-depth-ring"></i><i class="member-depth-ring ring-two"></i>';
-  document.body.prepend(ambient);
-  for(const child of document.body.children){
+  body.prepend(ambient);
+
+  if(!body.classList.contains('public-landing')&&!body.classList.contains('auth-public')){
+    const current=location.pathname.split('/').pop()||'dashboard.html';
+    const routes=[
+      ['dashboard.html','Ana Sayfa'],['wallet.html','Cüzdan'],['deposit.html','Yatırım Yap'],
+      ['withdraw.html','Çekim Yap'],['balance-history.html','Bakiye Hareketleri'],
+      ['transactions.html','İşlem Geçmişi'],['referrals.html','Referanslar'],['events.html','Etkinlikler'],
+      ['earnings.html','Kazanç Merkezi'],['support.html','Destek'],['notifications.html','Bildirimler'],
+      ['profile.html','Profil & Güvenlik'],['security.html','Güvenlik Merkezi']
+    ];
+    if(!document.querySelector('body>.side,.app>.side,.dashboard-shell>.side')){
+      const rail=document.createElement('aside');
+      rail.className='side member-shared-rail';
+      const logo=document.createElement('a');logo.className='logo';logo.href='dashboard.html';logo.innerHTML='Safe<span>Pays</span>';
+      const nav=document.createElement('nav');nav.setAttribute('aria-label','Üye menüsü');
+      for(const [href,label] of routes){const link=document.createElement('a');link.href=href;link.textContent=label;if(current===href)link.classList.add('active');nav.append(link)}
+      rail.append(logo,nav);
+      const app=document.querySelector('.app,.dashboard-shell');
+      (app||body).prepend(rail);
+    }
+    if(!document.querySelector('.mobile-nav')){
+      const nav=document.createElement('nav');nav.className='mobile-nav member-shared-mobile-nav';nav.setAttribute('aria-label','Ana menü');
+      for(const [href,label,icon] of [['dashboard.html','Ana Sayfa','⌂'],['wallet.html','Cüzdan','◈'],['events.html','Etkinlik','✦'],['finance.html','Yatır / Çek','↕'],['support.html','Destek','?']]){
+        const link=document.createElement('a');link.href=href;if(current===href)link.classList.add('active');
+        const symbol=document.createElement('b');symbol.className='nav-svg';symbol.setAttribute('aria-hidden','true');symbol.textContent=icon;
+        const text=document.createElement('span');text.textContent=label;link.append(symbol,text);nav.append(link);
+      }
+      body.append(nav);
+    }
+  }
+
+  for(const child of body.children){
     if(child===ambient||child.tagName==='SCRIPT'||child.tagName==='STYLE')continue;
-    if(getComputedStyle(child).position==='static')child.style.position='relative';
-    if(getComputedStyle(child).zIndex==='auto')child.style.zIndex='1';
+    const style=getComputedStyle(child);
+    if(style.position==='static')child.style.position='relative';
+    if(style.zIndex==='auto')child.style.zIndex='1';
   }
 
   const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const selector='.card,.dash-card,.assets-summary,.balance-card,.finance-card,.network-invest,.network-invest-card,.quick,.ref-banner,.transaction-card,.history-card,.profile,.support-card,.support-panel,.chat-panel,.context-card,.support-categories,.support-category,.support-compose,.security-card,.security-row,.security-grid,.security-hero,.account-card,.account-grid,.danger-zone,.notice-card,.event-card,.panel,.wallet-card,.wallet-summary-card,.wallet-secure-panel,.wallet-activity-panel,.form-card,.auth-card,.auth,.member-earning-guide,.wallet-layout-grid>section,.activity-panel,.balance-panel,.transactions-card,.pending-card,.ref-card,.ref-page,.ref-stat,.recent-card,.campaign,.overview-hero,.quick-action,.quick-actions,.balance-history-panel,.table-wrap,.stat-card,.info-card,.ticket,.session,.pl-globe-stage,.pl-join-card';
+  const selector=[
+    '.pl-hero .hero-copy','.pl-globe-stage','.pl-feature-card','.pl-news-card','.pl-how-card','.pl-faq-item','.pl-join-card',
+    '.dash-content>.balance-grid','.dash-content>.dashboard-published-feed','.dash-content>.assets-summary',
+    '.dash-content>.member-earning-guide','.dash-content>.network-invest','.dash-content>.quick-grid>.quick',
+    '.dash-content>.dash-two>.dash-card','.dash-content>.dash-two>.ref-banner','.dash-content>.tx-card',
+    '.main>.finance-card','.main>.support-panel','.main>.security-hero','.main>.account-card',
+    '.finance-page>.finance-card','.finance-page>.support-panel','.finance-page>.wallet-summary-card',
+    '.main>.ref-card','.main>.ref-page','.main>.event-card','.main>.history-card','.main>.transactions-card',
+    '.main>.campaign','.main>.stat-card','.main>.info-card','.main>.profile','.auth-wrap>.auth',
+    '.support-shell>.support-panel','.wallet-page>.wallet-summary-card','.wallet-page>.wallet-secure-panel',
+    '.wallet-page>.wallet-activity-panel'
+  ].join(',');
   const cards=new Set(),visible=new Set();
   let raf=0;
 
@@ -26,30 +70,33 @@
       const viewport=innerHeight||1;
       for(const card of visible){
         const rect=card.getBoundingClientRect();
-        const phase=Math.max(-1.25,Math.min(1.25,(rect.top+rect.height*.5-viewport*.5)/viewport));
+        const phase=Math.max(-1.15,Math.min(1.15,(rect.top+rect.height*.5-viewport*.5)/viewport));
         const distance=Math.abs(phase);
         const side=Number(card.dataset.depthSide||1);
-        const y=Math.max(-34,Math.min(34,phase*27));
-        const z=-Math.min(142,distance*118);
-        const tilt=Math.max(-13,Math.min(13,-phase*11));
-        const turn=Math.sin(phase*2.25)*4.2+side*1.25;
-        const x=Math.sin(phase*2.1+side)*Math.min(13,distance*12);
-        const scale=1-Math.min(.065,distance*.052);
+        const x=Math.sin(phase*1.85+side)*Math.min(10,distance*9);
+        const y=Math.max(-18,Math.min(18,phase*15));
+        const z=-Math.min(34,distance*28);
+        const tilt=Math.max(-4.5,Math.min(4.5,-phase*4));
+        const turn=Math.sin(phase*1.8)*2.1+side*.7;
+        const scale=1-Math.min(.025,distance*.021);
         card.style.setProperty('--member-depth-x',x.toFixed(2)+'px');
         card.style.setProperty('--member-depth-y',y.toFixed(2)+'px');
         card.style.setProperty('--member-depth-z',z.toFixed(2)+'px');
         card.style.setProperty('--member-depth-r',tilt.toFixed(2)+'deg');
         card.style.setProperty('--member-depth-side',turn.toFixed(2)+'deg');
-        card.style.setProperty('--member-depth-side-mobile',(turn*.45).toFixed(2)+'deg');
         card.style.setProperty('--member-depth-scale',scale.toFixed(4));
       }
       const maxScroll=Math.max(1,document.documentElement.scrollHeight-viewport);
       const progress=Math.max(0,Math.min(1,(scrollY||0)/maxScroll));
-      document.body.style.setProperty('--member-scroll-progress',progress.toFixed(4));
-      ambient.style.setProperty('--member-parallax-y',(-scrollY*.24).toFixed(2)+'px');
-      ambient.style.setProperty('--member-grid-y',(-scrollY*.14).toFixed(2)+'px');
-      ambient.style.setProperty('--member-ring-y',(-scrollY*.19).toFixed(2)+'px');
-      ambient.style.setProperty('--member-ring-y-secondary',(-scrollY*.13).toFixed(2)+'px');
+      body.style.setProperty('--member-scroll-progress',progress.toFixed(4));
+      body.style.setProperty('--member-hero-rotate-y',(-progress*6).toFixed(2)+'deg');
+      body.style.setProperty('--member-hero-rotate-x',(progress*3).toFixed(2)+'deg');
+      body.style.setProperty('--member-ticker-rotate',(-progress*2).toFixed(2)+'deg');
+      body.style.setProperty('--member-join-rotate',(progress*2).toFixed(2)+'deg');
+      ambient.style.setProperty('--member-parallax-y',(-scrollY*.21).toFixed(2)+'px');
+      ambient.style.setProperty('--member-grid-y',(-scrollY*.12).toFixed(2)+'px');
+      ambient.style.setProperty('--member-ring-y',(-scrollY*.18).toFixed(2)+'px');
+      ambient.style.setProperty('--member-ring-y-secondary',(-scrollY*.11).toFixed(2)+'px');
     });
   }
 
@@ -59,15 +106,13 @@
       else visible.delete(entry.target);
     }
     updateDepth();
-  },{threshold:0,rootMargin:'12% 0px 12% 0px'});
+  },{threshold:0,rootMargin:'10% 0px 10% 0px'});
 
   function registerCard(card){
-    if(cards.has(card)||card.closest('.admin-side,.admin-nav,.mobile-nav,.public-header,header'))return;
+    if(cards.has(card)||card.closest('.side,.mobile-nav,.public-header,header,.auth-scene'))return;
     cards.add(card);
     card.classList.add('member-depth-card','member-depth-visible');
-    const side=cards.size%2?-1:1;
-    card.dataset.depthSide=String(side);
-    card.style.setProperty('--member-depth-side',(side*1.25)+'deg');
+    card.dataset.depthSide=String(cards.size%2?-1:1);
     if(observer)observer.observe(card);else visible.add(card);
   }
   function scan(node){
@@ -76,7 +121,7 @@
     node.querySelectorAll(selector).forEach(registerCard);
   }
   document.querySelectorAll(selector).forEach(registerCard);
-  new MutationObserver(records=>records.forEach(record=>record.addedNodes.forEach(scan))).observe(document.body,{childList:true,subtree:true});
+  new MutationObserver(records=>records.forEach(record=>record.addedNodes.forEach(scan))).observe(body,{childList:true,subtree:true});
   addEventListener('scroll',updateDepth,{passive:true});
   addEventListener('resize',updateDepth,{passive:true});
   updateDepth();
