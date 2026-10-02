@@ -1,0 +1,600 @@
+/* Shared Obsidyen Cam theme for every public and member-facing route. */
+html { color-scheme: dark; }
+
+html body.member-premium,
+html body.maintenance-page {
+  --obsidian-bg: #0b0c0e;
+  --obsidian-panel: rgba(25, 26, 29, .82);
+  --obsidian-panel-raised: rgba(39, 40, 44, .78);
+  --obsidian-input: rgba(9, 10, 12, .74);
+  --obsidian-line: rgba(236, 237, 240, .15);
+  --obsidian-line-strong: rgba(245, 245, 247, .25);
+  --obsidian-text: #f2f2f4;
+  --obsidian-muted: #a6a7ad;
+  --obsidian-dim: #81838a;
+  --obsidian-silver: #dedfe2;
+  --obsidian-silver-dark: #b7b9be;
+  --obsidian-glow: rgba(229, 230, 233, .12);
+  color: var(--obsidian-text) !important;
+  background: var(--obsidian-bg) !important;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+html body.member-premium {
+  background-image: radial-gradient(ellipse at 12% 0%, rgba(205, 207, 212, .08), transparent 30%),
+    radial-gradient(ellipse at 88% 50%, rgba(128, 130, 136, .07), transparent 34%),
+    linear-gradient(155deg, #101113 0%, #0b0c0e 56%, #101113 100%) !important;
+  background-attachment: fixed !important;
+}
+
+html body.member-premium .member-depth-ambient,
+html body.member-premium.public-landing .member-depth-ambient,
+html body.member-premium.auth-public .member-depth-ambient {
+  background: radial-gradient(ellipse at 12% 8%, rgba(225, 226, 229, .12), transparent 31%),
+    radial-gradient(ellipse at 85% 56%, rgba(137, 139, 145, .09), transparent 34%),
+    linear-gradient(145deg, #0b0c0e 0%, #101113 58%, #0c0d0f 100%) !important;
+  opacity: 1 !important;
+}
+
+html body.member-premium .member-depth-ambient::before,
+html body.member-premium .member-depth-ambient::after {
+  opacity: .3 !important;
+  background: radial-gradient(ellipse at 18% 24%, rgba(237, 238, 240, .1), transparent 27%),
+    radial-gradient(ellipse at 80% 76%, rgba(179, 181, 186, .07), transparent 31%) !important;
+}
+
+html body.member-premium .member-depth-ambient::after {
+  opacity: .12 !important;
+  background-image: linear-gradient(rgba(215, 216, 219, .075) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(215, 216, 219, .075) 1px, transparent 1px) !important;
+  background-size: 96px 96px !important;
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 73%) !important;
+}
+
+html body.member-premium .pl-ambient-bg { display: none !important; }
+html body.member-premium .member-depth-orb.one { background: radial-gradient(circle at 36% 34%, rgba(245,245,247,.24), rgba(151,153,159,.055) 57%, transparent 73%) !important; opacity: .28 !important; }
+html body.member-premium .member-depth-orb.two { background: radial-gradient(circle at 40% 38%, rgba(224,225,228,.16), rgba(141,143,149,.045) 58%, transparent 74%) !important; opacity: .24 !important; }
+html body.member-premium .member-depth-orb.three { background: radial-gradient(circle at 40% 38%, rgba(233,234,237,.12), rgba(133,135,141,.04) 60%, transparent 75%) !important; opacity: .2 !important; }
+html body.member-premium .member-depth-ring,
+html body.member-premium .member-depth-ring.ring-two { border-color: rgba(225,226,229,.09) !important; box-shadow: 0 0 54px rgba(255,255,255,.025), inset 0 0 38px rgba(255,255,255,.018) !important; }
+
+html body.member-premium :where(.app, .app-shell, .dashboard-shell, .main, .main-content, .dash-main, .finance-page, .wrap, .member-content) {
+  color: var(--obsidian-text) !important;
+  background: transparent !important;
+}
+
+html body.member-premium :where(.side, .sidebar, .member-sidebar) {
+  color: var(--obsidian-text) !important;
+  border: 1px solid var(--obsidian-line) !important;
+  background: linear-gradient(160deg, rgba(34,35,39,.9), rgba(13,14,16,.94) 74%) !important;
+  box-shadow: 0 22px 70px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.1) !important;
+  backdrop-filter: blur(26px) saturate(65%) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(65%) !important;
+}
+
+html body.member-premium :where(.side .logo, .logo, .member-brand, .member-logo, .auth-scene-brand) {
+  color: var(--obsidian-text) !important;
+}
+html body.member-premium .logo span,
+html body.member-premium .logo-words b:last-child,
+html body.member-premium .auth-scene-brand span b:last-child { color: var(--obsidian-text) !important; }
+html body.member-premium :where(.side nav a, .mobile-nav a) { color: #c7c8cc !important; }
+html body.member-premium :where(.side nav a:hover, .side nav a.active, .mobile-nav a:hover, .mobile-nav a.active) {
+  color: #fff !important;
+  border-color: rgba(240,241,243,.21) !important;
+  background: linear-gradient(145deg, rgba(255,255,255,.13), rgba(255,255,255,.045)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 8px 24px rgba(0,0,0,.2) !important;
+}
+
+html body.member-premium :where(.dash-header, .topbar, .member-topbar, .member-header, .support-topbar, .page-head, .finance-title) {
+  color: var(--obsidian-text) !important;
+  border-color: var(--obsidian-line) !important;
+  background: linear-gradient(145deg, rgba(36,37,41,.84), rgba(17,18,20,.8)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08) !important;
+  backdrop-filter: blur(24px) saturate(68%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(68%) !important;
+}
+html body.member-premium :where(h1, h2, h3, h4, h5, strong, b, .page-title, .balance-amount, .balance-label) { color: var(--obsidian-text); }
+html body.member-premium :where(p, small, .muted, .sub, .hint, .page-description, .finance-title p, .wallet-balance-caption) { color: var(--obsidian-muted); }
+html body.member-premium a:not(.btn):not(.button):not(.mobile-nav a) { color: #d8d9dc; }
+html body.member-premium :where(.side nav a, .mobile-nav a) { text-decoration: none; }
+
+html body.member-premium :where(.panel, .card, .dark-card, .dash-card, .finance-card, .support-panel, .support-category, .account-card, .context-card, .chat-panel, .network-live-panel, .dashboard-published-feed, .assets-summary, .member-earning-guide, .tx-card, .transactions-card, .security-hero, .campaign, .ref-card, .ref-page, .wallet-summary-card, .wallet-secure-panel, .wallet-activity-panel, .pending-card, .event-card, .news-card, .faq-item, .faq-list, .profile-referral-card, .profile-close-panel, .profile-danger-actions) {
+  color: var(--obsidian-text) !important;
+  border: 1px solid var(--obsidian-line) !important;
+  border-radius: 20px !important;
+  background: linear-gradient(145deg, rgba(41,42,46,.78), rgba(18,19,22,.9) 68%, rgba(14,15,17,.92)) !important;
+  box-shadow: 0 22px 58px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.12) !important;
+  backdrop-filter: blur(24px) saturate(62%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(62%) !important;
+}
+
+html body.member-premium :where(.balance-card.main-balance, .main-balance, .wallet-summary-card, .wallet-balance-card) {
+  color: var(--obsidian-text) !important;
+  border-color: var(--obsidian-line-strong) !important;
+  background: radial-gradient(ellipse at 80% 8%, rgba(240,241,243,.18), transparent 32%),
+    linear-gradient(145deg, rgba(72,73,78,.92), rgba(35,36,40,.94) 58%, rgba(20,21,24,.96)) !important;
+  box-shadow: 0 26px 70px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.25) !important;
+}
+
+html body.member-premium :where(.network-live-panel, .network-live-grid, .network-invest-card, .wallet-network-strip, .network, .info, .info-list, .pending-item, .support-list, .support-messages, .support-compose, .chat-head, .wallet-recent-block, .wallet-activity-row, .security-row, .recent-row, .recent-card, .tx-summary, .sp-confirm-summary) {
+  color: var(--obsidian-text) !important;
+  border-color: var(--obsidian-line) !important;
+  background-color: rgba(255,255,255,.035) !important;
+}
+
+html body.member-premium :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea, .phone-input-wrap) {
+  border: 1px solid var(--obsidian-line-strong) !important;
+  border-radius: 13px !important;
+  color: var(--obsidian-text) !important;
+  background: var(--obsidian-input) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.055) !important;
+}
+html body.member-premium :where(input, select, textarea)::placeholder { color: #85868c !important; opacity: 1; }
+html body.member-premium :where(input, select, textarea):focus {
+  border-color: rgba(242,243,245,.52) !important;
+  box-shadow: 0 0 0 4px rgba(236,237,240,.085), inset 0 1px 0 rgba(255,255,255,.06) !important;
+  outline: none !important;
+}
+html body.member-premium input[type="checkbox"],
+html body.member-premium input[type="radio"] { accent-color: #d6d7da !important; }
+html body.member-premium :where(label, .field label, .terms-label) { color: #c7c8cc !important; }
+html body.member-premium :where(.field-error, .field-invalid .field-error) { color: #e58b96 !important; }
+html body.member-premium :where(.phone-prefix, .phone-input-wrap .phone-prefix) { color: #d6d7da !important; background: rgba(255,255,255,.06) !important; }
+
+html body.member-premium :where(.btn, .button, button[type="submit"], input[type="submit"], .auth-submit, .auth-submit button) {
+  border: 1px solid rgba(255,255,255,.36) !important;
+  border-radius: 13px !important;
+  color: #18191b !important;
+  background: linear-gradient(145deg, #f3f3f5, #c6c8cc) !important;
+  box-shadow: 0 12px 28px rgba(0,0,0,.28), inset 0 1px 0 #fff !important;
+  font-weight: 700 !important;
+}
+html body.member-premium :where(.btn.secondary, .btn.ghost, .button.secondary, .paste-wallet-btn, .mini-btn, .quick-action, .amount-row .amount) {
+  border: 1px solid var(--obsidian-line-strong) !important;
+  color: var(--obsidian-text) !important;
+  background: rgba(255,255,255,.065) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+html body.member-premium :where(.btn.danger, .button.danger, button.danger, .danger-zone .btn) {
+  border-color: rgba(207,111,125,.3) !important;
+  color: #f4dfe2 !important;
+  background: linear-gradient(145deg, rgba(111,52,61,.82), rgba(55,29,34,.92)) !important;
+}
+
+html body.member-premium :where(table, .table, .transaction-table-wrapper, .ref-table) { color: var(--obsidian-text) !important; background: transparent !important; }
+html body.member-premium :where(th, td, .table th, .table td) { color: #d4d5d8 !important; border-color: var(--obsidian-line) !important; }
+html body.member-premium :where(tr:hover, .table tr:hover) { background: rgba(255,255,255,.035) !important; }
+html body.member-premium :where(.network-icon, .network-chip, .network-inline, .asset-token-icon, .wallet-secure-icon, .quick-icon, .info-icon) { filter: grayscale(.88) !important; }
+html body.member-premium :where(.network-tabs .network-tab, .network-tab, .filter-row button, .selected-topic) { border-color: var(--obsidian-line) !important; color: #d7d8db !important; background: rgba(255,255,255,.045) !important; }
+html body.member-premium :where(.network-tab.active, .network-tabs .network-tab.active, .selected-topic) { border-color: var(--obsidian-line-strong) !important; color: #fff !important; background: linear-gradient(145deg, rgba(231,232,235,.16), rgba(255,255,255,.055)) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.15) !important; }
+html body.member-premium :where(.stepbar .step, .step) { background: rgba(255,255,255,.12) !important; }
+html body.member-premium :where(.stepbar .step.active, .step.active) { background: linear-gradient(90deg,#dfe0e3,#8f9196) !important; box-shadow: 0 0 16px rgba(255,255,255,.18) !important; }
+html body.member-premium :where(.wallet-activity-positive, .recent-amount.positive) { color: #b3d2c4 !important; }
+html body.member-premium :where(.wallet-activity-negative, .recent-amount.negative) { color: #e4a0a8 !important; }
+
+/* Bottom glass dock shared by every member route on narrow screens. */
+html body.member-premium:not(.public-landing):not(.auth-public) .mobile-nav {
+  border: 1px solid rgba(245,245,247,.2) !important;
+  border-radius: 24px !important;
+  background: rgba(24,25,28,.83) !important;
+  box-shadow: 0 22px 56px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.15) !important;
+  backdrop-filter: blur(28px) saturate(68%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(68%) !important;
+}
+
+/* Public landing: quiet monochrome canvas, silver depth, restrained network illustration. */
+html body.member-premium.public-landing .member-depth-ambient {
+  background: radial-gradient(ellipse at 9% 13%, rgba(210,211,215,.12), transparent 28%),
+    radial-gradient(ellipse at 89% 62%, rgba(135,137,143,.09), transparent 31%),
+    linear-gradient(145deg,#0a0b0d,#111214 53%,#0b0c0e) !important;
+}
+html body.member-premium.public-landing .member-depth-ambient::after { opacity:.08 !important; }
+html body.member-premium.public-landing .public-header {
+  border: 1px solid rgba(245,245,247,.17) !important;
+  border-radius: 22px !important;
+  color: var(--obsidian-text) !important;
+  background: rgba(14,15,17,.83) !important;
+  box-shadow: 0 18px 48px rgba(0,0,0,.36), inset 0 1px 0 rgba(255,255,255,.12) !important;
+  backdrop-filter: blur(28px) saturate(70%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(70%) !important;
+}
+html body.member-premium.public-landing .public-header .navlinks a,
+html body.member-premium.public-landing .public-header .navlinks a:hover { color: #c6c7cb !important; }
+html body.member-premium.public-landing .public-header .public-login { color:#f2f2f4 !important; background:rgba(255,255,255,.075) !important; }
+html body.member-premium.public-landing .pl-hero h1 { color:#f4f4f5 !important; text-shadow:0 9px 36px rgba(0,0,0,.35); }
+html body.member-premium.public-landing .pl-hero h1 .gradient {
+  color: #dedfe2 !important;
+  background: linear-gradient(105deg,#f7f7f8 4%,#c6c8cc 50%,#85878d 96%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+html body.member-premium.public-landing .pl-hero .lead,
+html body.member-premium.public-landing .section-sub { color:#b2b3b8 !important; }
+html body.member-premium.public-landing .pl-badge { border-color:rgba(255,255,255,.2) !important; color:#dddde0 !important; background:rgba(255,255,255,.065) !important; }
+html body.member-premium.public-landing .pl-cta-primary,
+html body.member-premium.public-landing .pl-join-card .btn { color:#17181a !important; background:linear-gradient(145deg,#f4f4f5,#c3c5c9) !important; }
+html body.member-premium.public-landing .pl-cta-secondary { color:#efeff1 !important; border:1px solid rgba(255,255,255,.19) !important; background:rgba(255,255,255,.065) !important; }
+html body.member-premium.public-landing .pl-globe-stage {
+  border-color:rgba(255,255,255,.18) !important;
+  background:radial-gradient(circle at 50% 48%,rgba(227,228,231,.11),transparent 44%),linear-gradient(145deg,rgba(52,53,58,.54),rgba(17,18,21,.9) 70%) !important;
+  box-shadow:0 32px 82px rgba(0,0,0,.46),inset 0 1px 0 rgba(255,255,255,.17) !important;
+  backdrop-filter:blur(24px) saturate(68%) !important;
+  -webkit-backdrop-filter:blur(24px) saturate(68%) !important;
+}
+html body.member-premium.public-landing .pl-globe-glow { background:radial-gradient(circle,rgba(238,239,241,.24),rgba(150,152,158,.07) 42%,transparent 72%) !important; }
+html body.member-premium.public-landing .pl-globe {
+  position:absolute !important; left:50% !important; top:50% !important;
+  border-color:rgba(255,255,255,.32) !important;
+  background:radial-gradient(circle at 34% 27%,#dedfe2 0%,#a5a7ad 18%,#55575d 54%,#1d1e22 100%) !important;
+  box-shadow:inset -26px -23px 45px rgba(0,0,0,.55),inset 13px 9px 24px rgba(255,255,255,.28),0 0 70px rgba(255,255,255,.12) !important;
+  animation:obsidian-globe-float 7.4s ease-in-out infinite alternate !important;
+}
+html body.member-premium.public-landing .pl-globe-core { border-color:rgba(255,255,255,.3) !important; background:radial-gradient(circle at 34% 27%,rgba(255,255,255,.76),transparent 22%),radial-gradient(circle at 64% 70%,rgba(195,197,203,.3),transparent 49%),linear-gradient(145deg,#77797f,#242529 64%,#111215) !important; }
+html body.member-premium.public-landing .pl-globe-grid { opacity:.22 !important; }
+html body.member-premium.public-landing :where(.pl-globe-ring, .pl-globe-ring-b) { border-color:rgba(235,235,238,.26) !important; box-shadow:0 0 22px rgba(255,255,255,.07) !important; }
+html body.member-premium.public-landing .pl-globe-stage :where(.usdt1, .usdt2, .tag) { border-color:rgba(255,255,255,.24) !important; color:#f0f0f2 !important; background:linear-gradient(145deg,rgba(226,227,230,.22),rgba(37,38,42,.9)) !important; box-shadow:0 13px 34px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.23) !important; filter:grayscale(1) !important; }
+html body.member-premium.public-landing .pl-logo-ticker { border-color:rgba(255,255,255,.12) !important; background:rgba(17,18,20,.76) !important; backdrop-filter:blur(24px) !important; }
+html body.member-premium.public-landing .pl-ticker-item { border-color:rgba(255,255,255,.15) !important; color:#d1d1d5 !important; background:rgba(255,255,255,.05) !important; }
+html body.member-premium.public-landing :where(.pl-feature-card, .pl-how-card, .pl-faq-item, .pl-news-card, .pl-join-card) {
+  border-color:rgba(255,255,255,.15) !important;
+  color:#ededee !important;
+  background:linear-gradient(145deg,rgba(52,53,58,.66),rgba(21,22,25,.9) 68%) !important;
+  box-shadow:0 22px 56px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.14) !important;
+  backdrop-filter:blur(24px) saturate(66%) !important;
+  -webkit-backdrop-filter:blur(24px) saturate(66%) !important;
+}
+html body.member-premium.public-landing :where(.pl-feature-card h3, .pl-how-card h3, .pl-faq-item summary, .pl-join-card h2) { color:#f2f2f4 !important; }
+html body.member-premium.public-landing :where(.pl-feature-card p, .pl-how-card p, .pl-faq-item p, .pl-join-card p) { color:#b8b9be !important; }
+html body.member-premium.public-landing .pl-neon-icon { border-color:rgba(255,255,255,.2) !important; color:#ededee !important; background:linear-gradient(145deg,rgba(255,255,255,.14),rgba(255,255,255,.035)) !important; filter:grayscale(1) !important; }
+html body.member-premium.public-landing .pl-news-section { border-color:rgba(255,255,255,.12) !important; background:linear-gradient(112deg,rgba(42,43,47,.42),rgba(16,17,19,.78) 58%,rgba(37,38,42,.3)) !important; }
+html body.member-premium.public-landing .pl-news-img { filter:grayscale(.72) !important; }
+html body.member-premium.public-landing .pl-footer { border-color:rgba(255,255,255,.12) !important; color:#e0e0e3 !important; background:rgba(9,10,12,.82) !important; backdrop-filter:blur(26px) !important; }
+
+/* Login and registration share the same graphite glass language as the signed-in app. */
+html body.auth-public.member-premium { background:var(--obsidian-bg) !important; }
+html body.auth-public .member-depth-ambient { opacity:.88 !important; }
+html body.auth-public .auth-page {
+  width:min(1320px,calc(100% - 72px)) !important;
+  grid-template-columns:minmax(300px,.9fr) minmax(470px,1.1fr) !important;
+  gap:clamp(22px,4vw,64px) !important;
+}
+html body.auth-public .auth-scene { color:var(--obsidian-text) !important; }
+html body.auth-public .auth-scene::before { border-color:rgba(240,241,243,.13) !important; box-shadow:0 0 0 22px rgba(255,255,255,.018),0 0 0 56px rgba(255,255,255,.012) !important; }
+html body.auth-public .auth-scene-brand span b:last-child { color:#f0f0f2 !important; }
+html body.auth-public .auth-scene-kicker { color:#c5c6ca !important; }
+html body.auth-public .auth-scene h2 { color:#f4f4f5 !important; }
+html body.auth-public .auth-scene h2 span { color:#dedfe2 !important; }
+html body.auth-public .auth-scene-copy { color:#b8b9bf !important; }
+html body.auth-public .auth-visual-stage {
+  border-color:rgba(255,255,255,.17) !important;
+  background:radial-gradient(ellipse at 50% 54%,rgba(228,229,232,.13),transparent 49%),linear-gradient(145deg,rgba(54,55,60,.52),rgba(17,18,21,.83)) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 22px 55px rgba(0,0,0,.22) !important;
+}
+html body.auth-public .auth-visual-stage::before,
+html body.auth-public .auth-visual-stage::after { border-color:rgba(235,235,238,.3) !important; box-shadow:0 0 28px rgba(255,255,255,.07) !important; }
+html body.auth-public .auth-visual-sphere { border-color:rgba(255,255,255,.38) !important; background:radial-gradient(circle at 33% 24%,#e3e4e7,#a1a3a9 30%,#4b4d53 67%,#1f2024) !important; box-shadow:inset -18px -18px 33px rgba(8,9,11,.57),inset 8px 7px 17px rgba(255,255,255,.3),0 0 54px rgba(255,255,255,.15) !important; }
+html body.auth-public .auth-coin { border-color:rgba(255,255,255,.32) !important; color:#f6f6f7 !important; background:linear-gradient(145deg,#77797f,#292a2e) !important; box-shadow:0 12px 30px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.25) !important; }
+html body.auth-public .auth-coin.two { background:linear-gradient(145deg,#66686e,#25262a) !important; }
+html body.auth-public .auth-network-labels { color:#d6d7da !important; }
+html body.auth-public .auth-scene-points span { border-color:var(--obsidian-line) !important; color:#dadbde !important; background:rgba(255,255,255,.055) !important; }
+html body.auth-public .auth-wrap .auth {
+  border:1px solid rgba(245,245,247,.2) !important;
+  border-radius:28px !important;
+  color:var(--obsidian-text) !important;
+  background:linear-gradient(145deg,rgba(53,54,59,.83),rgba(23,24,27,.94) 66%,rgba(15,16,18,.96)) !important;
+  box-shadow:0 34px 90px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.17) !important;
+  backdrop-filter:blur(28px) saturate(66%) !important;
+  -webkit-backdrop-filter:blur(28px) saturate(66%) !important;
+}
+html body.auth-public .auth-wrap .auth .auth-logo { display:flex !important; margin-bottom:17px !important; }
+html body.auth-public .auth h1 { color:#f4f4f5 !important; }
+html body.auth-public .auth > p { color:#b7b8be !important; }
+html body.auth-public .auth .field label,
+html body.auth-public .auth .terms-label { color:#c4c5ca !important; }
+html body.auth-public .auth .field input,
+html body.auth-public .auth .field select,
+html body.auth-public .auth .field textarea,
+html body.auth-public .phone-input-wrap { border-color:rgba(245,245,247,.2) !important; color:#f1f1f3 !important; background:rgba(9,10,12,.7) !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.055) !important; }
+html body.auth-public .auth .field input::placeholder { color:#85868d !important; }
+html body.auth-public .auth .field input:focus,
+html body.auth-public .phone-input-wrap:focus-within { border-color:rgba(245,245,247,.55) !important; box-shadow:0 0 0 4px rgba(255,255,255,.09) !important; }
+html body.auth-public .phone-prefix { color:#e4e5e8 !important; }
+html body.auth-public .auth-row,
+html body.auth-public .auth-switch,
+html body.auth-public .auth-version { color:#a6a7ad !important; }
+html body.auth-public .auth-forgot,
+html body.auth-public .auth-switch a { color:#f0f0f2 !important; }
+html body.auth-public .auth-submit { color:#18191b !important; background:linear-gradient(145deg,#f2f2f4,#c5c7cb) !important; }
+html body.auth-public .sp-forgot-modal { border-color:rgba(255,255,255,.2) !important; color:#f0f0f2 !important; background:linear-gradient(145deg,#303136,#17181b) !important; }
+html body.auth-public .sp-forgot-modal :where(h3, p, label) { color:#e6e6e8 !important; }
+html body.auth-public .sp-forgot-modal input { color:#f0f0f2 !important; border-color:var(--obsidian-line) !important; background:var(--obsidian-input) !important; }
+
+html body.maintenance-page {
+  min-height:100vh !important;
+  background:radial-gradient(ellipse at 13% 9%,rgba(222,223,226,.11),transparent 32%),linear-gradient(145deg,#0b0c0e,#151619 55%,#0a0b0d) !important;
+  color:var(--obsidian-text) !important;
+}
+html body.maintenance-page :where(main, section, .card, .panel, .maintenance-card) { color:var(--obsidian-text) !important; border-color:var(--obsidian-line) !important; background:linear-gradient(145deg,rgba(47,48,52,.78),rgba(18,19,22,.91)) !important; box-shadow:0 24px 70px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.13) !important; backdrop-filter:blur(24px) !important; }
+
+/* Final palette pass: outrank older page-specific blue accents. */
+html body.member-premium.auth-public button.auth-submit,
+html body.member-premium.auth-public button#registerBtn,
+html body.member-premium.auth-public button.auth-submit:hover,
+html body.member-premium.auth-public button#registerBtn:hover {
+  border:1px solid rgba(255,255,255,.42) !important;
+  color:#18191b !important;
+  background:linear-gradient(145deg,#f3f3f5,#c3c5c9) !important;
+  box-shadow:0 14px 32px rgba(0,0,0,.34),inset 0 1px 0 #fff !important;
+  filter:none !important;
+}
+html body.member-premium.public-landing .pl-cta-primary,
+html body.member-premium.public-landing .pl-join-card .btn {
+  border-color:rgba(255,255,255,.42) !important;
+  color:#18191b !important;
+  background:linear-gradient(145deg,#f3f3f5,#c3c5c9) !important;
+  box-shadow:0 14px 32px rgba(0,0,0,.34),inset 0 1px 0 #fff !important;
+}
+
+html body.member-premium .side .logo::before {
+  content:"" !important;
+  display:block !important;
+  flex:0 0 38px !important;
+  width:38px !important;
+  height:38px !important;
+  border-radius:11px !important;
+  color:transparent !important;
+  background:url("safepays-obsidian-mark.svg") center/contain no-repeat !important;
+  box-shadow:none !important;
+}
+html body.member-premium .avatar-sm,
+html body.member-premium .member-avatar,
+html body.member-premium .member-wallet-icon {
+  border-color:rgba(255,255,255,.22) !important;
+  color:#f2f2f4 !important;
+  background:linear-gradient(145deg,#77797f,#292a2e) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 8px 20px rgba(0,0,0,.24) !important;
+}
+html body.member-premium .wallet-balance-pill em,
+html body.member-premium .member-balance-pill em { color:#d9dade !important; }
+
+/* The existing finance templates use their own high-specificity palette. */
+html.member-finance body.member-premium .finance-page .finance-card,
+html body.member-premium .wallet-page .finance-card {
+  border:1px solid rgba(238,239,242,.16) !important;
+  border-radius:20px !important;
+  color:#eeeeF0 !important;
+  background:linear-gradient(145deg,rgba(46,47,52,.82),rgba(20,21,24,.95) 68%,rgba(13,14,16,.96)) !important;
+  box-shadow:0 24px 64px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.15) !important;
+  backdrop-filter:blur(25px) saturate(62%) !important;
+  -webkit-backdrop-filter:blur(25px) saturate(62%) !important;
+}
+html body.member-premium .wallet-page .wallet-secure-card {
+  border:1px solid rgba(238,239,242,.15) !important;
+  border-radius:17px !important;
+  background:rgba(255,255,255,.045) !important;
+}
+html body.member-premium .wallet-page .btn.secondary,
+html.member-finance body.member-premium .finance-page .btn.secondary {
+  border-color:rgba(245,245,247,.2) !important;
+  color:#eeeeF0 !important;
+  background:rgba(255,255,255,.075) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.1) !important;
+}
+html.member-finance body.member-premium .finance-page .network-tabs .network-tab,
+html body.member-premium .wallet-page .network-tabs .network-tab {
+  border:1px solid rgba(238,239,242,.16) !important;
+  color:#d5d6da !important;
+  background:rgba(255,255,255,.055) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07) !important;
+}
+html.member-finance body.member-premium .finance-page .network-tabs .network-tab.active,
+html body.member-premium .wallet-page .network-tabs .network-tab.active {
+  border-color:rgba(255,255,255,.34) !important;
+  color:#fff !important;
+  background:linear-gradient(145deg,rgba(231,232,235,.19),rgba(255,255,255,.065)) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.19),0 12px 25px rgba(0,0,0,.24) !important;
+}
+html.member-finance body.member-premium .finance-page .info,
+html body.member-premium .wallet-page .info {
+  border:1px solid rgba(238,239,242,.12) !important;
+  border-radius:13px !important;
+  color:#e7e7ea !important;
+  background:rgba(255,255,255,.055) !important;
+}
+html.member-finance body.member-premium .finance-page .info span,
+html body.member-premium .wallet-page .info span { color:#adaeb4 !important; }
+html.member-finance body.member-premium .finance-page .info-icon,
+html body.member-premium .wallet-page .info-icon {
+  border:1px solid rgba(255,255,255,.15) !important;
+  color:#e7e7ea !important;
+  background:linear-gradient(145deg,rgba(255,255,255,.16),rgba(255,255,255,.045)) !important;
+}
+html.member-finance body.member-premium .finance-page .stepbar .step,
+html body.member-premium .wallet-page .stepbar .step { background:rgba(255,255,255,.15) !important; }
+html.member-finance body.member-premium .finance-page .stepbar .step.active,
+html body.member-premium .wallet-page .stepbar .step.active { background:linear-gradient(90deg,#f1f1f3,#92949a) !important; box-shadow:0 0 15px rgba(255,255,255,.18) !important; }
+html.member-finance body.member-premium .finance-page .network-icon.trc,
+html.member-finance body.member-premium .finance-page .network-icon.erc,
+html body.member-premium .wallet-page .network-icon.trc,
+html body.member-premium .wallet-page .network-icon.erc {
+  border-color:rgba(255,255,255,.18) !important;
+  color:#e6e7e9 !important;
+  background:linear-gradient(145deg,#55565c,#25262a) !important;
+  filter:grayscale(1) !important;
+}
+html.member-finance body.member-premium .finance-page .network,
+html.member-finance body.member-premium .finance-page .timer-card,
+html body.member-premium .wallet-page .network,
+html body.member-premium .wallet-page .timer-card {
+  border-color:rgba(238,239,242,.15) !important;
+  color:#e8e8eb !important;
+  background:rgba(255,255,255,.055) !important;
+}
+html.member-finance body.member-premium .finance-page .timer-card strong,
+html body.member-premium .wallet-page .timer-card strong { color:#e1e2e5 !important; }
+html.member-finance body.member-premium .finance-page .address,
+html body.member-premium .wallet-page .address {
+  border-color:rgba(238,239,242,.17) !important;
+  color:#e7e7e9 !important;
+  background:rgba(8,9,11,.76) !important;
+}
+html.member-finance body.member-premium .finance-page .amount,
+html body.member-premium .wallet-page .amount {
+  border-color:rgba(238,239,242,.16) !important;
+  color:#dedfe2 !important;
+  background:rgba(255,255,255,.055) !important;
+}
+html.member-finance body.member-premium .finance-page .amount:hover,
+html body.member-premium .wallet-page .amount:hover { border-color:rgba(255,255,255,.34) !important; color:#fff !important; }
+html.member-finance body.member-premium .finance-page .copy-row button,
+html.member-finance body.member-premium .finance-page .paste-wallet-btn,
+html body.member-premium .wallet-page .copy-row button,
+html body.member-premium .wallet-page .paste-wallet-btn {
+  border:1px solid rgba(255,255,255,.23) !important;
+  color:#eeeeF0 !important;
+  background:rgba(255,255,255,.09) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.1) !important;
+}
+
+/* Keep the shared member dock and its selected state monochrome. */
+html body.member-premium:not(.public-landing):not(.auth-public) .mobile-nav > a.active,
+html body.member-premium:not(.public-landing):not(.auth-public) .mobile-nav > a.active .nav-svg {
+  border-color:rgba(245,245,247,.2) !important;
+  color:#f3f3f5 !important;
+  background:linear-gradient(145deg,rgba(255,255,255,.18),rgba(255,255,255,.065)) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) .mobile-nav > a.active::after {
+  background:#e4e5e8 !important;
+  box-shadow:0 0 12px rgba(255,255,255,.34) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) .mobile-nav .nav-svg svg { filter:grayscale(1) !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) .network-invest-card,
+html body.member-premium:not(.public-landing):not(.auth-public) .network-invest-card.trc,
+html body.member-premium:not(.public-landing):not(.auth-public) .network-invest-card.erc {
+  border-color:rgba(238,239,242,.16) !important;
+  color:#ededf0 !important;
+  background:linear-gradient(145deg,rgba(43,44,48,.78),rgba(18,19,22,.92)) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-chip,
+html body.member-premium:not(.public-landing):not(.auth-public) .network-chip.blue,
+html body.member-premium:not(.public-landing):not(.auth-public) .wallet-mini-icon,
+html body.member-premium:not(.public-landing):not(.auth-public) .wallet-card-icon,
+html body.member-premium:not(.public-landing):not(.auth-public) .quick-icon {
+  border-color:rgba(255,255,255,.18) !important;
+  color:#e9e9ec !important;
+  background:linear-gradient(145deg,rgba(226,227,230,.18),rgba(255,255,255,.045)) !important;
+  filter:grayscale(1) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) .chart svg,
+html body.member-premium:not(.public-landing):not(.auth-public) .sparkline,
+html body.member-premium:not(.public-landing):not(.auth-public) .balance-sparkline { filter:grayscale(1) !important; }
+
+/* Keep the selected glass palette on member screens with legacy-specific rules. */
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.side, .sidebar, .member-sidebar) {
+  border:1px solid rgba(240,241,243,.16) !important;
+  color:#f0f0f2 !important;
+  background:linear-gradient(160deg,rgba(39,40,44,.91),rgba(13,14,16,.96) 74%) !important;
+  box-shadow:0 22px 70px rgba(0,0,0,.46),inset 0 1px 0 rgba(255,255,255,.12) !important;
+  backdrop-filter:blur(28px) saturate(65%) !important;
+  -webkit-backdrop-filter:blur(28px) saturate(65%) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.dash-header, .topbar, .member-topbar, .member-header, .support-topbar, .page-head, .finance-title) {
+  border-color:rgba(240,241,243,.17) !important;
+  color:#f0f0f2 !important;
+  background:linear-gradient(145deg,rgba(42,43,47,.78),rgba(17,18,20,.84)) !important;
+  box-shadow:0 18px 50px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.12) !important;
+  backdrop-filter:blur(26px) saturate(68%) !important;
+  -webkit-backdrop-filter:blur(26px) saturate(68%) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.panel, .card, .dark-card, .dash-card, .finance-card, .support-panel, .support-card, .support-category, .support-categories, .account-card, .context-card, .chat-panel, .network-live-panel, .dashboard-published-feed, .assets-summary, .member-earning-guide, .tx-card, .transactions-card, .security-hero, .campaign, .campaign-note, .ref-card, .ref-page, .wallet-summary-card, .wallet-secure-panel, .wallet-activity-panel, .pending-card, .event-card, .news-card, .faq-item, .faq-list, .profile-referral-card, .profile-close-panel, .profile-danger-actions, .quick, .network-invest) {
+  border-color:rgba(238,239,242,.16) !important;
+  border-radius:20px !important;
+  color:#ededf0 !important;
+  background:linear-gradient(145deg,rgba(43,44,48,.78),rgba(18,19,22,.92) 68%,rgba(13,14,16,.94)) !important;
+  box-shadow:0 22px 58px rgba(0,0,0,.37),inset 0 1px 0 rgba(255,255,255,.13) !important;
+  backdrop-filter:blur(25px) saturate(63%) !important;
+  -webkit-backdrop-filter:blur(25px) saturate(63%) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.main, .dash-main, .main-content, .finance-page, .wrap, .member-content, .support-shell),
+html body.member-premium:not(.public-landing):not(.auth-public) :is(h1, h2, h3, h4, h5, strong, b, .page-title, .balance-amount, .balance-label) { color:#f0f0f2 !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) :is(p, small, .muted, .sub, .hint, .page-description, .finance-title p, .wallet-balance-caption, .wallet-private-note) { color:#aeb0b6 !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) a:not(.btn):not(.button):not(.mobile-nav a) { color:#d8d9dc !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.side nav a, .mobile-nav a) { color:#cbccd0 !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.side nav a:hover, .side nav a.active, .mobile-nav a:hover, .mobile-nav a.active) {
+  border-color:rgba(244,245,247,.21) !important;
+  color:#fff !important;
+  background:linear-gradient(145deg,rgba(255,255,255,.15),rgba(255,255,255,.05)) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 8px 24px rgba(0,0,0,.24) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.btn, .button, button[type="submit"], input[type="submit"]) {
+  border:1px solid rgba(255,255,255,.36) !important;
+  border-radius:14px !important;
+  color:#18191b !important;
+  background:linear-gradient(145deg,#f3f3f5,#c4c6ca) !important;
+  box-shadow:0 13px 30px rgba(0,0,0,.31),inset 0 1px 0 #fff !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.btn.secondary, .btn.ghost, .button.secondary, .paste-wallet-btn, .mini-btn, .quick-action, .amount-row .amount) {
+  border-color:rgba(244,245,247,.2) !important;
+  color:#ededf0 !important;
+  background:rgba(255,255,255,.065) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.09) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  border-color:rgba(240,241,243,.18) !important;
+  color:#eeeeF0 !important;
+  background:rgba(9,10,12,.73) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) :is(table, .table) { color:#ededf0 !important; background:transparent !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) :is(th, td, .table th, .table td) { color:#d1d2d6 !important; border-color:rgba(238,239,242,.14) !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.network-icon, .network-chip, .status, .network-inline, .asset-token-icon, .asset-dot, .campaign-icon) { filter:grayscale(1) !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) .dash-header .wallet-balance-pill b em,
+html body.member-premium:not(.public-landing):not(.auth-public) .topbar .wallet-balance-pill b em,
+html body.member-premium:not(.public-landing):not(.auth-public) .member-topbar .wallet-balance-pill b em { color:#d9dade !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) .dash-header .avatar-sm,
+html body.member-premium:not(.public-landing):not(.auth-public) .topbar .avatar-sm,
+html body.member-premium:not(.public-landing):not(.auth-public) .member-topbar .avatar-sm {
+  border-color:rgba(255,255,255,.22) !important;
+  color:#f2f2f4 !important;
+  background:linear-gradient(145deg,#77797f,#292a2e) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) .dash-content .network-invest-card.trc,
+html body.member-premium:not(.public-landing):not(.auth-public) .dash-content .network-invest-card.erc {
+  border-color:rgba(238,239,242,.16) !important;
+  color:#ededf0 !important;
+  background:linear-gradient(145deg,rgba(43,44,48,.78),rgba(18,19,22,.92)) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) .dash-content .network-invest-card :is(strong, span, b) { color:#dedfe2 !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) .dash-content :is(.quick:nth-child(4n+1) .quick-icon, .quick:nth-child(4n+2) .quick-icon, .quick:nth-child(4n+3) .quick-icon, .quick:nth-child(4n) .quick-icon) {
+  border-color:rgba(255,255,255,.18) !important;
+  color:#e9e9ec !important;
+  background:linear-gradient(145deg,rgba(226,227,230,.18),rgba(255,255,255,.045)) !important;
+  filter:grayscale(1) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-v101::after {
+  background:radial-gradient(circle,rgba(235,236,239,.07),transparent 68%) !important;
+}
+
+@keyframes obsidian-globe-float {
+  from { transform:translate3d(-50%,-50%,52px) rotate(-2deg) scale(.99); }
+  to { transform:translate3d(-50%,calc(-50% - 7px),52px) rotate(2deg) scale(1.025); }
+}
+
+@media (max-width:1050px) {
+  html body.auth-public .auth-page { width:min(100% - 42px,1200px) !important; grid-template-columns:minmax(260px,.85fr) minmax(420px,1.15fr) !important; gap:24px !important; }
+}
+@media (max-width:760px) {
+  html body.member-premium:not(.public-landing):not(.auth-public) :where(.dash-main, .main, main.wrap, main.main-content) { padding-bottom:150px !important; }
+  html body.member-premium :where(.panel, .card, .finance-card, .support-panel, .wallet-summary-card, .wallet-secure-panel, .wallet-activity-panel) { border-radius:18px !important; }
+  html body.auth-public .auth-page { width:100% !important; }
+  html body.auth-public .auth-scene { min-height:0 !important; }
+  html body.auth-public .auth-visual-stage { min-height:150px !important; }
+  html body.auth-public .auth-wrap .auth { max-width:620px !important; }
+}
+@media (prefers-reduced-motion:reduce) {
+  html body.member-premium.public-landing .pl-globe { animation:none !important; }
+  html body.member-premium .member-depth-card,
+  html body.member-premium .member-depth-card.member-depth-visible { opacity:1 !important; transform:none !important; transition:none !important; }
+}

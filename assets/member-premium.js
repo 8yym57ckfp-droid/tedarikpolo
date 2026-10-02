@@ -2,10 +2,10 @@
   if(!document.body)return;
   const body=document.body;
   body.classList.add('member-premium');
-  body.dataset.memberTheme='graphite';
+  body.dataset.memberTheme='obsidian';
 
   document.querySelectorAll('img[src*="safepays-mark.png"]').forEach(img=>{
-    img.src='assets/safepays-graphite-mark.svg';
+    img.src='assets/safepays-obsidian-mark.svg?v=1';
   });
 
   const ambient=document.createElement('div');
@@ -44,7 +44,7 @@
       link.classList.toggle('active',active);
       if(active)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');
     });
-    const brandMarkup='<img src="assets/safepays-graphite-mark.svg" alt=""><span class="inline-brand"><b>Safe</b><b>Pays</b></span>';
+    const brandMarkup='<img src="assets/safepays-obsidian-mark.svg?v=1" alt=""><span class="inline-brand"><b>Safe</b><b>Pays</b></span>';
     const inlineBrand=document.querySelector('.dash-brand-mobile .mobile-inline-logo');
     if(inlineBrand){inlineBrand.classList.add('member-glass-brand');inlineBrand.innerHTML=brandMarkup;}
     else{
