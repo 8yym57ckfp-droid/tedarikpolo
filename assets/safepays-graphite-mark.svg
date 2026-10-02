@@ -1,28 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title">
   <title id="title">SafePays</title>
   <defs>
-    <linearGradient id="silver" x1="15" y1="8" x2="81" y2="88" gradientUnits="userSpaceOnUse">
+    <linearGradient id="metal" x1="20" y1="16" x2="77" y2="84" gradientUnits="userSpaceOnUse">
       <stop stop-color="#fff"/>
-      <stop offset=".38" stop-color="#d9dadd"/>
-      <stop offset=".7" stop-color="#85878d"/>
-      <stop offset="1" stop-color="#f4f4f5"/>
+      <stop offset=".24" stop-color="#dfe0e3"/>
+      <stop offset=".53" stop-color="#85878d"/>
+      <stop offset=".78" stop-color="#f4f4f5"/>
+      <stop offset="1" stop-color="#a9abb1"/>
     </linearGradient>
-    <linearGradient id="edge" x1="18" y1="14" x2="76" y2="82" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#fff" stop-opacity=".5"/>
-      <stop offset="1" stop-color="#fff" stop-opacity=".04"/>
+    <linearGradient id="shine" x1="24" y1="18" x2="69" y2="75" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff" stop-opacity=".9"/>
+      <stop offset="1" stop-color="#fff" stop-opacity=".08"/>
     </linearGradient>
-    <filter id="shadow" x="-30%" y="-25%" width="160%" height="170%">
-      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000" flood-opacity=".45"/>
+    <filter id="shadow" x="-30%" y="-28%" width="160%" height="165%">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000" flood-opacity=".42"/>
     </filter>
   </defs>
-  <g filter="url(#shadow)">
-    <path d="M48 5 82 24.5v23L48 67 14 47.5v-23L48 5Z" fill="#17181b" stroke="url(#edge)" stroke-width="2"/>
-    <path d="M14 25 48 44.5 82 25v22.5L48 67 14 47.5V25Z" fill="url(#silver)"/>
-    <path d="m14 47.5 34 19.5v23L14 70.5v-23Z" fill="#777980"/>
-    <path d="M82 47.5 48 67v23l34-19.5v-23Z" fill="#c8c9cc"/>
-    <path d="m27 32.5 21-12 21 12-21 12-21-12Z" fill="#25262a" stroke="url(#edge)" stroke-width="1.4"/>
-    <path d="M35.5 32.5 48 25.3l12.5 7.2L48 39.7l-12.5-7.2Z" fill="url(#silver)"/>
-    <path d="m27 32.5 8.5 4.9v8.8L27 41.3v-8.8Z" fill="#b7b8bc"/>
-    <path d="m69 32.5-8.5 4.9v8.8l8.5-4.9v-8.8Z" fill="#fff"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#shadow)">
+    <path d="M68 28c-6-6-13-9-22-9h-7c-12 0-20 6-20 16 0 9 7 13 19 16l17 4c12 3 18 8 18 17 0 11-9 17-22 17h-8c-10 0-18-4-25-11" stroke="#121316" stroke-opacity=".8" stroke-width="18"/>
+    <path d="M68 28c-6-6-13-9-22-9h-7c-12 0-20 6-20 16 0 9 7 13 19 16l17 4c12 3 18 8 18 17 0 11-9 17-22 17h-8c-10 0-18-4-25-11" stroke="url(#metal)" stroke-width="12"/>
+    <path d="M65 27c-6-5-12-7-19-7" stroke="url(#shine)" stroke-width="2.2"/>
+    <path d="M24 75c6 6 13 9 21 10" stroke="url(#shine)" stroke-width="2.2"/>
   </g>
 </svg>

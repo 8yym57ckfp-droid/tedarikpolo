@@ -78,7 +78,7 @@
 
   const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
   const selector=[
-    '.pl-hero .hero-copy','.pl-globe-stage','.pl-feature-card','.pl-news-card','.pl-how-card','.pl-faq-item','.pl-join-card',
+    '.pl-hero .hero-copy','.pl-globe-stage','.pl-logo-ticker','.pl-feature-card','.pl-news-card','.pl-how-card','.pl-faq-item','.pl-join-card',
     '.dash-content>.balance-grid','.dash-content>.dashboard-published-feed','.dash-content>.network-live-panel','.dash-content>.assets-summary',
     '.dash-content>.member-earning-guide','.dash-content>.network-invest','.dash-content>.quick-grid>.quick',
     '.dash-content #publishedContent .events-grid>.event-card',
@@ -98,7 +98,7 @@
     raf=requestAnimationFrame(()=>{
       raf=0;
       const viewport=innerHeight||1;
-      for(const card of visible){
+      for(const card of cards){
         const rect=card.getBoundingClientRect();
         const phase=Math.max(-1.15,Math.min(1.15,(rect.top+rect.height*.5-viewport*.5)/viewport));
         const distance=Math.abs(phase);
@@ -133,7 +133,7 @@
   const observer=reduced||!('IntersectionObserver'in window)?null:new IntersectionObserver(entries=>{
     for(const entry of entries){
       if(entry.isIntersecting){entry.target.classList.add('member-depth-visible');visible.add(entry.target)}
-      else visible.delete(entry.target);
+      else{entry.target.classList.remove('member-depth-visible');visible.delete(entry.target)}
     }
     updateDepth();
   },{threshold:0,rootMargin:'10% 0px 10% 0px'});
@@ -141,9 +141,9 @@
   function registerCard(card){
     if(cards.has(card)||card.closest('.side,.mobile-nav,.public-header,header,.auth-scene'))return;
     cards.add(card);
-    card.classList.add('member-depth-card','member-depth-visible');
+    card.classList.add('member-depth-card');
     card.dataset.depthSide=String(cards.size%2?-1:1);
-    if(observer)observer.observe(card);else visible.add(card);
+    if(observer)observer.observe(card);else{card.classList.add('member-depth-visible');visible.add(card)}
   }
   function scan(node){
     if(node.nodeType!==1)return;
