@@ -12,6 +12,8 @@ services:
         sync: false
       - key: PGSSL
         value: "true"
+      - key: STAFF_SESSION_TTL_SECONDS
+        value: "2592000"
       - key: ADMIN_EMAIL
         sync: false
       - key: ADMIN_PASSWORD

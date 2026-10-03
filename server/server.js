@@ -18,11 +18,11 @@ const USE_POSTGRES = !!DATABASE_URL && !!Pool;
 const pool = USE_POSTGRES ? new Pool({ connectionString: DATABASE_URL, ssl: process.env.PGSSL === 'false' ? false : { rejectUnauthorized:false } }) : null;
 if(process.env.NODE_ENV==='production'&&!pool){throw new Error('A persistent PostgreSQL DATABASE_URL is required in production.');}
 const TTL = Number(process.env.SESSION_TTL_SECONDS || 3600) * 1000;
-// Staff panels use their own bounded lifetime so a short member-session setting cannot force repeated 2FA.
+// Staff sessions are persistent across Render restarts/instances and use a rolling inactivity lifetime.
 const configuredStaffTtlSeconds=Number(process.env.STAFF_SESSION_TTL_SECONDS);
 const STAFF_SESSION_TTL_SECONDS=Number.isFinite(configuredStaffTtlSeconds)&&configuredStaffTtlSeconds>0
-  ?Math.min(43200,Math.max(3600,configuredStaffTtlSeconds))
-  :28800;
+  ?Math.min(2592000,Math.max(3600,configuredStaffTtlSeconds))
+  :2592000;
 const STAFF_TTL=STAFF_SESSION_TTL_SECONDS*1000;
 const sessions = new Map();
 const resetTokens = new Map();
@@ -102,7 +102,14 @@ async function saveTeamAccount(account){
   const db=readDb();db.teamAccounts=Array.isArray(db.teamAccounts)?db.teamAccounts:[];const index=db.teamAccounts.findIndex(item=>item.id===account.id);const clean={...account,permissions:cleanTeamPermissions(account.permissions),updatedAt:account.updatedAt||new Date().toISOString()};if(index<0)db.teamAccounts.push(clean);else db.teamAccounts[index]=clean;writeDb(db);
 }
 function publicTeamAccount(account){return {id:account.id,email:account.email,active:account.active!==false,twoFactorEnabled:!!account.twoFactorEnabled,permissions:cleanTeamPermissions(account.permissions),createdAt:account.createdAt||null,updatedAt:account.updatedAt||null};}
-function clearTeamSessions(accountId){for(const [sessionId,session] of adminSessions.entries())if(session.adminId===accountId)adminSessions.delete(sessionId);}
+async function clearTeamSessions(accountId){
+  if(pool){await pool.query("DELETE FROM staff_sessions WHERE portal='admin' AND subject_id=$1",[accountId]);return;}
+  for(const [sessionId,session] of adminSessions.entries())if(session.adminId===accountId)adminSessions.delete(sessionId);
+}
+async function clearOwnerSessions(){
+  if(pool){await pool.query("DELETE FROM staff_sessions WHERE portal='owner' AND subject_id='OWNER-001'");return;}
+  ownerSessions.clear();
+}
 function teamPermissionForPath(path){
   if(path==='/api/admin/users'||path.startsWith('/api/admin/user-center')||path.startsWith('/api/admin/user/')||path==='/api/admin/kyc'||path==='/api/admin/kyc/decision')return 'members';
   if(path==='/api/admin/audit')return 'audit';
@@ -206,6 +213,13 @@ async function pgInit(){
     permissions JSONB NOT NULL DEFAULT '{"dashboard":true,"transactions":true,"reports":true,"wallets":true,"support":true}'::jsonb,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS staff_sessions (
+    token_hash TEXT PRIMARY KEY, portal TEXT NOT NULL CHECK (portal IN ('admin','owner')),
+    subject_id TEXT NOT NULL, email TEXT NOT NULL, role TEXT NOT NULL,
+    permissions JSONB NOT NULL DEFAULT '{}'::jsonb,
+    expires_at TIMESTAMPTZ NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_staff_sessions_expiry ON staff_sessions(expires_at)');
   await bootstrapTeamAccounts();
 }
 async function getUsers(){
@@ -279,8 +293,34 @@ function readSession(req,cookieName,store){
   if(!s || s.expires<Date.now()){if(t)store.delete(t);return null;}
   return s;
 }
-function adminAuth(req){return readSession(req,ADMIN_COOKIE,adminSessions);}
-function ownerAuth(req){return readSession(req,OWNER_COOKIE,ownerSessions);}
+function staffTokenHash(value){return crypto.createHash('sha256').update(String(value)).digest('hex');}
+async function saveStaffSession(value,portal,session){
+  if(pool){
+    await pool.query('INSERT INTO staff_sessions (token_hash,portal,subject_id,email,role,permissions,expires_at) VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7)',[staffTokenHash(value),portal,portal==='owner'?session.ownerId:session.adminId,session.email,session.role,JSON.stringify(session.permissions||{}),new Date(session.expires).toISOString()]);
+    return;
+  }
+  (portal==='owner'?ownerSessions:adminSessions).set(value,session);
+}
+async function deleteStaffSession(value,portal){
+  if(!value)return;
+  if(pool){await pool.query('DELETE FROM staff_sessions WHERE token_hash=$1 AND portal=$2',[staffTokenHash(value),portal]);return;}
+  (portal==='owner'?ownerSessions:adminSessions).delete(value);
+}
+async function readStaffSession(req,cookieName,portal){
+  const value=parseCookies(req)[cookieName]||'';
+  if(!value)return null;
+  if(!pool){
+    const store=portal==='owner'?ownerSessions:adminSessions,session=readSession(req,cookieName,store);
+    if(session)session.expires=Date.now()+STAFF_TTL;
+    return session;
+  }
+  const result=await pool.query(`UPDATE staff_sessions SET expires_at=NOW()+($3::integer * INTERVAL '1 second') WHERE token_hash=$1 AND portal=$2 AND expires_at>NOW() RETURNING subject_id AS "subjectId",email,role,permissions,expires_at AS "expiresAt"`,[staffTokenHash(value),portal,STAFF_SESSION_TTL_SECONDS]);
+  const row=result.rows[0];if(!row){await pool.query('DELETE FROM staff_sessions WHERE token_hash=$1 AND portal=$2',[staffTokenHash(value),portal]);return null;}
+  const expires=new Date(row.expiresAt).getTime();
+  return portal==='owner'?{ownerId:row.subjectId,email:row.email,role:row.role,expires}:{adminId:row.subjectId,email:row.email,role:row.role,permissions:cleanTeamPermissions(row.permissions),expires};
+}
+async function adminAuth(req){return readStaffSession(req,ADMIN_COOKIE,'admin');}
+async function ownerAuth(req){return readStaffSession(req,OWNER_COOKIE,'owner');}
 function clearCookie(name){return name+'=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax'+(process.env.NODE_ENV==='production'?'; Secure':'');}
 function sessionCookie(name,value,ttl=TTL){return name+'='+encodeURIComponent(value)+'; Max-Age='+Math.floor(ttl/1000)+'; Path=/; HttpOnly; SameSite=Lax'+(process.env.NODE_ENV==='production'?'; Secure':'');}
 function addAudit(action,actor,meta={}){
@@ -436,7 +476,7 @@ function clearExpiredLock(tx){return tx.lockedBy && tx.lockedAt && (Date.now()-n
 
 async function route(req,res){
   if(req.method==='OPTIONS') return json(res,204,{});
-  if(req.url==='/api/health' && req.method==='GET') return json(res,200,{ok:true,service:'safepays-api',version:'35.0.0'});
+  if(req.url==='/api/health' && req.method==='GET') return json(res,200,{ok:true,service:'safepays-api',version:'35.1.0'});
   await refreshTransactionExpiry();
   if(req.url==='/api/system/maintenance' && req.method==='GET') return json(res,200,{maintenance:await getMaintenance()});
   if(req.url==='/api/content' && req.method==='GET')return json(res,200,{items:(await getPublishedContent()).filter(x=>x.published)});
@@ -446,10 +486,10 @@ async function route(req,res){
     if(!ADMIN_EMAIL||!ADMIN_PASSWORD||!ADMIN_TOTP_SECRET)return json(res,503,{error:'owner_login_not_configured'});
     if(email!==ADMIN_EMAIL.toLowerCase()||password!==ADMIN_PASSWORD){addAudit('owner_login_failed',email||'unknown',{...requestAuditMeta(req),reason:'invalid_credentials'});return json(res,401,{error:'invalid_owner_credentials'});}
     if(!/^\d{6}$/.test(code)||!verifyTotp(ADMIN_TOTP_SECRET,code)){addAudit('owner_login_failed',email,{...requestAuditMeta(req),reason:'invalid_2fa'});return json(res,401,{error:'invalid_2fa_code'});}
-    const cookies=parseCookies(req);if(cookies[ADMIN_COOKIE])adminSessions.delete(cookies[ADMIN_COOKIE]);
-    const t=token();ownerSessions.set(t,{ownerId:'OWNER-001',email:ADMIN_EMAIL,role:'owner',expires:Date.now()+STAFF_TTL});
+    await clearOwnerSessions();
+    const t=token(),session={ownerId:'OWNER-001',email:ADMIN_EMAIL,role:'owner',expires:Date.now()+STAFF_TTL};await saveStaffSession(t,'owner',session);
     addAudit('owner_login',ADMIN_EMAIL,requestAuditMeta(req));
-    return json(res,200,{ok:true,owner:{id:'OWNER-001',email:ADMIN_EMAIL,role:'owner'},expiresIn:STAFF_SESSION_TTL_SECONDS},{'Set-Cookie':[sessionCookie(OWNER_COOKIE,t,STAFF_TTL),clearCookie(ADMIN_COOKIE)]});
+    return json(res,200,{ok:true,owner:{id:'OWNER-001',email:ADMIN_EMAIL,role:'owner'},expiresIn:STAFF_SESSION_TTL_SECONDS},{'Set-Cookie':sessionCookie(OWNER_COOKIE,t,STAFF_TTL)});
   }
   if(req.url==='/api/admin/login' && req.method==='POST'){
     const b=await body(req),email=String(b.email||'').trim().toLowerCase(),password=String(b.password||''),code=String(b.code||'').trim();
@@ -459,18 +499,18 @@ async function route(req,res){
     const credentialsOverlap=account.email.toLowerCase()===ADMIN_EMAIL.toLowerCase()||(ADMIN_PASSWORD&&verifyPassword(ADMIN_PASSWORD,account.passwordHash))||(account.totpSecret&&account.totpSecret===ADMIN_TOTP_SECRET);
     if(credentialsOverlap)return json(res,503,{error:'team_credentials_not_separate'});
     if(account.twoFactorEnabled&&(!/^\d{6}$/.test(code)||!account.totpSecret||!verifyTotp(account.totpSecret,code))){addAudit('team_login_failed',email,{...requestAuditMeta(req),reason:'invalid_2fa'});return json(res,401,{error:'invalid_2fa_code'});}
-    const cookies=parseCookies(req);if(cookies[OWNER_COOKIE])ownerSessions.delete(cookies[OWNER_COOKIE]);
-    const t=token();adminSessions.set(t,{adminId:account.id,email:account.email,role:'team_admin',active:account.active!==false,permissions:cleanTeamPermissions(account.permissions),expires:Date.now()+STAFF_TTL});
+    await clearTeamSessions(account.id);
+    const t=token(),session={adminId:account.id,email:account.email,role:'team_admin',active:account.active!==false,permissions:cleanTeamPermissions(account.permissions),expires:Date.now()+STAFF_TTL};await saveStaffSession(t,'admin',session);
     addAudit('team_admin_login',account.email,requestAuditMeta(req));
-    return json(res,200,{ok:true,admin:{id:account.id,email:account.email,role:'team_admin',permissions:cleanTeamPermissions(account.permissions)},expiresIn:STAFF_SESSION_TTL_SECONDS},{'Set-Cookie':[sessionCookie(ADMIN_COOKIE,t,STAFF_TTL),clearCookie(OWNER_COOKIE)]});
+    return json(res,200,{ok:true,admin:{id:account.id,email:account.email,role:'team_admin',permissions:cleanTeamPermissions(account.permissions)},expiresIn:STAFF_SESSION_TTL_SECONDS},{'Set-Cookie':sessionCookie(ADMIN_COOKIE,t,STAFF_TTL)});
   }
   if(req.url==='/api/admin/logout' && req.method==='POST'){
-    const c=parseCookies(req)[ADMIN_COOKIE]||'';if(c)adminSessions.delete(c);return json(res,200,{ok:true},{'Set-Cookie':clearCookie(ADMIN_COOKIE)});
+    const c=parseCookies(req)[ADMIN_COOKIE]||'';if(c)await deleteStaffSession(c,'admin');return json(res,200,{ok:true},{'Set-Cookie':clearCookie(ADMIN_COOKIE)});
   }
   if(req.url==='/api/owner/logout' && req.method==='POST'){
-    const c=parseCookies(req)[OWNER_COOKIE]||'';if(c)ownerSessions.delete(c);return json(res,200,{ok:true},{'Set-Cookie':clearCookie(OWNER_COOKIE)});
+    const c=parseCookies(req)[OWNER_COOKIE]||'';if(c)await deleteStaffSession(c,'owner');return json(res,200,{ok:true},{'Set-Cookie':clearCookie(OWNER_COOKIE)});
   }
-  const owner=ownerAuth(req),teamAdmin=adminAuth(req);
+  const owner=await ownerAuth(req),teamAdmin=await adminAuth(req);
   const staticPath=new URL(req.url,'http://localhost').pathname;
   if(req.method==='GET'&&staticPath.endsWith('.html')){
     if(staticPath.startsWith('/owner/')){
@@ -503,7 +543,7 @@ async function route(req,res){
     return sendFile(req,res);
   }
   if(req.url==='/api/owner/me' && req.method==='GET'){
-    if(!owner)return json(res,teamAdmin?403:401,{error:teamAdmin?'owner_only':'unauthorized'});return json(res,200,{owner:{id:owner.ownerId,email:owner.email,role:owner.role}});
+    if(!owner)return json(res,teamAdmin?403:401,{error:teamAdmin?'owner_only':'unauthorized'});return json(res,200,{owner:{id:owner.ownerId,email:owner.email,role:owner.role}},{'Set-Cookie':sessionCookie(OWNER_COOKIE,parseCookies(req)[OWNER_COOKIE],STAFF_TTL)});
   }
   if(req.url==='/api/owner/team-accounts' && req.method==='GET'){
     if(!owner)return json(res,teamAdmin?403:401,{error:teamAdmin?'owner_only':'unauthorized'});
@@ -511,7 +551,7 @@ async function route(req,res){
     return json(res,200,{accounts:accounts.map(publicTeamAccount),configured:accounts.length>0});
   }
   if(req.url==='/api/admin/me' && req.method==='GET'){
-    if(!teamAdmin)return json(res,owner?403:401,{error:owner?'team_admin_only':'unauthorized'});return json(res,200,{admin:{id:teamAdmin.adminId,email:teamAdmin.email,role:teamAdmin.role,permissions:cleanTeamPermissions(teamAdmin.permissions)}});
+    if(!teamAdmin)return json(res,owner?403:401,{error:owner?'team_admin_only':'unauthorized'});return json(res,200,{admin:{id:teamAdmin.adminId,email:teamAdmin.email,role:teamAdmin.role,permissions:cleanTeamPermissions(teamAdmin.permissions)}},{'Set-Cookie':sessionCookie(ADMIN_COOKIE,parseCookies(req)[ADMIN_COOKIE],STAFF_TTL)});
   }
   const requestedApiPath=new URL(req.url,'http://localhost').pathname;
   const ownerApiRequest=requestedApiPath==='/api/owner'||requestedApiPath.startsWith('/api/owner/');
@@ -564,17 +604,17 @@ async function route(req,res){
     const accounts=await getTeamAccounts(),index=accounts.findIndex(account=>account.id===id);if(index<0)return json(res,404,{error:'team_account_not_found'});
     const account={...accounts[index]},now=new Date().toISOString();
     if(action==='begin_2fa'){
-      account.totpSecret=base32Encode(crypto.randomBytes(20));account.twoFactorEnabled=false;account.updatedAt=now;await saveTeamAccount(account);clearTeamSessions(id);
+      account.totpSecret=base32Encode(crypto.randomBytes(20));account.twoFactorEnabled=false;account.updatedAt=now;await saveTeamAccount(account);await clearTeamSessions(id);
       const label=encodeURIComponent(`SafePays:${account.email}`),issuer=encodeURIComponent('SafePays');
       return json(res,200,{ok:true,account:publicTeamAccount(account),secret:account.totpSecret,otpauthUrl:`otpauth://totp/${label}?secret=${account.totpSecret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`});
     }
     if(action==='verify_2fa'){
       const code=String(b.teamTotpCode||'');if(!account.totpSecret||!/^\d{6}$/.test(code)||!verifyTotp(account.totpSecret,code))return json(res,400,{error:'invalid_team_2fa_code'});
-      account.twoFactorEnabled=true;account.updatedAt=now;await saveTeamAccount(account);clearTeamSessions(id);addAudit('team_account_2fa_enabled',admin.email,{teamAccountId:id});
+      account.twoFactorEnabled=true;account.updatedAt=now;await saveTeamAccount(account);await clearTeamSessions(id);addAudit('team_account_2fa_enabled',admin.email,{teamAccountId:id});
       return json(res,200,{ok:true,account:publicTeamAccount(account)});
     }
     if(action==='disable_2fa'){
-      account.twoFactorEnabled=false;account.totpSecret=null;account.updatedAt=now;await saveTeamAccount(account);clearTeamSessions(id);addAudit('team_account_2fa_disabled',admin.email,{teamAccountId:id});
+      account.twoFactorEnabled=false;account.totpSecret=null;account.updatedAt=now;await saveTeamAccount(account);await clearTeamSessions(id);addAudit('team_account_2fa_disabled',admin.email,{teamAccountId:id});
       return json(res,200,{ok:true,account:publicTeamAccount(account)});
     }
     if(action!=='update')return json(res,400,{error:'unknown_team_account_action'});
@@ -582,7 +622,7 @@ async function route(req,res){
     if(b.password!==undefined&&String(b.password)){const password=String(b.password);if(password.length<12||password===ADMIN_PASSWORD)return json(res,400,{error:'invalid_team_password'});account.passwordHash=hashPassword(password);}
     if(b.active!==undefined)account.active=!!b.active;
     if(b.permissions!==undefined)account.permissions=cleanTeamPermissions(b.permissions);
-    account.updatedAt=now;await saveTeamAccount(account);clearTeamSessions(id);addAudit('team_account_updated',admin.email,{teamAccountId:id,emailChanged:b.email!==undefined,passwordChanged:!!b.password,active:account.active,permissions:account.permissions});
+    account.updatedAt=now;await saveTeamAccount(account);await clearTeamSessions(id);addAudit('team_account_updated',admin.email,{teamAccountId:id,emailChanged:b.email!==undefined,passwordChanged:!!b.password,active:account.active,permissions:account.permissions});
     return json(res,200,{ok:true,account:publicTeamAccount(account)});
   }
   if(adminUrl.pathname==='/api/admin/synthetic-finance/eligible-users' && req.method==='GET'){
