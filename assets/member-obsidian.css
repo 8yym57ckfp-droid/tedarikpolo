@@ -852,11 +852,29 @@ html body.member-premium.public-landing :is(.pl-feature-card, .pl-how-card, .pl-
   background: linear-gradient(145deg,rgba(13,40,67,.94),rgba(6,23,40,.98)) !important;
   box-shadow: 0 22px 56px rgba(0,0,0,.25), inset 0 1px 0 rgba(140,191,229,.08) !important;
 }
+html body.member-premium.public-landing .pl-news-grid .pl-news-card {
+  border-color: rgba(73,137,185,.32) !important;
+  color: #eaf4ff !important;
+  background: linear-gradient(145deg,rgba(13,40,67,.94),rgba(6,23,40,.98)) !important;
+  box-shadow: 0 22px 56px rgba(0,0,0,.25), inset 0 1px 0 rgba(140,191,229,.08) !important;
+}
+html body.member-premium.public-landing .pl-news-grid .pl-news-card .news-body {
+  color: #eaf4ff !important;
+  background: transparent !important;
+}
 html body.member-premium.public-landing :is(.pl-feature-card h3, .pl-how-card h3, .pl-news-card h3, .pl-faq-item summary) { color: #edf6ff !important; }
 html body.member-premium.public-landing :is(.pl-feature-card p, .pl-how-card p, .pl-news-card p, .pl-faq-item p) { color: #9db4cb !important; }
 html body.member-premium.public-landing :is(.pl-neon-icon, .pl-step-num, .pl-content-kind) { color: #65baff !important; border-color: rgba(68,149,207,.3) !important; background: rgba(18,77,127,.38) !important; filter: none !important; }
-html body.member-premium.public-landing .pl-news-img:not(.has-image) { background: linear-gradient(135deg,#135da6,#0b2949) !important; filter: none !important; }
-html body.member-premium.public-landing .pl-news-img.has-image img { filter: none !important; }
+html body.member-premium.public-landing .pl-news-grid .pl-content-kind,
+html body.member-premium.public-landing .pl-news-grid .pl-content-kind.is-event,
+html body.member-premium.public-landing .pl-news-grid .pl-content-kind.is-news {
+  border-color: rgba(68,149,207,.3) !important;
+  color: #77c3ff !important;
+  background: rgba(18,77,127,.42) !important;
+  filter: none !important;
+}
+html body.member-premium.public-landing .pl-news-grid .pl-news-img:not(.has-image) { background: linear-gradient(135deg,#135da6,#0b2949) !important; filter: none !important; }
+html body.member-premium.public-landing .pl-news-grid .pl-news-img.has-image img { filter: none !important; }
 html body.member-premium.public-landing .pl-join-card { border-color: rgba(111,193,237,.36) !important; background: radial-gradient(circle at 88% 30%,rgba(79,205,192,.19),transparent 24%),linear-gradient(120deg,#0c4c91,#1269ad 58%,#087d82) !important; color: #fff !important; }
 html body.member-premium.public-landing .pl-footer { border-color: rgba(73,135,181,.24) !important; background: rgba(5,20,36,.93) !important; color: #c8dced !important; }
 
