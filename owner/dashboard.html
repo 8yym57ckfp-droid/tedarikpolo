@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../admin/admin.css">
   <link rel="stylesheet" href="../assets/dark-theme.css">
   <link rel="stylesheet" href="../assets/owner.css">
+  <link rel="stylesheet" href="../assets/overview-finance.css">
   <script src="../admin/admin-store.js"></script>
   <script src="../admin/admin-api.js"></script>
   <script src="owner.js"></script>
@@ -39,6 +40,24 @@
         <section class="owner-summary-card deposits"><small>Onaylı yatırımlar</small><strong id="ownerDeposits">—</strong></section>
         <section class="owner-summary-card withdrawals"><small>Onaylı çekimler</small><strong id="ownerWithdrawals">—</strong></section>
       </div>
+      <section class="finance-overview" id="financeOverview" aria-labelledby="financeTitle">
+        <div class="finance-overview-head"><div><h2 id="financeTitle">Finansal görünüm</h2><p>Son yedi günün sunucudaki mutabakat ve onaylı işlem verileri.</p></div><span class="finance-overview-range" id="financePeriod">—</span></div>
+        <div class="finance-kpis">
+          <article class="finance-kpi deposit"><small>Son 7 gün · yatırımlar</small><strong id="financeDeposits">—</strong><small id="financeDepositsNote">Günlük tutarlar yükleniyor</small></article>
+          <article class="finance-kpi withdraw"><small>Son 7 gün · çekimler</small><strong id="financeWithdrawals">—</strong><small id="financeWithdrawalsNote">Günlük tutarlar yükleniyor</small></article>
+          <article class="finance-kpi commission"><small>Son 7 gün · komisyon</small><strong id="financeCommissions">—</strong><small id="financeCommissionNote">Hesaplama durumu yükleniyor</small></article>
+          <article class="finance-kpi receivable"><small>Son 7 gün · net alacak</small><strong id="financeReceivable">—</strong><small id="financeReceivableNote">Hesaplama durumu yükleniyor</small></article>
+        </div>
+        <div class="finance-main-grid">
+          <section class="finance-card"><h3>Günlük finans grafiği</h3><p class="finance-card-subtitle">Yatırım, çekim ve etkinse komisyon tutarları.</p><div class="finance-chart-legend"><span><i class="finance-dot"></i>Yatırım</span><span><i class="finance-dot withdraw"></i>Çekim</span><span id="financeCommissionChartLegend"><i class="finance-dot commission"></i>Komisyon</span></div><svg class="finance-line-chart" id="financeTrend" viewBox="0 0 760 225" role="img" aria-label="Son yedi günlük yatırım, çekim ve komisyon grafiği"></svg></section>
+          <section class="finance-card"><h3>İşlem türlerine göre dağılım</h3><p class="finance-card-subtitle">Onaylı finans tutarlarının payı.</p><div class="finance-donut-area"><div class="finance-donut" id="financeDonut"><div class="finance-donut-center">Toplam<strong id="financeDonutTotal">—</strong></div></div><div class="finance-donut-legend"><span class="finance-donut-row"><i class="finance-dot"></i>Yatırım <b id="financeDepositPct">%0</b></span><span class="finance-donut-row"><i class="finance-dot withdraw"></i>Çekim <b id="financeWithdrawalPct">%0</b></span><span class="finance-donut-row" id="financeCommissionLegend"><i class="finance-dot commission"></i>Komisyon <b id="financeCommissionPct">%0</b></span></div></div></section>
+        </div>
+        <div class="finance-tables">
+          <section class="finance-card"><h3>Son yatırımlar</h3><div class="finance-table-wrap"><table class="finance-table"><thead><tr><th>İşlem</th><th>Tutar</th><th>Ağ</th><th>Tarih</th><th>Durum</th></tr></thead><tbody id="financeDepositRows"><tr><td colspan="5" class="finance-empty">Yükleniyor…</td></tr></tbody></table></div></section>
+          <section class="finance-card"><h3>Son çekimler</h3><div class="finance-table-wrap"><table class="finance-table"><thead><tr><th>İşlem</th><th>Tutar</th><th>Ağ</th><th>Tarih</th><th>Durum</th></tr></thead><tbody id="financeWithdrawalRows"><tr><td colspan="5" class="finance-empty">Yükleniyor…</td></tr></tbody></table></div></section>
+        </div>
+        <div class="finance-updated"><span id="financeError" hidden>Finansal özet sunucudan alınamadı.</span> <span id="financeUpdated">Sunucu verileri yükleniyor</span> · <button class="refresh-button" id="financeRefresh" type="button">Yenile</button></div>
+      </section>
       <h2 class="owner-section-title">Hızlı erişim</h2>
       <div class="owner-shortcuts">
         <a class="owner-shortcut" href="panel-site-management.html"><b>Panel ve site yönetimi</b><span>Bakım durumunu ve bilgilendirme mesajlarını yönet.</span></a>
@@ -64,5 +83,6 @@
       }catch(e){document.getElementById('ownerStatsNote').textContent='Özet şu anda yüklenemedi. Sayfayı yenileyip tekrar dene.';}
     })();
   </script>
+  <script src="../assets/overview-finance.js"></script>
 </body>
 </html>
