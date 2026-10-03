@@ -185,6 +185,15 @@ async function pgInit(){
     created_by TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (network,address)
   )`);
+  // Older deployed databases may have this table without the rotation/audit columns.
+  // CREATE TABLE IF NOT EXISTS does not add columns to an existing table.
+  await pool.query('ALTER TABLE wallet_addresses ADD COLUMN IF NOT EXISTS team_id TEXT');
+  await pool.query('ALTER TABLE wallet_addresses ADD COLUMN IF NOT EXISTS created_by TEXT');
+  await pool.query("UPDATE wallet_addresses SET created_by='system:legacy' WHERE created_by IS NULL OR BTRIM(created_by)=''");
+  await pool.query("ALTER TABLE wallet_addresses ALTER COLUMN created_by SET DEFAULT 'system:legacy'");
+  await pool.query('ALTER TABLE wallet_addresses ALTER COLUMN created_by SET NOT NULL');
+  await pool.query('ALTER TABLE wallet_addresses ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()');
+  await pool.query('ALTER TABLE wallet_addresses ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()');
   await pool.query('ALTER TABLE wallet_addresses ADD COLUMN IF NOT EXISTS use_count INTEGER NOT NULL DEFAULT 0');
   await pool.query('ALTER TABLE wallet_addresses ADD COLUMN IF NOT EXISTS last_used_at TIMESTAMPTZ');
   await pool.query(`CREATE TABLE IF NOT EXISTS deposit_intents (
