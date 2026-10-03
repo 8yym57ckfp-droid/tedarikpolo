@@ -43,7 +43,7 @@
     if(brand){brand.href='dashboard.html';brand.innerHTML='<span class="owner-brand-wordmark">Safe<span>Pays</span></span><small>OWNER PANEL</small>';}
     const items=[
       ['GENEL',[['dashboard.html','home','Genel Bakış']]],
-      ['İŞLEMLER',[['requests.html','clock','Beklenen İşlemler'],['withdrawal-pool.html','wallet','Çekim Havuzu'],['history.html?status=approved','check','Onaylanan İşlemler'],['history.html?status=rejected','x','Reddedilen İşlemler'],['reconciliation.html','handshake','Mutabakat'],['reports.html','chart','Raporlar']]],
+      ['İŞLEMLER',[['requests.html','clock','Beklenen İşlemler'],['requests.html?type=withdrawal','wallet','Çekim Havuzu'],['history.html?status=approved','check','Onaylanan İşlemler'],['history.html?status=rejected','x','Reddedilen İşlemler'],['reconciliation.html','handshake','Mutabakat'],['reports.html','chart','Raporlar']]],
       ['FİNANS',[['wallet-addresses.html','wallet','Cüzdan Hesapları'],['team-accounts.html','team','Ekip Hesapları'],['earnings.html','coins','Kazanç & Bonuslar'],['test-data.html','chart','Finans Test Verisi']]],
       ['KULLANICILAR',[['member-operations.html','users','Üye Operasyonları'],['support.html','news','Destek Talepleri']]],
       ['İÇERİK',[['content.html','news','İçerik Merkezi']]],
@@ -73,6 +73,11 @@
         const targetStatus=u.searchParams.get('status')||'';
         const activeStatus=currentParams.get('status')||'';
         active=targetStatus===activeStatus;
+      }
+      if(samePath && currentPath==='requests.html'){
+        const targetType=u.searchParams.get('type')||'deposit';
+        const activeType=currentParams.get('type')||'deposit';
+        active=targetType===activeType;
       }
       a.classList.toggle('active',active);
     });

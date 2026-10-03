@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       back:'<path d="M10 6 4 12l6 6"/><path d="M4 12h16"/>'
     };return `<span class="nav-icon nav-icon-${name}" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths[name]}</svg></span>`};
     const staffItems=[
-      ['team-dashboard.html','home','Genel Bakış'],['requests.html','clock','Bekleyen İşlemler'],['withdrawal-pool.html','clock','Çekim Havuzu'],['history.html?status=approved','check','Onaylanan İşlemler'],['history.html?status=rejected','x','Reddedilen İşlemler'],['reconciliation.html','handshake','Mutabakat'],['reports.html','chart','Raporlar'],['wallet-addresses.html','wallet','Cüzdan Hesapları'],['support.html','news','Destek Talepleri'],['profile.html','user','Profilim']
+      ['team-dashboard.html','home','Genel Bakış'],['requests.html','clock','Bekleyen İşlemler'],['requests.html?type=withdrawal','wallet','Çekim Havuzu'],['history.html?status=approved','check','Onaylanan İşlemler'],['history.html?status=rejected','x','Reddedilen İşlemler'],['reconciliation.html','handshake','Mutabakat'],['reports.html','chart','Raporlar'],['wallet-addresses.html','wallet','Cüzdan Hesapları'],['support.html','news','Destek Talepleri'],['profile.html','user','Profilim']
     ];
     const ownerItems=[
       ['member-operations.html','user','Kullanıcılar'],
@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(!ownerPortal) document.querySelectorAll('.admin-nav').forEach(nav=>{
       nav.replaceChildren(...items.map(([href,ico,label])=>{const el=document.createElement('a');el.href=href;el.innerHTML=icon(ico)+'<span>'+label+'</span>';return el;}));
       const path=location.pathname.split('/').pop()||'dashboard.html';
-      nav.querySelectorAll('a').forEach(el=>{const u=new URL(el.href,location.href);const samePath=u.pathname.split('/').pop()===path;const wantedStatus=new URLSearchParams(u.search).get('status');const currentStatus=new URLSearchParams(location.search).get('status');const sameStatus=(wantedStatus===null&&currentStatus===null)||(wantedStatus!==null&&wantedStatus===currentStatus);el.classList.toggle('active',samePath&&sameStatus)});
+      nav.querySelectorAll('a').forEach(el=>{const u=new URL(el.href,location.href),wantedParams=new URLSearchParams(u.search),currentParams=new URLSearchParams(location.search);const samePath=u.pathname.split('/').pop()===path;const wantedStatus=wantedParams.get('status');const currentStatus=currentParams.get('status');const sameStatus=(wantedStatus===null&&currentStatus===null)||(wantedStatus!==null&&wantedStatus===currentStatus);const wantedType=wantedParams.get('type');const currentType=currentParams.get('type');const sameType=(wantedType===null&&currentType===null)||(wantedType!==null&&wantedType===currentType);el.classList.toggle('active',samePath&&sameStatus&&sameType)});
     });
     const side=document.querySelector('.admin-side');
     if(side && !document.getElementById('adminMenuToggle')){
