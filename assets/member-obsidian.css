@@ -598,3 +598,282 @@ html body.member-premium:not(.public-landing):not(.auth-public) .finance-v101::a
   html body.member-premium .member-depth-card,
   html body.member-premium .member-depth-card.member-depth-visible { opacity:1 !important; transform:none !important; transition:none !important; }
 }
+
+/* Shared dark navy restoration for every public and member-facing page. */
+html body.member-premium:not(.public-landing):not(.auth-public),
+html body.member-premium.auth-public,
+html body.member-premium.public-landing,
+html body.maintenance-page {
+  --obsidian-bg: #061426;
+  --obsidian-panel: rgba(11, 32, 56, .92);
+  --obsidian-panel-raised: rgba(16, 47, 77, .94);
+  --obsidian-input: rgba(5, 22, 40, .88);
+  --obsidian-line: rgba(76, 145, 204, .26);
+  --obsidian-line-strong: rgba(92, 174, 237, .44);
+  --obsidian-text: #f1f7ff;
+  --obsidian-muted: #9db3ca;
+  --obsidian-dim: #7893ad;
+  --obsidian-silver: #48a8ff;
+  --obsidian-silver-dark: #1e70c8;
+  --obsidian-glow: rgba(38, 145, 255, .2);
+  color: #f1f7ff !important;
+  color-scheme: dark !important;
+  background-color: #061426 !important;
+  background-image:
+    radial-gradient(ellipse at 8% 4%, rgba(28, 112, 203, .2), transparent 31%),
+    radial-gradient(ellipse at 91% 36%, rgba(23, 126, 156, .1), transparent 34%),
+    linear-gradient(145deg, #071a30 0%, #061426 54%, #08182b 100%) !important;
+  background-attachment: fixed !important;
+}
+
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-ambient,
+html body.member-premium.auth-public .member-depth-ambient,
+html body.member-premium.public-landing .member-depth-ambient {
+  background:
+    radial-gradient(ellipse at 15% 10%, rgba(30, 126, 223, .24), transparent 32%),
+    radial-gradient(ellipse at 85% 54%, rgba(35, 171, 183, .12), transparent 35%),
+    linear-gradient(145deg, #071a30 0%, #061426 58%, #08192d 100%) !important;
+  opacity: 1 !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-ambient::before,
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-ambient::after {
+  background:
+    radial-gradient(ellipse at 18% 24%, rgba(82, 168, 255, .12), transparent 29%),
+    radial-gradient(ellipse at 80% 76%, rgba(55, 207, 190, .07), transparent 32%) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-ambient::after {
+  background-image:
+    linear-gradient(rgba(74, 147, 204, .07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74, 147, 204, .07) 1px, transparent 1px) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-orb.one { background: radial-gradient(circle at 36% 34%, rgba(65,166,255,.28), rgba(32,104,181,.07) 58%, transparent 74%) !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-orb.two { background: radial-gradient(circle at 40% 38%, rgba(58,207,191,.19), rgba(25,112,153,.05) 59%, transparent 75%) !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-orb.three { background: radial-gradient(circle at 40% 38%, rgba(111,164,255,.16), rgba(63,91,177,.04) 60%, transparent 75%) !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-ring,
+html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-ring.ring-two { border-color: rgba(86,166,230,.16) !important; box-shadow: 0 0 54px rgba(44,145,229,.07), inset 0 0 38px rgba(48,136,206,.04) !important; }
+
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.app, .app-shell, .dashboard-shell, .main, .main-content, .dash-main, .dash-content, .finance-page, .wrap, .member-content, .page-content) {
+  color: #eaf3ff !important;
+  background: transparent !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.side, .sidebar, .member-sidebar) {
+  color: #eaf3ff !important;
+  border-color: rgba(78, 140, 194, .25) !important;
+  background: linear-gradient(160deg, rgba(12,35,61,.97), rgba(6,20,36,.98) 76%) !important;
+  box-shadow: 12px 0 38px rgba(0,0,0,.22), inset 0 1px 0 rgba(146,195,233,.08) !important;
+  backdrop-filter: blur(26px) saturate(112%) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(112%) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.side .logo, .logo, .member-brand, .member-logo, .auth-scene-brand) { color: #f4f8ff !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) .logo span,
+html body.member-premium:not(.public-landing):not(.auth-public) .logo-words b:last-child,
+html body.member-premium:not(.public-landing):not(.auth-public) .auth-scene-brand span b:last-child { color: #63b8ff !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.side nav a, .mobile-nav a) { color: #a8bfd6 !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.side nav a:hover, .side nav a.active, .mobile-nav a:hover, .mobile-nav a.active) {
+  color: #f5faff !important;
+  border-color: rgba(70, 157, 228, .34) !important;
+  background: linear-gradient(145deg, rgba(29,103,169,.36), rgba(14,54,91,.35)) !important;
+  box-shadow: inset 0 1px 0 rgba(143,198,240,.12), 0 8px 24px rgba(0,0,0,.18) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.dash-header, .topbar, .member-topbar, .member-header, .support-topbar, .page-head, .finance-title) {
+  color: #f1f7ff !important;
+  border-color: rgba(78,145,201,.24) !important;
+  background: linear-gradient(145deg, rgba(13,39,66,.88), rgba(7,25,44,.86)) !important;
+  box-shadow: inset 0 1px 0 rgba(142,193,233,.08) !important;
+  backdrop-filter: blur(24px) saturate(115%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(115%) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) :is(h1, h2, h3, h4, h5, strong, b, .page-title, .balance-amount, .balance-label) { color: #f1f7ff !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) :is(p, small, .muted, .sub, .hint, .page-description, .finance-title p, .wallet-balance-caption) { color: #9db3ca !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) a:not(.btn):not(.button):not(.mobile-nav a) { color: #c9def1 !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.side nav a, .mobile-nav a) { text-decoration: none; }
+
+html body.member-premium:not(.public-landing):not(.auth-public) :is(
+  .panel, .card, .dark-card, .dash-card, .finance-card, .support-panel, .support-card, .support-category,
+  .account-card, .context-card, .chat-panel, .network-live-panel, .dashboard-published-feed, .assets-summary,
+  .member-earning-guide, .tx-card, .transactions-card, .transaction-card, .history-card, .security-hero,
+  .campaign, .ref-card, .ref-page, .ref-stat, .wallet-card, .wallet-summary-card, .wallet-secure-panel,
+  .wallet-activity-panel, .pending-card, .event-card, .news-card, .faq-item, .faq-list, .profile-referral-card,
+  .profile-close-panel, .profile-danger-actions, .quick, .network-invest, .network-invest-card, .notice-card,
+  .ticket, .session, .stat-card, .info-card, .balance-history-panel, .activity-panel, .balance-panel,
+  .support-compose, .danger-zone, .security-row, .security-grid, .account-grid, .quick-action, .quick-actions,
+  .table-container, .table-wrap, .form-card, .auth-wrap .auth, .auth-page .auth
+) {
+  color: #eaf3ff !important;
+  border-color: rgba(73,139,194,.28) !important;
+  background: linear-gradient(145deg, rgba(13,39,66,.95), rgba(7,25,44,.97) 70%, rgba(6,21,38,.98)) !important;
+  box-shadow: 0 22px 58px rgba(0,0,0,.28), inset 0 1px 0 rgba(133,187,229,.08) !important;
+  backdrop-filter: blur(22px) saturate(118%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(118%) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.balance-card.main-balance, .main-balance, .wallet-summary-card, .wallet-balance-card) {
+  color: #f7fbff !important;
+  border-color: rgba(110,190,249,.48) !important;
+  background: radial-gradient(ellipse at 82% 8%, rgba(198,230,255,.2), transparent 32%), linear-gradient(125deg, #0d4b91, #1267bb 54%, #087f91) !important;
+  box-shadow: 0 26px 70px rgba(3,57,113,.36), inset 0 1px 0 rgba(218,240,255,.22) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.balance-card.main-balance *, .main-balance *, .wallet-summary-card *, .wallet-balance-card *) { color: #f6fbff !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.network-live-panel, .network-live-grid, .network-invest-card, .wallet-network-strip, .network, .info, .info-list, .pending-item, .support-list, .support-messages, .support-compose, .chat-head, .wallet-recent-block, .wallet-activity-row, .security-row, .recent-row, .recent-card, .tx-summary, .sp-confirm-summary) {
+  color: #dcecff !important;
+  border-color: rgba(74,139,194,.24) !important;
+  background-color: rgba(13,43,71,.5) !important;
+}
+
+html body.member-premium:not(.public-landing):not(.auth-public) :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea, .phone-input-wrap) {
+  border: 1px solid rgba(78,139,189,.4) !important;
+  border-radius: 13px !important;
+  color: #edf6ff !important;
+  background: rgba(5,22,40,.92) !important;
+  box-shadow: inset 0 1px 0 rgba(120,177,222,.07) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) :is(input, select, textarea)::placeholder { color: #738da7 !important; opacity: 1; }
+html body.member-premium:not(.public-landing):not(.auth-public) :is(input, select, textarea):focus {
+  border-color: rgba(79,174,255,.78) !important;
+  box-shadow: 0 0 0 4px rgba(38,139,231,.17), inset 0 1px 0 rgba(120,177,222,.08) !important;
+  outline: none !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) input[type="checkbox"],
+html body.member-premium:not(.public-landing):not(.auth-public) input[type="radio"] { accent-color: #3299f4 !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) :is(label, .field label, .terms-label) { color: #c7d9eb !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.field-error, .field-invalid .field-error) { color: #ff8591 !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.phone-prefix, .phone-input-wrap .phone-prefix) { color: #e2f1ff !important; background: rgba(39,105,160,.26) !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.btn, .button, button[type="submit"], input[type="submit"], .auth-submit, .auth-submit button) {
+  border: 1px solid rgba(112,190,246,.38) !important;
+  border-radius: 14px !important;
+  color: #fff !important;
+  background: linear-gradient(110deg, #1369c1, #258fe5 58%, #177fb1) !important;
+  box-shadow: 0 12px 30px rgba(8,86,157,.28), inset 0 1px 0 rgba(219,241,255,.2) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.btn.secondary, .button.secondary, .btn-secondary, .btn:not(.primary):not(.auth-submit):not(.danger)) {
+  border-color: rgba(79,137,184,.34) !important;
+  color: #d9eaff !important;
+  background: linear-gradient(145deg, #10304f, #0a223a) !important;
+  box-shadow: inset 0 1px 0 rgba(148,196,235,.08) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.btn.danger, button.danger) { color: #ffe8eb !important; background: linear-gradient(145deg,#852d42,#5d2031) !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) :is(button:not(.btn):not(.button):not([type="submit"]):not(.danger), input[type="button"]) {
+  border: 1px solid rgba(79,137,184,.34) !important;
+  border-radius: 12px !important;
+  color: #d9eaff !important;
+  background: linear-gradient(145deg,#10304f,#0a223a) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) button.danger:not(.btn):not(.button):not([type="submit"]) {
+  color: #ffe8eb !important;
+  background: linear-gradient(145deg,#852d42,#5d2031) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.quick-icon, .wallet-mini-icon, .wallet-card-icon, .asset-token-icon, .network-icon, .pl-neon-icon) {
+  border-color: rgba(87,166,225,.34) !important;
+  color: #73c1ff !important;
+  background: linear-gradient(145deg, rgba(26,104,174,.42), rgba(11,48,82,.82)) !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,.2) !important;
+  filter: none !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.status, .badge, .network, .network-chip, .network-inline, .network-invest-card, .pl-ticker-dot) { filter: none !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.mobile-nav .nav-svg svg, .chart svg, .sparkline, .balance-sparkline) { filter: none !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.network-inline.trc, .network.trc, .trc) { color: #ff858d !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.network-inline.erc, .network.erc, .erc) { color: #90aaff !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) :is(table, .table) { color: #dcecff !important; background: transparent !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) :is(table th, table td, .table th, .table td) { color: #c5d8eb !important; border-color: rgba(73,132,177,.23) !important; }
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.mobile-nav, .member-shared-mobile-nav) {
+  border-color: rgba(72,139,194,.34) !important;
+  background: rgba(5,22,40,.96) !important;
+  box-shadow: 0 16px 42px rgba(0,0,0,.42) !important;
+  backdrop-filter: blur(24px) saturate(120%) !important;
+}
+html body.member-premium:not(.public-landing):not(.auth-public) .dash-header :is(.wallet-balance-pill, .user-pill),
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.member-glass-brand, .wallet-balance-pill, .user-pill) {
+  border-color: rgba(79,145,199,.32) !important;
+  color: #eaf4ff !important;
+  background: rgba(17,51,82,.68) !important;
+}
+
+/* Authentication pages keep their split layout while sharing the navy palette. */
+html body.member-premium.auth-public .auth-page { color: #edf6ff !important; }
+html body.member-premium.auth-public .auth-scene { color: #edf6ff !important; background: transparent !important; }
+html body.member-premium.auth-public .auth-scene-kicker { color: #62b9ff !important; }
+html body.member-premium.auth-public .auth-scene h2,
+html body.member-premium.auth-public .auth-scene h2 span { color: #f3f8ff !important; }
+html body.member-premium.auth-public .auth-scene h2 span { color: #61b9ff !important; }
+html body.member-premium.auth-public .auth-scene-copy { color: #a9bfd6 !important; }
+html body.member-premium.auth-public .auth-wrap .auth,
+html body.member-premium.auth-public .auth-page .auth {
+  border: 1px solid rgba(79,144,198,.36) !important;
+  background: linear-gradient(145deg, rgba(13,39,66,.98), rgba(6,23,41,.98)) !important;
+  box-shadow: 0 28px 76px rgba(0,0,0,.4), inset 0 1px 0 rgba(149,199,239,.1) !important;
+}
+html body.member-premium.auth-public .auth-visual-stage {
+  border-color: rgba(83,161,220,.3) !important;
+  background: radial-gradient(ellipse at 50% 50%, rgba(25,111,203,.28), transparent 53%), linear-gradient(145deg, rgba(13,43,72,.85), rgba(5,22,40,.96)) !important;
+}
+html body.member-premium.auth-public .auth-visual-sphere {
+  border-color: rgba(150,210,255,.58) !important;
+  background: radial-gradient(circle at 33% 24%, #d5f3ff 0%, #68bfff 18%, #1c6ed0 56%, #0b2854 100%) !important;
+  box-shadow: inset -18px -18px 33px rgba(4,18,43,.5), inset 8px 7px 17px rgba(255,255,255,.36), 0 0 60px rgba(31,129,231,.4) !important;
+}
+html body.member-premium.auth-public .auth-coin { border-color: rgba(138,201,244,.5) !important; background: linear-gradient(145deg,#20a788,#116a75) !important; }
+html body.member-premium.auth-public .auth-coin.two { background: linear-gradient(145deg,#55bdff,#1766c1) !important; }
+html body.member-premium.auth-public .auth-network-labels,
+html body.member-premium.auth-public .auth-network-labels span { color: #b1cce4 !important; }
+html body.member-premium.auth-public :is(.auth-forgot, .auth-switch a) { color: #67baff !important; }
+
+/* The marketing home uses the same blues and teal as the account screens. */
+html body.member-premium.public-landing .public-header {
+  border-color: rgba(91,155,204,.3) !important;
+  background: linear-gradient(145deg, rgba(12,39,66,.93), rgba(5,22,40,.94)) !important;
+}
+html body.member-premium.public-landing .public-logo .logo-words,
+html body.member-premium.public-landing .public-logo .logo-words b { color: #f2f8ff !important; }
+html body.member-premium.public-landing .public-logo .logo-words b:last-child { color: #65baff !important; }
+html body.member-premium.public-landing .public-logo img { filter: drop-shadow(0 5px 13px rgba(36,133,220,.2)) !important; }
+html body.member-premium.public-landing .public-header :is(.navlinks a, .public-login) { color: #c5d9ed !important; }
+html body.member-premium.public-landing :is(.public-register, .pl-cta-primary) {
+  border-color: rgba(108,188,244,.4) !important;
+  color: #fff !important;
+  background: linear-gradient(110deg,#1269c3,#268fe1 58%,#1787a5) !important;
+  box-shadow: 0 12px 30px rgba(14,99,174,.26) !important;
+}
+html body.member-premium.public-landing :is(.public-login, .pl-cta-secondary, .pl-badge, .pl-ticker-item) {
+  border-color: rgba(78,140,190,.34) !important;
+  color: #d3e6f7 !important;
+  background: rgba(12,39,65,.8) !important;
+}
+html body.member-premium.public-landing .pl-hero h1 { color: #f3f8ff !important; }
+html body.member-premium.public-landing .pl-hero h1 .gradient { background: linear-gradient(100deg,#55baff,#65d4d3 64%,#73d8b3) !important; color: transparent !important; background-clip: text !important; -webkit-background-clip: text !important; }
+html body.member-premium.public-landing :is(.pl-hero .lead, .section-sub) { color: #a9bfd5 !important; }
+html body.member-premium.public-landing .pl-globe-stage {
+  border-color: rgba(92,162,215,.32) !important;
+  background: radial-gradient(ellipse at 50% 51%,rgba(26,117,223,.32),transparent 45%),linear-gradient(145deg,rgba(13,43,72,.9),rgba(5,22,40,.97)) !important;
+}
+html body.member-premium.public-landing .pl-globe { border-color: rgba(152,210,255,.54) !important; background: radial-gradient(circle at 34% 27%,#d5f4ff 0%,#68beff 18%,#1b6ed0 57%,#0b2854 100%) !important; }
+html body.member-premium.public-landing .pl-globe-core { background: radial-gradient(circle at 34% 27%,rgba(217,245,255,.74),transparent 24%),linear-gradient(145deg,#1d74c8,#10264a 68%,#07172e) !important; border-color: rgba(141,204,248,.4) !important; }
+html body.member-premium.public-landing :is(.pl-feature-card, .pl-how-card, .pl-faq-item, .pl-news-card) {
+  border-color: rgba(73,137,185,.32) !important;
+  color: #eaf4ff !important;
+  background: linear-gradient(145deg,rgba(13,40,67,.94),rgba(6,23,40,.98)) !important;
+  box-shadow: 0 22px 56px rgba(0,0,0,.25), inset 0 1px 0 rgba(140,191,229,.08) !important;
+}
+html body.member-premium.public-landing :is(.pl-feature-card h3, .pl-how-card h3, .pl-news-card h3, .pl-faq-item summary) { color: #edf6ff !important; }
+html body.member-premium.public-landing :is(.pl-feature-card p, .pl-how-card p, .pl-news-card p, .pl-faq-item p) { color: #9db4cb !important; }
+html body.member-premium.public-landing :is(.pl-neon-icon, .pl-step-num, .pl-content-kind) { color: #65baff !important; border-color: rgba(68,149,207,.3) !important; background: rgba(18,77,127,.38) !important; filter: none !important; }
+html body.member-premium.public-landing .pl-news-img:not(.has-image) { background: linear-gradient(135deg,#135da6,#0b2949) !important; filter: none !important; }
+html body.member-premium.public-landing .pl-news-img.has-image img { filter: none !important; }
+html body.member-premium.public-landing .pl-join-card { border-color: rgba(111,193,237,.36) !important; background: radial-gradient(circle at 88% 30%,rgba(79,205,192,.19),transparent 24%),linear-gradient(120deg,#0c4c91,#1269ad 58%,#087d82) !important; color: #fff !important; }
+html body.member-premium.public-landing .pl-footer { border-color: rgba(73,135,181,.24) !important; background: rgba(5,20,36,.93) !important; color: #c8dced !important; }
+
+html body.maintenance-page :is(h1, h2, h3, strong, b) { color: #f2f8ff !important; }
+html body.maintenance-page :is(p, small, .muted) { color: #9db4cb !important; }
+
+@media (max-width:760px) {
+  html body.member-premium:not(.public-landing):not(.auth-public) :is(.mobile-nav, .member-shared-mobile-nav) { border-radius: 22px !important; }
+}
+html body.member-premium.auth-public .member-depth-orb.one,
+html body.member-premium.public-landing .member-depth-orb.one { background: radial-gradient(circle at 36% 34%, rgba(65,166,255,.28), rgba(32,104,181,.07) 58%, transparent 74%) !important; }
+html body.member-premium.auth-public .member-depth-orb.two,
+html body.member-premium.public-landing .member-depth-orb.two { background: radial-gradient(circle at 40% 38%, rgba(58,207,191,.19), rgba(25,112,153,.05) 59%, transparent 75%) !important; }
+html body.member-premium.auth-public .member-depth-orb.three,
+html body.member-premium.public-landing .member-depth-orb.three { background: radial-gradient(circle at 40% 38%, rgba(111,164,255,.16), rgba(63,91,177,.04) 60%, transparent 75%) !important; }
+html body.member-premium.auth-public .member-depth-ring,
+html body.member-premium.public-landing .member-depth-ring,
+html body.member-premium.auth-public .member-depth-ring.ring-two,
+html body.member-premium.public-landing .member-depth-ring.ring-two { border-color: rgba(86,166,230,.16) !important; box-shadow: 0 0 54px rgba(44,145,229,.07), inset 0 0 38px rgba(48,136,206,.04) !important; }
+html body.member-premium.auth-public .auth-scene-brand span b:last-child { color: #63b8ff !important; }
