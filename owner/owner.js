@@ -49,6 +49,7 @@
       ['İÇERİK',[['content.html','news','İçerik Merkezi']]],
       ['SİSTEM',[['panel-site-management.html','settings','Panel & Site Yönetimi'],['audit.html','shield','İşlem / Audit Logları'],['settings.html','settings','Ayarlar'],['profile.html','user','Profilim'],['../index.html','back','Siteye Dön']]]
     ];
+    const currentParams=new URLSearchParams(location.search);
     el.innerHTML='';
     for(const [title,links] of items){
       const h=document.createElement('div');h.className='owner-nav-title';h.textContent=title;el.appendChild(h);
@@ -62,7 +63,6 @@
       }
     }
     const currentPath=location.pathname.split('/').pop()||'dashboard.html';
-    const currentParams=new URLSearchParams(location.search);
     el.querySelectorAll('a').forEach(a=>{
       const u=new URL(a.href,location.href);
       const samePath=u.pathname.split('/').pop()===currentPath;
