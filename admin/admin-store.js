@@ -9,7 +9,7 @@
   }
   function setSessionProfile(profile){
     const role=profile?.role==='Team Admin'?'Team Admin':'Super Admin';
-    const next={id:String(profile?.id||''),email:String(profile?.email||''),role,name:role};
+    const next={id:String(profile?.id||''),email:String(profile?.email||''),role,name:role,permissions:profile?.permissions&&typeof profile.permissions==='object'?profile.permissions:{}};
     sessionStorage.setItem(PROFILE_KEY,JSON.stringify(next));
     return next;
   }

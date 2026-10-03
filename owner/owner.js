@@ -44,7 +44,7 @@
     const items=[
       ['GENEL',[['dashboard.html','home','Genel Bakış']]],
       ['İŞLEMLER',[['requests.html','clock','Beklenen İşlemler'],['withdrawal-pool.html','wallet','Çekim Havuzu'],['history.html?status=approved','check','Onaylanan İşlemler'],['history.html?status=rejected','x','Reddedilen İşlemler'],['reconciliation.html','handshake','Mutabakat'],['reports.html','chart','Raporlar']]],
-      ['FİNANS',[['wallet-addresses.html','wallet','Cüzdan Hesapları'],['team-accounts.html','team','Ekip Hesapları'],['earnings.html','coins','Kazanç & Bonuslar']]],
+      ['FİNANS',[['wallet-addresses.html','wallet','Cüzdan Hesapları'],['team-accounts.html','team','Ekip Hesapları'],['earnings.html','coins','Kazanç & Bonuslar'],['test-data.html','chart','Finans Test Verisi']]],
       ['KULLANICILAR',[['member-operations.html','users','Üye Operasyonları'],['support.html','news','Destek Talepleri']]],
       ['İÇERİK',[['content.html','news','İçerik Merkezi']]],
       ['SİSTEM',[['panel-site-management.html','settings','Panel & Site Yönetimi'],['audit.html','shield','İşlem / Audit Logları'],['settings.html','settings','Ayarlar'],['profile.html','user','Profilim'],['../index.html','back','Siteye Dön']]]
@@ -53,7 +53,12 @@
     for(const [title,links] of items){
       const h=document.createElement('div');h.className='owner-nav-title';h.textContent=title;el.appendChild(h);
       for(const [href,icon,label] of links){
-        const a=document.createElement('a');a.href=href;a.innerHTML=`<span class="owner-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icons[icon]||''}</svg></span><span>${label}</span>`;el.appendChild(a);
+        const a=document.createElement('a');a.href=href;
+        const linkedPage=new URL(a.href,location.href).pathname.split('/').pop();
+        if(currentParams.has('testRunId')&&['dashboard.html','requests.html','withdrawal-pool.html','history.html','reconciliation.html','reports.html'].includes(linkedPage)){
+          const targetUrl=new URL(a.href,location.href);targetUrl.searchParams.set('testRunId',currentParams.get('testRunId'));a.href=targetUrl.href;
+        }
+        a.innerHTML=`<span class="owner-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icons[icon]||''}</svg></span><span>${label}</span>`;el.appendChild(a);
       }
     }
     const currentPath=location.pathname.split('/').pop()||'dashboard.html';

@@ -10,11 +10,9 @@
       const [stats,data]=await Promise.all([adminFetch('/stats'),adminFetch('/transactions')]);
       const tx=Array.isArray(data.transactions)?data.transactions:[];
       const pending=tx.filter(x=>x.status==='pending');
-      byId('userCount').textContent=number(stats.users);
       byId('pendingCount').textContent=number(stats.pending);
       byId('pendingNote').textContent=`${pending.filter(x=>x.type==='deposit').length} yatırım · ${pending.filter(x=>x.type==='withdrawal').length} çekim`;
       byId('approvedCount').textContent=number(stats.approved);
-      byId('kycCount').textContent=number(stats.kycPending);
       const recent=tx.slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0)).slice(0,8);
       rows.innerHTML=recent.map(x=>{
         const type=x.type==='deposit'?'Yatırım':x.type==='withdrawal'?'Çekim':x.type||'—';

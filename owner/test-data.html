@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SafePays Owner — Finans Test Verisi</title>
+<link rel="stylesheet" href="../assets/styles.css"><link rel="stylesheet" href="../admin/admin.css"><link rel="stylesheet" href="../assets/dark-theme.css"><link rel="stylesheet" href="../assets/owner.css">
+<style>
+.test-form{display:grid;gap:14px;max-width:760px}.test-form label{display:grid;gap:6px;font-size:12px;font-weight:800;color:#54657a}.test-form input,.test-form select{min-height:42px;border:1px solid #dfe7f1;border-radius:10px;padding:0 12px;background:#fbfdff;color:#10223b}.test-note{max-width:760px;color:#728198;font-size:12px;line-height:1.6}.test-status{margin-top:12px;font-size:13px;line-height:1.55;white-space:pre-line}.test-status.error{color:#d74754}.test-links{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}.test-links a{display:inline-flex;padding:10px 13px;border-radius:9px;background:#edf5ff;color:#1769d2;font-weight:800;text-decoration:none}.dark-theme .test-form label,.dark-theme .test-note{color:#9fb0c4}.dark-theme .test-form input,.dark-theme .test-form select{background:#09182a;border-color:#28415e;color:#e8eef7;color-scheme:dark}
+</style>
+<script src="../admin/admin-store.js"></script><script src="../admin/admin.js"></script><script src="owner.js"></script><script src="../assets/maintenance.js"></script>
+</head>
+<body class="admin-body"><div class="admin-layout"><aside class="admin-side"><a class="logo" href="dashboard.html">Safe<span>Pays</span></a><nav class="admin-nav"></nav></aside>
+<main class="admin-main">
+  <div class="admin-head"><div><div class="admin-muted">OWNER TOOLS</div><h1>Finans Test Verisi</h1><div class="admin-muted">Boş test hesabında geçmiş yatırım ve çekim akışlarını oluştur.</div></div></div>
+  <section class="admin-card">
+    <p class="test-note">Önce seçilen boş hesabı Owner onayıyla test hesabı olarak işaretleyin; bu hesap hemen üretim listeleri ve toplamlarından çıkar. İkinci bir Owner onayıyla 90 gün boyunca her güne dağıtılmış sentetik yatırım/çekim talepleri ve test edilebilir bekleyen talepler oluşturulur. Tüm tutarlar en az 50 USDT’dir. İşlemler normal bakiye defteri ve finansal rapor hesaplamalarından geçer. Test çekimlerinin onayı gerçek transfer başlatmaz. Gerçek cüzdan adresi veya zincir transfer kimliği oluşturulmaz.</p>
+    <form id="seedForm" class="test-form">
+      <label for="targetUser">Test hesabı<select id="targetUser" required><option value="">Hesaplar yükleniyor…</option></select></label>
+      <label for="confirmedEmail">Seçilen hesabın e-postasını doğrula<input id="confirmedEmail" type="email" autocomplete="off" required></label>
+      <label for="confirmText">Onay ifadesi<input id="confirmText" autocomplete="off" placeholder="TEST hesap-numarası" required></label>
+      <label for="totpCode">Owner 2FA kodu<input id="totpCode" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required></label>
+      <button class="admin-btn" id="seedButton" type="submit">90 günlük geçmiş oluştur</button>
+    </form>
+    <div class="test-status" id="seedStatus" role="status" aria-live="polite"></div>
+    <div class="test-links" id="resultLinks" hidden></div>
+  </section>
+</main></div>
+<script src="../admin/admin-api.js"></script><script src="test-data.js"></script>
+</body></html>

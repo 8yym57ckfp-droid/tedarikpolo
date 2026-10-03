@@ -14,7 +14,7 @@
     .team-account-card{margin-top:4px;padding:22px;border:1px solid #4b1d78;border-radius:17px;background:linear-gradient(145deg,#170a27,#10051d)}
     .team-account-intro{max-width:800px;margin:8px 0 19px;color:#c0b1d1;line-height:1.65;font-size:12px}
     .team-account-table-wrap{overflow:auto}
-    .team-account-table{width:100%;min-width:580px;border-collapse:collapse}
+    .team-account-table{width:100%;min-width:780px;border-collapse:collapse}
     .team-account-table th,.team-account-table td{padding:13px 10px;border-bottom:1px solid #351750;text-align:left;font-size:12px}
     .team-account-table th{color:#a88dbc;font-size:9px;letter-spacing:.07em;text-transform:uppercase}
     .team-account-table td{color:#f0e8f8}
@@ -25,20 +25,50 @@
     .team-account-state{padding:18px;border:1px dashed #5a2a88;border-radius:12px;color:#c0b1d1;font-size:12px;line-height:1.6}
     .team-account-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:17px}
     .team-account-footnote{margin:17px 0 0;color:#a88dbc;font-size:10px;line-height:1.6}
+    .team-account-form{display:grid;gap:14px;margin:20px 0;padding:18px;border:1px solid #3b2b52;border-radius:14px;background:rgba(255,255,255,.025)}
+    .team-account-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .team-account-form label{display:grid;gap:7px;color:#e9e1f0;font-size:12px;font-weight:750}
+    .team-account-form input:not([type=checkbox]){width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #49385e;border-radius:10px;background:#100c17;color:#f7f2fb;font:inherit}
+    .team-permissions{display:flex;flex-wrap:wrap;gap:9px}
+    .team-permissions label{display:flex;align-items:center;gap:7px;padding:9px 11px;border:1px solid #49385e;border-radius:10px;background:rgba(255,255,255,.025)}
+    .team-account-form-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .team-account-form-actions button,.team-row-action{padding:9px 12px;border:1px solid #58436f;border-radius:9px;background:#241630;color:#f4eaff;font-weight:800;cursor:pointer}
+    .team-account-form-actions .primary{background:linear-gradient(135deg,#726085,#44364f);border-color:#89779a}
+    .team-row-action{padding:7px 9px;margin:2px;font-size:10px}
+    .team-row-action.danger{border-color:#76424a;background:#351c23;color:#ffb6bd}
+    .team-account-form-message{font-size:11px;color:#c4b3d4}
+    .team-account-permission-list{display:flex;flex-wrap:wrap;gap:5px;color:#c3b5d0;font-size:10px}
+    .team-account-state{min-height:44px}
+    .team-account-actions .admin-btn{background:rgba(255,255,255,.06);border:1px solid #49385e;color:#f4eaff}
     @media(max-width:600px){.team-account-card{padding:16px}}
+    @media(max-width:640px){.team-account-fields{grid-template-columns:1fr}}
   </style>
 </head>
 <body class="admin-body owner-page">
   <div class="admin-layout">
     <aside class="admin-side"><a class="logo" href="dashboard.html"><span class="owner-brand-wordmark">Safe<span>Pays</span></span><small>OWNER PANEL</small></a><nav class="admin-nav" aria-label="Owner yönetim menüsü"></nav></aside>
     <main class="admin-main">
-      <header class="admin-head"><div><div class="admin-muted">OWNER CONTROL CENTER</div><h1>Ekip Hesapları</h1><div class="admin-muted">Render’da yapılandırılmış ekip girişini ve durumunu görüntüle.</div></div><div class="owner-badge">● OWNER</div></header>
+      <header class="admin-head"><div><div class="admin-muted">OWNER CONTROL CENTER</div><h1>Ekip Hesapları</h1><div class="admin-muted">Ekip giriş bilgilerini, durumunu ve panel erişimlerini yönetin.</div></div><div class="owner-badge">● OWNER</div></header>
       <section class="team-account-card">
         <h2>Admin ekip girişi</h2>
-        <p class="team-account-intro">Admin hesabı Render’daki <code>TEAM_ADMIN_…</code> ortam değişkenlerinden yönetilir. Burada yalnızca giriş e-postası ve yapılandırma durumu gösterilir; şifre ile 2FA gizli anahtarı hiçbir zaman gösterilmez.</p>
+        <p class="team-account-intro">E-posta, parola, 2FA, hesap durumu ve erişim yetkileri sunucuda güvenli biçimde saklanır. Parola ve doğrulayıcı gizli anahtarı bu listede gösterilmez. Ekip kullanıcı ve audit kayıtlarını göremez.</p>
+        <form class="team-account-form" id="teamAccountForm">
+          <input id="teamAccountId" type="hidden">
+          <div class="team-account-fields">
+            <label for="teamEmail">Giriş e-postası<input id="teamEmail" type="email" required autocomplete="off"></label>
+            <label for="teamPassword">Yeni parola<input id="teamPassword" type="password" minlength="12" autocomplete="new-password" placeholder="Yeni hesapta zorunlu, düzenlemede isteğe bağlı"></label>
+          </div>
+          <div><div class="admin-muted">İşlem yetkileri</div><div class="team-permissions">
+            <label><input id="permTransactions" type="checkbox" checked> Yatırım ve çekim talepleri</label>
+            <label><input id="permReports" type="checkbox" checked> Raporlar ve mutabakat</label>
+            <label><input id="permWallets" type="checkbox" checked> Cüzdan hesapları</label>
+            <label><input id="permSupport" type="checkbox" checked> Destek talepleri</label>
+          </div></div>
+          <div class="team-account-form-actions"><button class="primary" id="saveTeamAccount" type="submit">Ekip hesabı ekle</button><button id="cancelTeamEdit" type="button" hidden>İptal</button><span id="teamAccountMessage" class="team-account-form-message" role="status" aria-live="polite"></span></div>
+        </form>
         <div id="teamAccountContent" class="team-account-state" role="status" aria-live="polite">Ekip hesabı bilgisi yükleniyor…</div>
-        <div class="team-account-actions"><a class="admin-btn primary" href="https://dashboard.render.com/env-group/evg-davhn77avr4c73c2ic5g" target="_blank" rel="noopener noreferrer">Render ortam değişkenlerini aç</a><a class="admin-btn dark" href="../admin/login.html">Ekip giriş sayfası</a></div>
-        <p class="team-account-footnote">Ekip giriş bilgileri Owner girişinden tamamen ayrıdır. Ekip hesabı <code>/admin/login.html</code> adresini; Owner ise yalnızca <code>/owner/login.html</code> adresini kullanır.</p>
+        <div class="team-account-actions"><a class="admin-btn dark" href="../admin/login.html">Ekip giriş sayfası</a></div>
+        <p class="team-account-footnote">Her kaydetme, e-posta/parola değişikliği, etkinleştirme ve 2FA işlemi Owner doğrulama kodu ister. Yeni parola en az 12 karakter olmalıdır.</p>
       </section>
     </main>
   </div>

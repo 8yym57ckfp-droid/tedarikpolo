@@ -1,1 +1,31 @@
-<!doctype html><html lang="tr"><head><script>try{var p=location.pathname,s=p.includes('/admin/')?'admin':(p.includes('/owner/')?'owner':'member'),k='safepays-'+s+'-theme';if(localStorage.getItem(k)==='dark')document.documentElement.classList.add('dark-theme')}catch(e){}</script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Safepays Admin — Raporlar</title><link rel="stylesheet" href="../assets/styles.css"><link rel="stylesheet" href="admin.css"><script src="admin-store.js"></script><script src="admin.js"></script><link rel="stylesheet" href="../assets/dark-theme.css"><script src="../assets/maintenance.js"></script></head><body class="admin-body"><div class="admin-layout"><aside class="admin-side"><a class="logo" href="dashboard.html">Safe<span>Pays</span></a><nav class="admin-nav"></nav></aside><main class="admin-main"><div class="admin-head"><div><div class="admin-muted">ANALYTICS</div><h1>Raporlar</h1><div class="admin-muted">Finansal hareketleri ve işlem sayılarını özetle.</div></div></div><div class="admin-card"><div style="display:flex;gap:10px;flex-wrap:wrap"><select id="range"><option value="7">Son 7 gün</option><option value="30">Son 30 gün</option><option value="90">Son 90 gün</option></select></div><div class="admin-grid" style="margin-top:15px"><div class="card"><div class="admin-muted">Yatırım hacmi</div><div class="admin-value" id="dep">—</div></div><div class="card"><div class="admin-muted">Çekim hacmi</div><div class="admin-value" id="wd">—</div></div><div class="card"><div class="admin-muted">İşlem adedi</div><div class="admin-value" id="cnt">—</div></div><div class="card"><div class="admin-muted">Bekleyen</div><div class="admin-value" id="pend">—</div></div></div></div></main></div><script src="admin-api.js"></script><script src="reports-data.js"></script>
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Safepays Admin — Raporlar</title>
+<link rel="stylesheet" href="../assets/styles.css"><link rel="stylesheet" href="admin.css"><link rel="stylesheet" href="../assets/dark-theme.css">
+<style>
+.report-chart-wrap{height:250px;overflow:auto;margin-top:14px}.report-bars{height:220px;min-width:620px;display:flex;align-items:flex-end;gap:8px;border-bottom:1px solid #dfe7f1;padding:0 6px}.report-bar-group{height:100%;min-width:34px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px}.report-bar-stack{height:195px;display:flex;align-items:flex-end;gap:2px}.report-bar-stack i{display:block;width:8px;min-height:2px;border-radius:4px 4px 0 0}.report-bar-stack .deposit{background:#178bff}.report-bar-stack .withdrawal{background:#7b61ff}.report-bar-stack .commission{background:#34d399}.report-bar-group small{font-size:9px;color:#7b8798;white-space:nowrap}.report-legend{display:flex;gap:14px;flex-wrap:wrap;color:#65758b;font-size:11px}.report-legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}.report-legend .dep{background:#178bff}.report-legend .wd{background:#7b61ff}.report-legend .com{background:#34d399}.report-table-wrap{overflow:auto}.report-table{width:100%;min-width:720px;border-collapse:collapse}.report-table th,.report-table td{text-align:left;padding:10px 8px;border-bottom:1px solid #e6ebf1;font-size:11px}.report-table th{font-size:9px;color:#7b8798;text-transform:uppercase}.dark-theme .report-table th,.dark-theme .report-table td{border-color:#1d3550;color:#dce8f5}.dark-theme .report-bars{border-color:#28415e}
+</style>
+<script src="admin.js"></script><script src="../assets/maintenance.js"></script>
+</head>
+<body class="admin-body">
+<div class="admin-layout"><aside class="admin-side"><a class="logo" href="dashboard.html">Safe<span>Pays</span></a><nav class="admin-nav"></nav></aside>
+<main class="admin-main">
+  <div class="admin-head"><div><div class="admin-muted">ANALYTICS</div><h1>Raporlar</h1><div class="admin-muted">Finansal hareketleri ve işlem sayılarını özetle.</div></div></div>
+  <section class="admin-card">
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><label for="range">Dönem</label><select id="range"><option value="7">Son 7 gün</option><option value="30">Son 30 gün</option><option value="90" selected>Son 90 gün</option></select></div>
+    <div class="admin-grid" style="margin-top:15px">
+      <div class="card"><div class="admin-muted">Yatırım hacmi</div><div class="admin-value" id="dep">—</div></div>
+      <div class="card"><div class="admin-muted">Çekim hacmi</div><div class="admin-value" id="wd">—</div></div>
+      <div class="card"><div class="admin-muted">Komisyon</div><div class="admin-value" id="commission">—</div></div>
+      <div class="card"><div class="admin-muted">Kasa bakiyesi</div><div class="admin-value" id="cash">—</div></div>
+      <div class="card"><div class="admin-muted">İşlem adedi</div><div class="admin-value" id="cnt">—</div></div>
+      <div class="card"><div class="admin-muted">Bekleyen</div><div class="admin-value" id="pend">—</div></div>
+    </div><p class="admin-muted" id="reportNote"></p>
+  </section>
+  <section class="admin-card" style="margin-top:14px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><h3 style="margin:0">Günlük finans grafiği</h3><div class="report-legend"><span><i class="dep"></i>Yatırım</span><span><i class="wd"></i>Çekim</span><span><i class="com"></i>Komisyon</span></div></div><div class="report-chart-wrap"><div class="report-bars" id="reportBars"></div></div></section>
+  <section class="admin-card" style="margin-top:14px"><h3>Günlük rapor</h3><div class="report-table-wrap"><table class="report-table"><thead><tr><th>Tarih</th><th>Yatırım</th><th>Çekim</th><th>Komisyon</th><th>Kasa</th><th>İşlem</th></tr></thead><tbody id="reportRows"><tr><td colspan="6">Veriler yükleniyor…</td></tr></tbody></table></div></section>
+</main></div>
+<script src="admin-api.js"></script><script src="reports-data.js"></script>
+</body></html>

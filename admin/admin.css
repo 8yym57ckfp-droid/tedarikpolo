@@ -56,19 +56,6 @@ html.dark-theme .admin-nav a:hover .nav-icon,html.dark-theme .admin-nav a.active
 .audit-page .section-head{margin-bottom:16px}.audit-page h2{margin:0 0 5px;font-size:20px}.audit-toolbar{display:flex;gap:10px;margin:12px 0 16px}.audit-toolbar input,.audit-toolbar select{padding:12px 13px;border-radius:10px;border:1px solid #dfe7f1;background:#fbfdff;color:#10223b;outline:none}.audit-toolbar input{flex:1}.audit-table-wrap{overflow:auto}.audit-table{min-width:1050px}.audit-table td{vertical-align:middle}.audit-table td small{display:block;color:#7f8ca6;margin-top:3px}.audit-badge{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:900}.audit-badge.success{background:rgba(40,190,120,.12);color:#15945c}.audit-badge.failed{background:rgba(235,70,85,.12);color:#d83f52}.audit-badge.info{background:rgba(76,128,240,.12);color:#3975d8}.audit-ok{color:#19a66a!important}.audit-fail{color:#df4757!important}.audit-last{font-size:17px!important}.audit-empty{text-align:center!important;padding:30px!important;color:#7f8ca6}.audit-note{margin-top:12px}.audit-note p{margin:7px 0 0;color:#6d7b91}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}.audit-toolbar select{min-width:145px}@media(max-width:700px){.audit-toolbar{flex-direction:column}.audit-stats{grid-template-columns:repeat(2,1fr)!important}}
 html.dark-theme .audit-toolbar input,html.dark-theme .audit-toolbar select{background:#09182a;border-color:#28415e;color:#e8eef7}html.dark-theme .audit-note p{color:#9fb0c4}html.dark-theme .audit-table td small{color:#8fa2ba}
 
-/* v166.16 — team self status control shown beside theme on every team page */
-.team-status-control{height:36px;display:flex;align-items:center;gap:7px;padding:0 9px;border:1px solid #dfe7f1;border-radius:999px;background:#fff;color:#172b44;cursor:pointer;font-size:11px;font-weight:850;white-space:nowrap}
-.team-status-control .team-status-label{min-width:34px;text-align:center}
-.team-status-control .team-status-dot{width:25px;height:14px;border-radius:99px;background:#cfd8e3;position:relative;display:block}
-.team-status-control .team-status-dot:after{content:"";position:absolute;width:12px;height:12px;left:1px;top:1px;border-radius:50%;background:#172b44;transition:.2s}
-.team-status-control.is-active .team-status-dot{background:#087cff}
-.team-status-control.is-active .team-status-dot:after{left:12px;background:#fff}
-.team-status-control.is-disabled{opacity:.62;cursor:not-allowed}
-html.dark-theme .team-status-control{background:#0b1b30;border-color:#28415e;color:#d8e2ef}
-html.dark-theme .team-status-control .team-status-dot{background:#2a4563}
-html.dark-theme .team-status-control .team-status-dot:after{background:#d8e2ef}
-html.dark-theme .team-status-control.is-active .team-status-dot{background:#087cff}
-html.dark-theme .team-status-control.is-active .team-status-dot:after{background:#fff}
 .team-profile-only{grid-template-columns:1fr 1fr}
 @media(max-width:800px){.team-profile-only{grid-template-columns:1fr}}
 
@@ -216,6 +203,22 @@ body.dark-theme .queue-top .qstat.receivable strong,
 html.dark-theme .admin-theme{background:#0b1b30!important;border-color:#28415e!important;color:#d8e2ef!important}
 html.dark-theme .admin-theme i{background:#2a4563!important}
 html.dark-theme .admin-theme i:after{left:12px!important;background:#fff!important}
+
+/* Admin pages are dark-only. The Owner panel keeps its separate styling. */
+html.admin-portal body.admin-body{background:#06111f!important;color:#e8eef7!important;color-scheme:dark}
+html.admin-portal body.admin-body .admin-theme,
+html.admin-portal body.admin-body #adminThemeSwitch,
+html.admin-portal body.admin-body .theme-switch,
+html.admin-portal body.admin-body [data-theme-toggle],
+html.admin-portal body.admin-body .team-status-control{display:none!important}
+html.admin-portal .admin-login{background:#06111f!important;color:#e8eef7!important;color-scheme:dark}
+html.admin-portal .admin-login .admin-card{background:#0b1b30!important;border:1px solid #1d3550!important;color:#e8eef7!important;box-shadow:0 18px 55px rgba(0,0,0,.3)!important}
+html.admin-portal .admin-login .admin-card .logo,html.admin-portal .admin-login .admin-card h1{color:#f4f7fb!important;text-shadow:none!important}
+html.admin-portal .admin-login .admin-card .logo span{color:#4f8cff!important}
+html.admin-portal .admin-login .admin-card p.admin-muted{color:#9fb0c4!important}
+html.admin-portal .admin-login .admin-card input{background:#09182a!important;border-color:#28415e!important;color:#e8eef7!important}
+html.admin-portal .admin-login .admin-card input::placeholder{color:#8fa2ba!important}
+html.admin-portal .admin-login .admin-card .admin-login-note{background:#0d2138!important;color:#9fb0c4!important}
 
 .team-profile-chip{display:inline-flex!important;align-items:center;gap:8px;text-decoration:none}.team-profile-avatar{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#0f2f4d;border:1px solid #2b6fa8;color:#eaf5ff;font-weight:900;font-size:12px}.team-profile-name{white-space:nowrap}
 

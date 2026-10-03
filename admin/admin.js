@@ -1,3 +1,7 @@
+// Admin UI is intentionally dark-only. Lock this before the page body renders.
+if(location.pathname.includes('/admin/')){document.documentElement.classList.add('admin-portal','dark-theme');try{localStorage.setItem('safepays-admin-theme','dark');}catch(_){}}
+else if(location.pathname.includes('/owner/'))document.documentElement.classList.add('owner-portal');
+
 function formatTime(s){let m=Math.floor(s/60),sec=s%60;return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0')}
 function tick(){document.querySelectorAll('.timer').forEach(el=>{let s=parseInt(el.dataset.seconds||'0');if(s>0)s--;el.dataset.seconds=s;el.textContent=s?formatTime(s):'Otomatik reddediliyor';el.classList.remove('timer-green','timer-yellow','timer-red');if(s>600)el.classList.add('timer-green');else if(s>300)el.classList.add('timer-yellow');else if(s>0)el.classList.add('timer-red');else{el.classList.add('timer-red');if(el.dataset.autored==='1'){el.textContent='Otomatik reddedildi'}}})}
 setInterval(tick,1000)
@@ -21,12 +25,10 @@ document.addEventListener('DOMContentLoaded',()=>{
     box=document.createElement('div');
     box.className='admin-tools';
     box.id='adminToolsShared';
-    box.innerHTML='<button class="admin-theme" id="adminThemeSwitch" type="button" aria-label="Tema değiştir"><span class="admin-theme-sun" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></span><i></i><span class="admin-theme-moon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2Z"/></svg></span></button><a class="admin-user-link team-profile-chip" href="profile.html" id="adminCurrentUser"><span class="team-profile-avatar" aria-hidden="true">◉</span><span class="team-profile-name">Profilim</span></a>';
+    box.innerHTML='<a class="admin-user-link team-profile-chip" href="profile.html" id="adminCurrentUser"><span class="team-profile-avatar" aria-hidden="true">◉</span><span class="team-profile-name">Profilim</span></a>';
     const host = head.classList.contains('team-head') ? (head.querySelector('.team-head > div:last-child') || head) : head;
     const dateCard = host.querySelector('.date-card');
     if(dateCard) host.insertBefore(box,dateCard); else host.appendChild(box);
-    const sw=box.querySelector('#adminThemeSwitch');
-    if(sw) sw.onclick=()=>window.toggleTheme();
   }
 
   // Standalone team-name chip intentionally removed. Team name remains in the profile dropdown.
@@ -75,7 +77,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       const d=await r.json();
       const identity=ownerPortal?d.owner:d.admin;
       if(ownerPortal?identity?.role!=='owner':identity?.role!=='team_admin')return false;
-      if(window.SafeAdmin?.setSessionProfile)SafeAdmin.setSessionProfile({id:identity.id,email:identity.email,role:ownerPortal?'Super Admin':'Team Admin',name:ownerPortal?'Super Admin':'Admin Ekibi'});
+      if(window.SafeAdmin?.setSessionProfile)SafeAdmin.setSessionProfile({id:identity.id,email:identity.email,role:ownerPortal?'Super Admin':'Team Admin',name:ownerPortal?'Super Admin':'Admin Ekibi',permissions:identity.permissions});
       return true;
     }catch(e){ return false; }
   }
@@ -112,8 +114,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       back:'<path d="M10 6 4 12l6 6"/><path d="M4 12h16"/>'
     };return `<span class="nav-icon nav-icon-${name}" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths[name]}</svg></span>`};
     const staffItems=[
-      ['user-center.html','user','Kullanıcılar'],
-      ['team-dashboard.html','home','Genel Bakış'],['requests.html','clock','Bekleyen İşlemler'],['withdrawal-pool.html','clock','Çekim Havuzu'],['history.html?status=approved','check','Onaylanan İşlemler'],['history.html?status=rejected','x','Reddedilen İşlemler'],['reconciliation.html','handshake','Mutabakat'],['reports.html','chart','Raporlar'],['wallet-addresses.html','wallet','Cüzdan Hesapları'],['audit.html','shield','İşlem / Audit Logları'],['profile.html','user','Profilim']
+      ['team-dashboard.html','home','Genel Bakış'],['requests.html','clock','Bekleyen İşlemler'],['withdrawal-pool.html','clock','Çekim Havuzu'],['history.html?status=approved','check','Onaylanan İşlemler'],['history.html?status=rejected','x','Reddedilen İşlemler'],['reconciliation.html','handshake','Mutabakat'],['reports.html','chart','Raporlar'],['wallet-addresses.html','wallet','Cüzdan Hesapları'],['support.html','news','Destek Talepleri'],['profile.html','user','Profilim']
     ];
     const ownerItems=[
       ['member-operations.html','user','Kullanıcılar'],
@@ -121,7 +122,14 @@ document.addEventListener('DOMContentLoaded',()=>{
     ];
     const isOwner=ownerPortal&&a?.role==='Super Admin';
     localStorage.setItem('safepays_portal',isOwner?'owner':'admin');
-    const items=isOwner?ownerItems:staffItems;
+    const items=isOwner?ownerItems:staffItems.filter(([href])=>{
+      const file=href.split('?')[0];
+      if(['requests.html','withdrawal-pool.html','history.html'].includes(file))return a?.permissions?.transactions!==false;
+      if(['reconciliation.html','reports.html'].includes(file))return a?.permissions?.reports!==false;
+      if(file==='wallet-addresses.html')return a?.permissions?.wallets!==false;
+      if(file==='support.html')return a?.permissions?.support!==false;
+      return true;
+    });
     if(!ownerPortal) document.querySelectorAll('.admin-nav').forEach(nav=>{
       nav.replaceChildren(...items.map(([href,ico,label])=>{const el=document.createElement('a');el.href=href;el.innerHTML=icon(ico)+'<span>'+label+'</span>';return el;}));
       const path=location.pathname.split('/').pop()||'dashboard.html';
@@ -138,46 +146,4 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setupNav);else setupNav();
-})();
-
-/* v166.16 — Team self active/passive control, available on every team page like the theme switch. */
-(function(){
-  function mountTeamStatus(){
-    try{
-      const a=window.SafeAdmin?.current?.();
-      if(!a || a.role==='Super Admin') return;
-      const tools=document.querySelector('.admin-tools');
-      if(!tools || document.getElementById('teamStatusControl')) return;
-      const b=document.createElement('button');
-      b.type='button'; b.id='teamStatusControl'; b.className='team-status-control';
-      b.setAttribute('aria-label','Ekip aktif/pasif durumu');
-      const active=a.active!==false;
-      const canReactivate=a.selfReactivateEnabled!==false;
-      b.classList.toggle('is-active',active);
-      b.innerHTML='<span class="team-status-label">'+(active?'Aktif':'Pasif')+'</span><span class="team-status-dot" aria-hidden="true"></span>';
-      if(!active && !canReactivate){b.classList.add('is-disabled');b.title='Owner bu ekip için kendi kendine aktifleştirmeyi kapattı.';}
-      b.onclick=function(){
-        if(!active && !canReactivate) return;
-        try{
-          const next=!((window.SafeAdmin.current()||{}).active!==false);
-          window.SafeAdmin.setSelfActive(next);
-          mountTeamStatus.refresh?.();
-        }catch(e){
-          const n=document.getElementById('teamStatusControl');
-          if(n){n.title=e.message||'Durum değiştirilemedi';let toast=document.getElementById('teamStatusWarning');if(!toast){toast=document.createElement('div');toast.id='teamStatusWarning';toast.className='team-status-warning';document.body.appendChild(toast)}toast.textContent='Lütfen yönetici ile iletişime geçin.';toast.classList.add('show');clearTimeout(window.__teamStatusWarningTimer);window.__teamStatusWarningTimer=setTimeout(()=>toast.classList.remove('show'),3500);}
-        }
-      };
-      const theme=tools.querySelector('#adminThemeSwitch');
-      if(theme) tools.insertBefore(b,theme); else tools.insertBefore(b,tools.firstChild);
-      mountTeamStatus.refresh=function(){
-        const cur=window.SafeAdmin?.current?.(); if(!cur) return;
-        const isActive=cur.active!==false, can=cur.selfReactivateEnabled!==false;
-        const n=document.getElementById('teamStatusControl'); if(!n) return;
-        n.classList.toggle('is-active',isActive); n.classList.toggle('is-disabled',!isActive&&!can);
-        n.querySelector('.team-status-label').textContent=isActive?'Aktif':'Pasif';
-        n.title=!isActive&&!can?'Owner bu ekip için kendi kendine aktifleştirmeyi kapattı.':'';
-      };
-    }catch(e){}
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mountTeamStatus); else mountTeamStatus();
 })();

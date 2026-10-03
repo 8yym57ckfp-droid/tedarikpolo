@@ -41,6 +41,14 @@ Render web servisi `render.yaml` dosyasını kullanır. Üretim başlangıcı `D
 - Destek: `/admin/support.html`
 - Bakiye geçmişi: `/balance-history.html`
 
+## İzole finans test verisi
+
+Owner panelindeki **Finans Test Verisi** ekranı, işlem geçmişi olmayan ve bakiyesi sıfır olan mevcut bir test üyesine 90 günlük sentetik geçmiş oluşturur. Her gün onaylı yatırım ve çekim hareketi bulunur; ayrıca seyrek reddedilmiş talepler ve test edilebilir birer bekleyen yatırım/çekim talebi oluşturulur. Tüm talepler en az 50 USDT'dir. Eklenen üyelerin ad-soyadları sentetik olarak üretilir, e-posta alanları `example.invalid` etki alanını kullanır ve gerçek cüzdan/transfer kimliği eklenmez. Bekleyen sentetik talepleri onaylamak standart bakiye defteri yolunu kullanır, dışarıya transfer göndermez.
+
+Bu özellik varsayılan olarak kapalıdır. Kontrollü bir test ortamında seed ekranını kullanacağınız sırada `SYNTHETIC_FINANCE_SEED_ENABLED=true` ayarını açın. Önce seçilen boş hesap geçerli Owner TOTP kodu ve e-posta/ID onayıyla `is_test_account` olarak işaretlenir ve üretim listeleri/toplamlarından çıkarılır. Ayrı bir onay ve yeni Owner TOTP koduyla 90 günlük veri oluşturulur. İşlem tamamlandıktan sonra ayarı tekrar kapatın. Her kullanıcı, talep ve bakiye defteri satırı `is_synthetic` ve `test_run_id` ile işaretlenir. Owner panelindeki rapor, mutabakat ve özet ekranları `testRunId` bağlantısıyla yalnızca ilgili koşuyu gösterir; varsayılan üretim/Admin toplamları test hesabı ve sentetik kayıtları dışarıda bırakır.
+
+Mevcut uygulamada gerçek komisyon ödeme/dağıtım modeli bulunmadığı için sentetik koşunun raporlarında yalnızca görünürlük testi amacıyla onaylı yatırımların %3'ü raporlama komisyonu olarak hesaplanır; bu tutar bakiyeye, ödeme akışına veya üretim komisyon kayıtlarına yazılmaz.
+
 ## Oran sağlayıcıları
 
 Piyasa oranı sağlayıcılarından hiçbiri erişilebilir değilse API oranı hata döndürür; statik/fallback piyasa fiyatı kullanmaz. Böylece geçersiz veya örnek fiyatla işlem teklifi oluşturulmaz.
