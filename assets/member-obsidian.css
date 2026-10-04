@@ -311,6 +311,57 @@ html body.auth-public .sp-forgot-modal { border-color:rgba(255,255,255,.2) !impo
 html body.auth-public .sp-forgot-modal :where(h3, p, label) { color:#e6e6e8 !important; }
 html body.auth-public .sp-forgot-modal input { color:#f0f0f2 !important; border-color:var(--obsidian-line) !important; background:var(--obsidian-input) !important; }
 
+/* Keep the registration country code in its own clear segment. */
+html body.auth-public .auth #phoneField .phone-input-wrap {
+  display:flex !important;
+  align-items:stretch !important;
+  min-height:48px !important;
+  padding:0 !important;
+  overflow:hidden !important;
+  border:1px solid rgba(80,153,216,.42) !important;
+  border-radius:14px !important;
+  color:#eaf4ff !important;
+  background:#071a2d !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.045) !important;
+}
+html body.auth-public .auth #phoneField .phone-prefix {
+  display:flex !important;
+  flex:0 0 58px !important;
+  align-items:center !important;
+  justify-content:center !important;
+  box-sizing:border-box !important;
+  padding:0 12px !important;
+  border-right:1px solid rgba(80,153,216,.3) !important;
+  color:#a9d6ff !important;
+  background:rgba(20,75,122,.34) !important;
+  font-size:15px !important;
+  font-weight:700 !important;
+  line-height:1 !important;
+}
+html body.auth-public .auth #phoneField .phone-input-wrap input {
+  flex:1 1 auto !important;
+  width:0 !important;
+  min-width:0 !important;
+  min-height:46px !important;
+  box-sizing:border-box !important;
+  margin:0 !important;
+  padding:0 15px !important;
+  border:0 !important;
+  border-radius:0 !important;
+  color:#edf6ff !important;
+  background:transparent !important;
+  box-shadow:none !important;
+}
+html body.auth-public .auth #phoneField .phone-input-wrap:focus-within {
+  border-color:#398fe0 !important;
+  box-shadow:0 0 0 3px rgba(40,132,219,.17) !important;
+}
+html body.auth-public .auth #phoneField .phone-input-wrap:has(input.field-invalid),
+html body.auth-public .auth #phoneField .phone-input-wrap.field-invalid {
+  border-color:#fb7185 !important;
+  box-shadow:0 0 0 2px rgba(251,113,133,.14) !important;
+}
+
 html body.maintenance-page {
   min-height:100vh !important;
   background:radial-gradient(ellipse at 13% 9%,rgba(222,223,226,.11),transparent 32%),linear-gradient(145deg,#0b0c0e,#151619 55%,#0a0b0d) !important;
