@@ -5,20 +5,21 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>SafePays Admin — Yönetim Merkezi</title>
   <script>(function(){try{if(localStorage.getItem('safepays-admin-theme')==='dark')document.documentElement.classList.add('dark-theme')}catch(_){}})();</script>
-  <link rel="stylesheet" href="../assets/styles.css">
-  <link rel="stylesheet" href="admin.css">
-  <link rel="stylesheet" href="../assets/dark-theme.css">
-  <link rel="stylesheet" href="../assets/overview-finance.css">
-  <script src="admin-api.js"></script>
-  <script src="admin.js"></script>
-  <script src="../assets/app.js"></script>
-  <script src="../assets/maintenance.js"></script>
+  <link rel="stylesheet" href="../assets/styles.css?v=20261005.1">
+  <link rel="stylesheet" href="admin.css?v=20261005.1">
+  <link rel="stylesheet" href="../assets/dark-theme.css?v=20261005.1">
+  <link rel="stylesheet" href="../assets/overview-finance.css?v=20261005.1">
+  <script src="admin-api.js?v=20261005.1"></script>
+  <script src="admin.js?v=20261005.1"></script>
+  <script src="../assets/app.js?v=20261005.1"></script>
+  <script src="../assets/maintenance.js?v=20261005.1"></script>
   <style>
     .team-overview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:18px 0}
     .team-stat{position:relative;overflow:hidden;min-height:125px;padding:18px;border:1px solid #dfe7f1;border-radius:16px;background:#fff;box-sizing:border-box}
     .team-stat:after{content:"";position:absolute;width:95px;height:95px;border-radius:50%;right:-24px;top:-28px;background:var(--stat-glow,rgba(62,142,255,.1))}
     .team-stat-label{color:#71839a;font-size:12px;font-weight:750}
     .team-stat-value{position:relative;z-index:1;margin-top:13px;font-size:30px;line-height:1;font-weight:900;letter-spacing:-.04em;color:#122b46;font-variant-numeric:tabular-nums}
+    #teamLifetimeCommission,#teamCollateralCapacity{font-size:clamp(16px,2.2vw,24px);overflow-wrap:anywhere}
     .team-stat-note{margin-top:9px;color:#8292a7;font-size:11px}
     .team-stat.blue{--stat-glow:rgba(62,142,255,.13)}.team-stat.green{--stat-glow:rgba(49,194,133,.13)}.team-stat.amber{--stat-glow:rgba(245,176,55,.15)}.team-stat.purple{--stat-glow:rgba(137,108,255,.14)}
     .overview-columns{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(260px,.8fr);gap:14px}
@@ -49,14 +50,25 @@
     html.dark-theme .overview-status.pending{background:#392f15;color:#ffd66a}html.dark-theme .overview-status.approved{background:#0c2a20;color:#5ee3aa}html.dark-theme .overview-status.rejected{background:#32171b;color:#ff8893}
     @media(max-width:1050px){.team-overview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.overview-columns{grid-template-columns:1fr}}
     @media(max-width:520px){.team-overview-grid{gap:8px}.team-stat{padding:13px;min-height:112px}.team-stat-value{font-size:25px}.overview-card{padding:14px}.overview-head{flex-direction:column}}
-    .team-dashboard-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.team-self-disable{background:rgba(185,48,64,.16)!important;border:1px solid rgba(255,110,124,.45)!important;color:#ffb4bc!important}
+    .team-dashboard-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.team-active-control{display:flex;align-items:center;gap:10px;color:#a9bfd4;font-size:12px;font-weight:800}.team-active-control[hidden]{display:none}.team-status-switch{position:relative;width:58px;height:34px;flex:0 0 58px;border:1px solid #16895a;border-radius:999px;background:#138654;box-shadow:inset 0 1px 3px rgba(0,0,0,.25);cursor:pointer;transition:background .2s,border-color .2s}.team-status-switch:before{content:"";position:absolute;top:3px;left:27px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3);transition:transform .2s}.team-status-switch:after{content:"✓";position:absolute;left:9px;top:8px;color:#fff;font-size:13px;font-weight:900}.team-status-switch[aria-checked="false"]{background:#33465a;border-color:#536a82}.team-status-switch[aria-checked="false"]:before{transform:translateX(-24px)}.team-status-switch[aria-checked="false"]:after{content:"×";left:36px}.team-status-switch:focus-visible{outline:3px solid rgba(86,171,255,.42);outline-offset:3px}.team-status-switch:disabled{opacity:.6;cursor:wait}
   </style>
 </head>
 <body class="admin-body dark-theme">
   <div class="admin-layout">
     <aside class="admin-side">
       <a class="logo" href="team-dashboard.html">Safe<span>Pays</span></a>
-      <nav class="admin-nav" aria-label="Ekip yönetim menüsü"></nav>
+      <nav class="admin-nav" aria-label="Ekip yönetim menüsü">
+        <a href="team-dashboard.html"><span>Genel Bakış</span></a>
+        <a href="requests.html"><span>Bekleyen İşlemler</span></a>
+        <a href="requests.html?type=withdrawal"><span>Çekim Havuzu</span></a>
+        <a href="history.html?status=approved"><span>Onaylanan İşlemler</span></a>
+        <a href="history.html?status=rejected"><span>Reddedilen İşlemler</span></a>
+        <a href="reconciliation.html"><span>Mutabakat</span></a>
+        <a href="reports.html"><span>Raporlar</span></a>
+        <a href="wallet-addresses.html"><span>Cüzdan Hesapları</span></a>
+        <a href="support.html"><span>Destek Talepleri</span></a>
+        <a href="profile.html"><span>Profilim</span></a>
+      </nav>
     </aside>
     <main class="admin-main">
       <header class="admin-head">
@@ -65,11 +77,13 @@
           <h1>Yönetim Merkezi</h1>
           <div class="admin-muted">Bekleyen işlemleri ve hesap durumunu tek ekrandan takip et.</div>
         </div>
-        <div class="team-dashboard-actions"><a class="admin-btn" href="requests.html">Bekleyen işlemleri aç</a><button id="selfDisableTeam" class="admin-btn team-self-disable" type="button" hidden>Hesabımı pasife al</button></div>
+        <div class="team-dashboard-actions"><a class="admin-btn" href="requests.html">Bekleyen işlemleri aç</a><div class="team-active-control" id="selfDisableTeamControl" hidden><span id="teamActiveLabel">Hesabım aktif</span><button id="selfDisableTeam" class="team-status-switch" type="button" role="switch" aria-checked="true" aria-label="Ekip hesabımı pasife al"></button></div></div>
       </header>
       <section class="team-overview-grid" aria-label="Güncel özet">
         <article class="team-stat amber"><div class="team-stat-label">Bekleyen işlem</div><div class="team-stat-value" id="pendingCount">—</div><div class="team-stat-note" id="pendingNote">Yatırım ve çekim talepleri</div></article>
         <article class="team-stat green"><div class="team-stat-label">Onaylanan işlem</div><div class="team-stat-value" id="approvedCount">—</div><div class="team-stat-note">Toplam onay kaydı</div></article>
+        <article class="team-stat purple"><div class="team-stat-label">Birikmiş komisyon</div><div class="team-stat-value" id="teamLifetimeCommission">—</div><div class="team-stat-note" id="teamCommissionRate">Onaylanan yatırımlardan hesaplanır</div></article>
+        <article class="team-stat blue"><div class="team-stat-label">Kullanılabilir teminat</div><div class="team-stat-value" id="teamCollateralCapacity">—</div><div class="team-stat-note" id="teamCollateralNote">Kasa kullanım bilgisi yükleniyor</div></article>
       </section>
       <section class="finance-overview" id="financeOverview" aria-labelledby="financeTitle">
         <div class="finance-overview-head"><div><h2 id="financeTitle">Finansal görünüm</h2><p>Son yedi günün sunucudaki mutabakat ve onaylı işlem verileri.</p></div><span class="finance-overview-range" id="financePeriod">—</span></div>
@@ -105,7 +119,7 @@
       </div>
     </main>
   </div>
-  <script src="team-dashboard-data.js"></script>
-  <script src="../assets/overview-finance.js"></script>
+  <script src="team-dashboard-data.js?v=20261005.1"></script>
+  <script src="../assets/overview-finance.js?v=20261005.1"></script>
 </body>
 </html>

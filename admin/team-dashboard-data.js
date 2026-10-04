@@ -8,7 +8,22 @@
     const rows=byId('recentRows');
     try{
       const [stats,data,profile]=await Promise.all([adminFetch('/stats'),adminFetch('/transactions'),adminFetch('/me')]);
-      const selfDisable=byId('selfDisableTeam');if(selfDisable){selfDisable.hidden=!profile.admin?.allowSelfDisable;selfDisable.onclick=async()=>{if(!confirm('Ekip hesabınızı pasife almak istiyor musunuz? Giriş ve atanmış cüzdanların yeni yatırım rotasyonu durur.'))return;try{await adminFetch('/team/self-disable',{method:'POST',body:JSON.stringify({})});location.replace('login.html?disabled=1');}catch(error){alert('Hesap pasife alınamadı: '+error.message);}};}
+      const admin=profile.admin||{},selfDisable=byId('selfDisableTeam'),selfDisableControl=byId('selfDisableTeamControl');
+      if(selfDisable&&selfDisableControl){
+        selfDisableControl.hidden=!admin.allowSelfDisable;
+        const setSwitch=enabled=>{selfDisable.setAttribute('aria-checked',enabled?'true':'false');byId('teamActiveLabel').textContent=enabled?'Hesabım aktif':'Hesabım pasif';};
+        setSwitch(true);
+        selfDisable.onclick=async()=>{
+          if(!confirm('Ekip hesabınızı pasife almak istiyor musunuz? Oturumunuz kapanır ve atanmış cüzdanlardan yeni yatırım yönlendirilmez.'))return;
+          selfDisable.disabled=true;setSwitch(false);
+          try{await adminFetch('/team/self-disable',{method:'POST',body:JSON.stringify({})});location.replace('login.html?disabled=1');}
+          catch(error){setSwitch(true);selfDisable.disabled=false;alert('Hesap pasife alınamadı: '+error.message);}
+        };
+      }
+      byId('teamLifetimeCommission').textContent=amount(admin.commissionEarned);
+      byId('teamCommissionRate').textContent=`Onaylı yatırımlar · ekip payı %${Number(admin.commissionPercent||0).toLocaleString('tr-TR')}`;
+      byId('teamCollateralCapacity').textContent=amount(admin.collateralAvailable);
+      byId('teamCollateralNote').textContent=Number(admin.collateralTotal||0)>0?`${amount(admin.collateralExposure)} kullanım / ${amount(admin.collateralTotal)} teminat${admin.collateralPaused?' · yeni yatırımlar duraklatıldı':''}`:'Teminat sınırı ayarlanmamış';
       const tx=Array.isArray(data.transactions)?data.transactions:[];
       const pending=tx.filter(x=>x.status==='pending');
       byId('pendingCount').textContent=number(stats.pending);

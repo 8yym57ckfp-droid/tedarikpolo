@@ -31,6 +31,7 @@ ALTER TABLE transactions ADD COLUMN IF NOT EXISTS requested_amount NUMERIC(20,8)
 ALTER TABLE transactions ADD COLUMN IF NOT EXISTS received_amount NUMERIC(20,8);
 ALTER TABLE transactions ADD COLUMN IF NOT EXISTS is_synthetic BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE transactions ADD COLUMN IF NOT EXISTS test_run_id TEXT;
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS team_account_id TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_request_key ON transactions(request_key) WHERE request_key IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_tx_hash_unique ON transactions(LOWER(tx_hash)) WHERE tx_hash IS NOT NULL AND tx_hash <> '';
 CREATE INDEX IF NOT EXISTS idx_transactions_user_created ON transactions(user_id, created_at DESC);
@@ -59,6 +60,7 @@ CREATE TABLE IF NOT EXISTS team_accounts (
   permissions JSONB NOT NULL DEFAULT '{"dashboard":true,"transactions":true,"reports":true,"wallets":true,"support":true}'::jsonb,
   wallet_limit INTEGER NOT NULL DEFAULT 0, collateral_total NUMERIC(20,8) NOT NULL DEFAULT 0,
   collateral_balance NUMERIC(20,8) NOT NULL DEFAULT 0, allow_self_disable BOOLEAN NOT NULL DEFAULT FALSE,
+  commission_percent NUMERIC(5,2) NOT NULL DEFAULT 3,
   collateral_auto_pause BOOLEAN NOT NULL DEFAULT FALSE, collateral_pause_percent NUMERIC(5,2) NOT NULL DEFAULT 80,
   collateral_paused BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

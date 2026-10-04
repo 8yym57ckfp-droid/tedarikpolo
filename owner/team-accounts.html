@@ -52,7 +52,7 @@
       <header class="admin-head"><div><div class="admin-muted">OWNER CONTROL CENTER</div><h1>Ekip Hesapları</h1><div class="admin-muted">Ekip giriş bilgilerini, durumunu ve panel erişimlerini yönetin.</div></div><div class="owner-badge">● OWNER</div></header>
       <section class="team-account-card">
         <h2>Admin ekip girişi</h2>
-        <p class="team-account-intro">Ekip hesabına özel doğrulayıcı anahtarı oluşturma sırasında hazırlanır. Her ekibe cüzdan sınırı, teminat kasası ve gerekirse kendi hesabını pasife alma yetkisi tanımlayabilirsin. Teminat kullanım eşiği aşılırsa ekip durur ve atanan cüzdanlar yeni yatırım rotasyonundan çıkar; yeniden etkinleştirmek için teminat bakiyesini artır.</p>
+        <p class="team-account-intro">Ekibin yatırım komisyonunu ve teminat sınırını belirle. Teminat kullanımı onaylı yatırımlar ve bekleyen taleplerle artar; ekibin ödediği çekimler aynı tutarda kapasiteyi geri açar. Teminatı aşan yatırım talepleri sunucu tarafından engellenir.</p>
         <form class="team-account-form" id="teamAccountForm">
           <input id="teamAccountId" type="hidden">
           <div class="team-account-fields">
@@ -60,7 +60,8 @@
             <label for="teamPassword">Yeni parola<input id="teamPassword" type="password" minlength="12" autocomplete="new-password" placeholder="Yeni hesapta zorunlu, düzenlemede isteğe bağlı"></label>
             <label for="teamWalletLimit">Cüzdan sınırı<input id="teamWalletLimit" type="number" min="0" max="5000" step="1" value="0"><small>0 = sınırsız</small></label>
             <label for="teamCollateralTotal">Toplam teminat (USDT)<input id="teamCollateralTotal" type="number" min="0" step="0.01" value="0"></label>
-            <label for="teamCollateralBalance">Mevcut kasa bakiyesi (USDT)<input id="teamCollateralBalance" type="number" min="0" step="0.01" value="0"></label>
+            <label for="teamCommissionPercent">Yatırım komisyonu (%)<input id="teamCommissionPercent" type="number" min="0" max="100" step="0.01" value="3"><small>Onaylanan yatırımlardan hesaplanır.</small></label>
+            <label for="teamCollateralBalance">Kullanılmış teminat (USDT)<input id="teamCollateralBalance" type="number" min="0" step="0.01" value="0" readonly><small>Sunucu işlemlerden otomatik hesaplar.</small></label>
             <label for="teamCollateralPausePercent">Otomatik pasife düşme eşiği (%)<input id="teamCollateralPausePercent" type="number" min="1" max="100" step="1" value="80"></label>
           </div>
           <div class="team-permissions">
@@ -77,7 +78,7 @@
         </form>
         <div id="teamAccountContent" class="team-account-state" role="status" aria-live="polite">Ekip hesabı bilgisi yükleniyor…</div>
         <div class="team-account-actions"><a class="admin-btn dark" href="../admin/login.html">Ekip giriş sayfası</a></div>
-        <p class="team-account-footnote">Cüzdan sınırında 0 sınırsız demektir. Teminat otomatik duraklatma için toplam teminat belirle; eşik, toplam teminatın kullanılan yüzdesidir. Yeni parola en az 12 karakter olmalıdır.</p>
+        <p class="team-account-footnote">Cüzdan sınırında 0 sınırsız demektir. Eşik, toplam teminatın kullanılmasına izin verilen yüzdesidir. Çekim ödendiğinde kapasite aynı tutarda geri açılır. Yeni parola en az 12 karakter olmalıdır.</p>
       </section>
     </main>
   </div>

@@ -87,7 +87,8 @@
       byId('financeWithdrawals').textContent=amount(totals.withdrawal);
       byId('financeCommissions').textContent=commissionEnabled?amount(totals.commission):'—';
       byId('financeReceivable').textContent=commissionEnabled?amount(totals.receivable):'—';
-      byId('financeCommissionNote').textContent=commissionEnabled?`Bugün ${amount(today.commission)} · %${Number(finance.commissionRate||0).toLocaleString('tr-TR')}`:'Bu hesapta komisyon mutabakatı etkin değil.';
+      const commissionPercent=Number(finance.commissionPercent??Number(finance.commissionRate||0)*100);
+      byId('financeCommissionNote').textContent=commissionEnabled?`Bugün ${amount(today.commission)} · ekip oranı %${commissionPercent.toLocaleString('tr-TR')}`:'Bu hesapta komisyon mutabakatı etkin değil.';
       byId('financeReceivableNote').textContent=commissionEnabled?`Bugün ${amount(today.receivable)} net alacak`:'Komisyon modeli tanımlandığında hesaplanır.';
       byId('financeDepositsNote').textContent=`Bugün ${amount(today.deposit)}`;
       byId('financeWithdrawalsNote').textContent=`Bugün ${amount(today.withdrawal)}`;

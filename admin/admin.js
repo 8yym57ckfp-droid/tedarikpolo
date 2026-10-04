@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       const d=await r.json();
       const identity=ownerPortal?d.owner:d.admin;
       if(ownerPortal?identity?.role!=='owner':identity?.role!=='team_admin')return false;
-      if(window.SafeAdmin?.setSessionProfile)SafeAdmin.setSessionProfile({id:identity.id,email:identity.email,role:ownerPortal?'Super Admin':'Team Admin',name:ownerPortal?'Super Admin':'Admin Ekibi',permissions:identity.permissions});
+      if(window.SafeAdmin?.setSessionProfile)SafeAdmin.setSessionProfile({...identity,id:identity.id,email:identity.email,role:ownerPortal?'Super Admin':'Team Admin',name:ownerPortal?'Super Admin':'Admin Ekibi',permissions:identity.permissions});
       return true;
     }catch(e){ return false; }
   }

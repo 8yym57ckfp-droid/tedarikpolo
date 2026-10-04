@@ -108,22 +108,22 @@ async function bootstrapTeamAccounts(){
   await saveTeamAccount(account);
 }
 async function getTeamAccounts(){
-  if(pool){const result=await pool.query('SELECT id,email,password_hash AS "passwordHash",totp_secret AS "totpSecret",two_factor_enabled AS "twoFactorEnabled",active,permissions,wallet_limit AS "walletLimit",collateral_total AS "collateralTotal",collateral_balance AS "collateralBalance",allow_self_disable AS "allowSelfDisable",collateral_auto_pause AS "collateralAutoPause",collateral_pause_percent AS "collateralPausePercent",collateral_paused AS "collateralPaused",created_at AS "createdAt",updated_at AS "updatedAt" FROM team_accounts ORDER BY created_at');return result.rows.map(account=>({...account,walletLimit:Number(account.walletLimit||0),collateralTotal:Number(account.collateralTotal||0),collateralBalance:Number(account.collateralBalance||0),collateralPausePercent:Number(account.collateralPausePercent||80),allowSelfDisable:!!account.allowSelfDisable,collateralAutoPause:!!account.collateralAutoPause,collateralPaused:!!account.collateralPaused,permissions:cleanTeamPermissions(account.permissions)}));}
-  return (readDb().teamAccounts||[]).map(account=>({...account,walletLimit:Number(account.walletLimit||0),collateralTotal:Number(account.collateralTotal||0),collateralBalance:Number(account.collateralBalance||0),collateralPausePercent:Number(account.collateralPausePercent||80),allowSelfDisable:!!account.allowSelfDisable,collateralAutoPause:!!account.collateralAutoPause,collateralPaused:!!account.collateralPaused,permissions:cleanTeamPermissions(account.permissions)}));
+  if(pool){const result=await pool.query('SELECT id,email,password_hash AS "passwordHash",totp_secret AS "totpSecret",two_factor_enabled AS "twoFactorEnabled",active,permissions,wallet_limit AS "walletLimit",collateral_total AS "collateralTotal",collateral_balance AS "collateralBalance",commission_percent AS "commissionPercent",allow_self_disable AS "allowSelfDisable",collateral_auto_pause AS "collateralAutoPause",collateral_pause_percent AS "collateralPausePercent",collateral_paused AS "collateralPaused",created_at AS "createdAt",updated_at AS "updatedAt" FROM team_accounts ORDER BY created_at');return result.rows.map(account=>({...account,walletLimit:Number(account.walletLimit||0),collateralTotal:Number(account.collateralTotal||0),collateralBalance:Number(account.collateralBalance||0),commissionPercent:Number(account.commissionPercent??3),collateralPausePercent:Number(account.collateralPausePercent||80),allowSelfDisable:!!account.allowSelfDisable,collateralAutoPause:!!account.collateralAutoPause,collateralPaused:!!account.collateralPaused,permissions:cleanTeamPermissions(account.permissions)}));}
+  return (readDb().teamAccounts||[]).map(account=>({...account,walletLimit:Number(account.walletLimit||0),collateralTotal:Number(account.collateralTotal||0),collateralBalance:Number(account.collateralBalance||0),commissionPercent:Number(account.commissionPercent??3),collateralPausePercent:Number(account.collateralPausePercent||80),allowSelfDisable:!!account.allowSelfDisable,collateralAutoPause:!!account.collateralAutoPause,collateralPaused:!!account.collateralPaused,permissions:cleanTeamPermissions(account.permissions)}));
 }
 async function saveTeamAccount(account){
-  if(pool){await pool.query('INSERT INTO team_accounts (id,email,password_hash,totp_secret,two_factor_enabled,active,permissions,wallet_limit,collateral_total,collateral_balance,allow_self_disable,collateral_auto_pause,collateral_pause_percent,collateral_paused,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10,$11,$12,$13,$14,$15,$16) ON CONFLICT (id) DO UPDATE SET email=EXCLUDED.email,password_hash=EXCLUDED.password_hash,totp_secret=EXCLUDED.totp_secret,two_factor_enabled=EXCLUDED.two_factor_enabled,active=EXCLUDED.active,permissions=EXCLUDED.permissions,wallet_limit=EXCLUDED.wallet_limit,collateral_total=EXCLUDED.collateral_total,collateral_balance=EXCLUDED.collateral_balance,allow_self_disable=EXCLUDED.allow_self_disable,collateral_auto_pause=EXCLUDED.collateral_auto_pause,collateral_pause_percent=EXCLUDED.collateral_pause_percent,collateral_paused=EXCLUDED.collateral_paused,updated_at=EXCLUDED.updated_at',[account.id,account.email,account.passwordHash,account.totpSecret||null,!!account.twoFactorEnabled,account.active!==false,JSON.stringify(cleanTeamPermissions(account.permissions)),Number(account.walletLimit||0),Number(account.collateralTotal||0),Number(account.collateralBalance||0),!!account.allowSelfDisable,!!account.collateralAutoPause,Number(account.collateralPausePercent||80),!!account.collateralPaused,account.createdAt||new Date().toISOString(),account.updatedAt||new Date().toISOString()]);return;}
+  if(pool){await pool.query('INSERT INTO team_accounts (id,email,password_hash,totp_secret,two_factor_enabled,active,permissions,wallet_limit,collateral_total,collateral_balance,commission_percent,allow_self_disable,collateral_auto_pause,collateral_pause_percent,collateral_paused,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) ON CONFLICT (id) DO UPDATE SET email=EXCLUDED.email,password_hash=EXCLUDED.password_hash,totp_secret=EXCLUDED.totp_secret,two_factor_enabled=EXCLUDED.two_factor_enabled,active=EXCLUDED.active,permissions=EXCLUDED.permissions,wallet_limit=EXCLUDED.wallet_limit,collateral_total=EXCLUDED.collateral_total,collateral_balance=EXCLUDED.collateral_balance,commission_percent=EXCLUDED.commission_percent,allow_self_disable=EXCLUDED.allow_self_disable,collateral_auto_pause=EXCLUDED.collateral_auto_pause,collateral_pause_percent=EXCLUDED.collateral_pause_percent,collateral_paused=EXCLUDED.collateral_paused,updated_at=EXCLUDED.updated_at',[account.id,account.email,account.passwordHash,account.totpSecret||null,!!account.twoFactorEnabled,account.active!==false,JSON.stringify(cleanTeamPermissions(account.permissions)),Number(account.walletLimit||0),Number(account.collateralTotal||0),Number(account.collateralBalance||0),Number(account.commissionPercent||0),!!account.allowSelfDisable,!!account.collateralAutoPause,Number(account.collateralPausePercent||80),!!account.collateralPaused,account.createdAt||new Date().toISOString(),account.updatedAt||new Date().toISOString()]);return;}
   const db=readDb();db.teamAccounts=Array.isArray(db.teamAccounts)?db.teamAccounts:[];const index=db.teamAccounts.findIndex(item=>item.id===account.id);const clean={...account,permissions:cleanTeamPermissions(account.permissions),updatedAt:account.updatedAt||new Date().toISOString()};if(index<0)db.teamAccounts.push(clean);else db.teamAccounts[index]=clean;writeDb(db);
 }
-function publicTeamAccount(account){return {id:account.id,email:account.email,active:account.active!==false,twoFactorEnabled:!!account.twoFactorEnabled,twoFactorSetupPending:!!account.totpSecret&&!account.twoFactorEnabled,permissions:cleanTeamPermissions(account.permissions),walletLimit:Number(account.walletLimit||0),collateralTotal:Number(account.collateralTotal||0),collateralBalance:Number(account.collateralBalance||0),allowSelfDisable:!!account.allowSelfDisable,collateralAutoPause:!!account.collateralAutoPause,collateralPausePercent:Number(account.collateralPausePercent||80),collateralPaused:!!account.collateralPaused,createdAt:account.createdAt||null,updatedAt:account.updatedAt||null};}
+function publicTeamAccount(account,metrics={}){const commissionPercent=Number(account.commissionPercent??3),collateralTotal=Number(account.collateralTotal||0),collateralExposure=Number(metrics.collateralExposure||0),collateralAutoPause=!!account.collateralAutoPause,collateralPausePercent=Number(account.collateralPausePercent||80),atPauseThreshold=collateralTotal>0&&collateralExposure>=collateralTotal*(collateralAutoPause?collateralPausePercent:100)/100;return {id:account.id,email:account.email,active:account.active!==false,twoFactorEnabled:!!account.twoFactorEnabled,twoFactorSetupPending:!!account.totpSecret&&!account.twoFactorEnabled,permissions:cleanTeamPermissions(account.permissions),walletLimit:Number(account.walletLimit||0),collateralTotal,collateralBalance:Number(account.collateralBalance||0),collateralExposure,collateralAvailable:Math.max(0,collateralTotal-collateralExposure),commissionPercent,commissionEarned:Number(metrics.commissionEarned||0)*commissionPercent/100,allowSelfDisable:!!account.allowSelfDisable,collateralAutoPause,collateralPausePercent,collateralPaused:!!account.collateralPaused||atPauseThreshold,createdAt:account.createdAt||null,updatedAt:account.updatedAt||null};}
 function readTeamControls(value={},current={},creating=false){
   const number=(key,fallback)=>value[key]===undefined?Number(current[key]??fallback):Number(value[key]);
-  const walletLimit=number('walletLimit',0),collateralTotal=number('collateralTotal',0),collateralBalance=number('collateralBalance',creating?collateralTotal:0),collateralPausePercent=number('collateralPausePercent',80);
-  if(!Number.isInteger(walletLimit)||walletLimit<0||walletLimit>5000||![collateralTotal,collateralBalance,collateralPausePercent].every(Number.isFinite)||collateralTotal<0||collateralBalance<0||collateralBalance>collateralTotal||collateralPausePercent<1||collateralPausePercent>100)return null;
+  const walletLimit=number('walletLimit',0),collateralTotal=number('collateralTotal',0),collateralBalance=number('collateralBalance',creating?collateralTotal:0),collateralPausePercent=number('collateralPausePercent',80),commissionPercent=number('commissionPercent',3);
+  if(!Number.isInteger(walletLimit)||walletLimit<0||walletLimit>5000||![collateralTotal,collateralBalance,collateralPausePercent,commissionPercent].every(Number.isFinite)||collateralTotal<0||collateralBalance<0||collateralPausePercent<1||collateralPausePercent>100||commissionPercent<0||commissionPercent>100)return null;
   const allowSelfDisable=value.allowSelfDisable===undefined?!!current.allowSelfDisable:!!value.allowSelfDisable;
   const collateralAutoPause=value.collateralAutoPause===undefined?!!current.collateralAutoPause:!!value.collateralAutoPause;
   if(collateralAutoPause&&collateralTotal<=0)return null;
-  return {walletLimit,collateralTotal,collateralBalance,allowSelfDisable,collateralAutoPause,collateralPausePercent};
+  return {walletLimit,collateralTotal,collateralBalance,commissionPercent,allowSelfDisable,collateralAutoPause,collateralPausePercent};
 }
 async function clearTeamSessions(accountId){
   if(pool){await pool.query("DELETE FROM staff_sessions WHERE portal='admin' AND subject_id=$1",[accountId]);return;}
@@ -134,7 +134,8 @@ async function clearOwnerSessions(){
   ownerSessions.clear();
 }
 function teamPermissionForPath(path){
-  if(path==='/api/admin/users'||path.startsWith('/api/admin/user-center')||path.startsWith('/api/admin/user/')||path==='/api/admin/kyc'||path==='/api/admin/kyc/decision')return 'members';
+  if(path==='/api/admin/users')return 'transactions';
+  if(path.startsWith('/api/admin/user-center')||path.startsWith('/api/admin/user/')||path==='/api/admin/kyc'||path==='/api/admin/kyc/decision')return 'members';
   if(path==='/api/admin/audit')return 'audit';
   if(path.startsWith('/api/admin/transactions'))return 'transactions';
   if(path.startsWith('/api/admin/wallet-addresses'))return 'wallets';
@@ -183,6 +184,7 @@ async function pgInit(){
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_tx_hash_unique ON transactions(LOWER(tx_hash)) WHERE tx_hash IS NOT NULL AND tx_hash <> \'\'');
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS is_synthetic BOOLEAN NOT NULL DEFAULT FALSE');
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS test_run_id TEXT');
+  await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS team_account_id TEXT');
   await pool.query('CREATE INDEX IF NOT EXISTS idx_transactions_test_run ON transactions(test_run_id,created_at) WHERE is_synthetic=TRUE');
   await pool.query(`CREATE TABLE IF NOT EXISTS ledger_entries (
     id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), transaction_id TEXT, direction TEXT NOT NULL,
@@ -245,6 +247,7 @@ async function pgInit(){
     permissions JSONB NOT NULL DEFAULT '{"dashboard":true,"transactions":true,"reports":true,"wallets":true,"support":true}'::jsonb,
     wallet_limit INTEGER NOT NULL DEFAULT 0, collateral_total NUMERIC(20,8) NOT NULL DEFAULT 0,
     collateral_balance NUMERIC(20,8) NOT NULL DEFAULT 0, allow_self_disable BOOLEAN NOT NULL DEFAULT FALSE,
+    commission_percent NUMERIC(5,2) NOT NULL DEFAULT 3,
     collateral_auto_pause BOOLEAN NOT NULL DEFAULT FALSE, collateral_pause_percent NUMERIC(5,2) NOT NULL DEFAULT 80,
     collateral_paused BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -256,6 +259,7 @@ async function pgInit(){
   await pool.query('ALTER TABLE team_accounts ADD COLUMN IF NOT EXISTS collateral_auto_pause BOOLEAN NOT NULL DEFAULT FALSE');
   await pool.query('ALTER TABLE team_accounts ADD COLUMN IF NOT EXISTS collateral_pause_percent NUMERIC(5,2) NOT NULL DEFAULT 80');
   await pool.query('ALTER TABLE team_accounts ADD COLUMN IF NOT EXISTS collateral_paused BOOLEAN NOT NULL DEFAULT FALSE');
+  await pool.query('ALTER TABLE team_accounts ADD COLUMN IF NOT EXISTS commission_percent NUMERIC(5,2) NOT NULL DEFAULT 3');
   await pool.query(`CREATE TABLE IF NOT EXISTS staff_sessions (
     token_hash TEXT PRIMARY KEY, portal TEXT NOT NULL CHECK (portal IN ('admin','owner')),
     subject_id TEXT NOT NULL, email TEXT NOT NULL, role TEXT NOT NULL,
@@ -272,7 +276,7 @@ async function getUsers(){
 }
 async function getTransactions(){
   if(!pool) return readDb().transactions;
-  const r=await pool.query('SELECT id, user_id AS "userId", type, amount, requested_amount AS "requestedAmount", received_amount AS "receivedAmount", currency, network, status, created_at AS "createdAt", tx_hash AS "txHash", address, wallet_id AS "walletId", request_key AS "requestKey", locked_by AS "lockedBy", locked_at AS "lockedAt", decision_by AS "decisionBy", decision_at AS "decisionAt", expires_at AS "expiresAt", is_synthetic AS "isSynthetic", test_run_id AS "testRunId" FROM transactions ORDER BY created_at DESC');
+  const r=await pool.query('SELECT id, user_id AS "userId", type, amount, requested_amount AS "requestedAmount", received_amount AS "receivedAmount", currency, network, status, created_at AS "createdAt", tx_hash AS "txHash", address, wallet_id AS "walletId", team_account_id AS "teamAccountId", request_key AS "requestKey", locked_by AS "lockedBy", locked_at AS "lockedAt", decision_by AS "decisionBy", decision_at AS "decisionAt", expires_at AS "expiresAt", is_synthetic AS "isSynthetic", test_run_id AS "testRunId" FROM transactions ORDER BY created_at DESC');
   return r.rows;
 }
 async function getLedger(userId){
@@ -323,6 +327,7 @@ function verifyPassword(password, stored){
   return expected.length===actual.length && crypto.timingSafeEqual(actual,expected);
 }
 function safeUser(u){const {passwordHash,totpSecret,isTestAccount,isSynthetic,testRunId,...safe}=u; return safe;}
+function safeTeamMember(u){return {id:u.id,firstName:u.firstName||'',lastName:u.lastName||'',kycStatus:u.kycStatus||'not_started',kycSubmittedAt:u.kycSubmittedAt||null,createdAt:u.createdAt||null};}
 function safeTransaction(tx){const {isSynthetic,testRunId,...safe}=tx;return safe;}
 function safeLedgerEntry(entry){const {isSynthetic,testRunId,...safe}=entry;return safe;}
 function base32Encode(buf){const alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';let bits=0,val=0,out='';for(const b of buf){val=(val<<8)|b;bits+=8;while(bits>=5){out+=alphabet[(val>>(bits-5))&31];bits-=5;}}if(bits>0)out+=alphabet[(val<<(5-bits))&31];return out;}
@@ -401,35 +406,57 @@ function redirect(res,location){res.writeHead(302,{'Location':location,'Cache-Co
 
 async function insertTransaction(tx, client=null){
   if(!pool){const db=readDb();db.transactions.unshift(tx);writeDb(db);return;}
-  await (client||pool).query('INSERT INTO transactions (id,user_id,type,amount,requested_amount,received_amount,currency,network,status,created_at,tx_hash,address,wallet_id,request_key,locked_by,locked_at,decision_by,decision_at,expires_at,is_synthetic,test_run_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)',[tx.id,tx.userId,tx.type,tx.amount,tx.requestedAmount??tx.amount,tx.receivedAmount??null,tx.currency,tx.network,tx.status,tx.createdAt,tx.txHash||null,tx.address||null,tx.walletId||null,tx.requestKey||null,tx.lockedBy||null,tx.lockedAt||null,tx.decisionBy||null,tx.decisionAt||null,tx.expiresAt||null,!!tx.isSynthetic,tx.testRunId||null]);
+  await (client||pool).query('INSERT INTO transactions (id,user_id,type,amount,requested_amount,received_amount,currency,network,status,created_at,tx_hash,address,wallet_id,team_account_id,request_key,locked_by,locked_at,decision_by,decision_at,expires_at,is_synthetic,test_run_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)',[tx.id,tx.userId,tx.type,tx.amount,tx.requestedAmount??tx.amount,tx.receivedAmount??null,tx.currency,tx.network,tx.status,tx.createdAt,tx.txHash||null,tx.address||null,tx.walletId||null,tx.teamAccountId||null,tx.requestKey||null,tx.lockedBy||null,tx.lockedAt||null,tx.decisionBy||null,tx.decisionAt||null,tx.expiresAt||null,!!tx.isSynthetic,tx.testRunId||null]);
+}
+async function syncTeamCollateral({teamId,exposure,client=null,dbState=null,at}){
+  let account;
+  if(client){const locked=await client.query('SELECT id,collateral_total AS "collateralTotal",collateral_auto_pause AS "collateralAutoPause",collateral_pause_percent AS "collateralPausePercent",active,collateral_paused AS "collateralPaused" FROM team_accounts WHERE id=$1 FOR UPDATE',[teamId]);account=locked.rows[0];}
+  else account=(dbState?.teamAccounts||[]).find(item=>item.id===teamId);
+  if(!account)throw new Error('team_account_not_found');
+  const total=Number(account.collateralTotal||0);
+  if(total>0&&exposure>total+1e-8)throw new Error('team_collateral_limit_exceeded');
+  const threshold=total*Number(account.collateralPausePercent||80)/100,pauseLimit=account.collateralAutoPause?threshold:total;
+  const shouldPause=total>0&&!!account.collateralAutoPause&&exposure>=threshold-1e-8;
+  const wasPaused=!!account.collateralPaused;
+  const shouldResume=wasPaused&&!shouldPause&&total>0&&exposure<pauseLimit-1e-8;
+  if(client){
+    await client.query('UPDATE team_accounts SET collateral_paused=$1,active=CASE WHEN $1 THEN FALSE WHEN collateral_paused=TRUE AND $1=FALSE THEN TRUE ELSE active END,updated_at=$2 WHERE id=$3',[shouldPause,at,teamId]);
+    if(shouldPause)await client.query("DELETE FROM staff_sessions WHERE portal='admin' AND subject_id=$1",[teamId]);
+  }else{
+    account.collateralPaused=shouldPause;
+    if(shouldPause)account.active=false;else if(shouldResume)account.active=true;
+    account.updatedAt=at;
+  }
+  return {autoPausedTeamAccountId:shouldPause?teamId:null,autoResumedTeamAccountId:shouldResume?teamId:null};
 }
 async function applyTransactionDecision({tx,decision,approvedAmount,actor,decisionAt,payoutTxHash=null,client=null,dbState=null,teamAccountId=null}){
   const requestedAmount=Number(tx.requestedAmount??tx.amount);
   const amountChanged=Math.abs(Number(approvedAmount)-requestedAmount)>1e-8;
-  let autoPausedTeamAccountId=null;
-  if(decision==='approved'&&tx.type==='withdrawal'&&teamAccountId){
-    let account;
-    if(client){const locked=await client.query('SELECT collateral_total AS "collateralTotal",collateral_balance AS "collateralBalance",collateral_auto_pause AS "collateralAutoPause",collateral_pause_percent AS "collateralPausePercent",active,collateral_paused AS "collateralPaused" FROM team_accounts WHERE id=$1 FOR UPDATE',[teamAccountId]);account=locked.rows[0];}
-    else if(dbState)account=(dbState.teamAccounts||[]).find(item=>item.id===teamAccountId);
-    if(!account)throw new Error('team_account_not_found');
-    const total=Number(account.collateralTotal||0),balance=Number(account.collateralBalance||0);
-    if(total>0){
-      if(Number(approvedAmount)>balance+1e-8)throw new Error('insufficient_team_collateral');
-      const nextBalance=Math.max(0,balance-Number(approvedAmount));
-      const usagePercent=total?((total-nextBalance)/total)*100:0;
-      const shouldPause=!!account.collateralAutoPause&&usagePercent>=Number(account.collateralPausePercent||80);
-      if(client){await client.query('UPDATE team_accounts SET collateral_balance=$1,collateral_paused=$2,active=CASE WHEN $2 THEN FALSE ELSE active END,updated_at=$3 WHERE id=$4',[nextBalance,shouldPause,decisionAt,teamAccountId]);if(shouldPause)await client.query("DELETE FROM staff_sessions WHERE portal='admin' AND subject_id=$1",[teamAccountId]);}
-      else{account.collateralBalance=nextBalance;account.collateralPaused=shouldPause;if(shouldPause)account.active=false;}
-      if(shouldPause)autoPausedTeamAccountId=teamAccountId;
+  let autoPausedTeamAccountId=null,autoResumedTeamAccountId=null;
+  if(decision==='approved'&&tx.type==='deposit'&&tx.walletId){
+    let depositTeamId=tx.teamAccountId||null;
+    if(!depositTeamId&&client){const wallet=await client.query('SELECT team_id AS "teamId" FROM wallet_addresses WHERE id=$1',[tx.walletId]);depositTeamId=wallet.rows[0]?.teamId||null;}
+    else if(!depositTeamId)depositTeamId=(dbState?.walletAddresses||[]).find(wallet=>wallet.id===tx.walletId)?.teamId||null;
+    if(depositTeamId){
+      const currentExposure=client?await getTeamCollateralExposure(client,depositTeamId):teamCollateralMetrics(depositTeamId,dbState?.transactions||[],dbState?.walletAddresses||[],dbState?.depositIntents||[]).collateralExposure;
+      const nextExposure=Math.max(0,currentExposure-requestedAmount+Number(approvedAmount));
+      const synced=await syncTeamCollateral({teamId:depositTeamId,exposure:nextExposure,client,dbState,at:decisionAt});
+      autoPausedTeamAccountId=synced.autoPausedTeamAccountId;autoResumedTeamAccountId=synced.autoResumedTeamAccountId;
     }
   }
+  if(decision==='approved'&&tx.type==='withdrawal'&&teamAccountId){
+    const currentExposure=client?await getTeamCollateralExposure(client,teamAccountId):teamCollateralMetrics(teamAccountId,dbState?.transactions||[],dbState?.walletAddresses||[],dbState?.depositIntents||[]).collateralExposure;
+    const nextExposure=Math.max(0,currentExposure-Number(approvedAmount));
+    const synced=await syncTeamCollateral({teamId:teamAccountId,exposure:nextExposure,client,dbState,at:decisionAt});
+    autoPausedTeamAccountId=synced.autoPausedTeamAccountId;autoResumedTeamAccountId=synced.autoResumedTeamAccountId;
+  }
   if(client){
-    const result=await client.query("UPDATE transactions SET status=$1,amount=$2,requested_amount=COALESCE(requested_amount,$3),received_amount=$4,decision_by=$5,decision_at=$6,locked_by=NULL,locked_at=NULL,tx_hash=COALESCE($7,tx_hash) WHERE id=$8 AND status='pending'",[decision,approvedAmount,requestedAmount,approvedAmount,actor,decisionAt,payoutTxHash,tx.id]);
+    const result=await client.query("UPDATE transactions SET status=$1,amount=$2,requested_amount=COALESCE(requested_amount,$3),received_amount=$4,decision_by=$5,decision_at=$6,locked_by=NULL,locked_at=NULL,tx_hash=COALESCE($7,tx_hash),team_account_id=COALESCE($8,team_account_id) WHERE id=$9 AND status='pending'",[decision,approvedAmount,requestedAmount,approvedAmount,actor,decisionAt,payoutTxHash,tx.type==='withdrawal'?teamAccountId:null,tx.id]);
     if(!result.rowCount)throw new Error('transaction_not_pending');
   }else if(dbState){
     const row=(dbState.transactions||[]).find(x=>String(x.id)===String(tx.id));
     if(!row||row.status!=='pending')throw new Error('transaction_not_pending');
-    row.requestedAmount=Number(row.requestedAmount??row.amount);row.receivedAmount=approvedAmount;row.amount=approvedAmount;row.status=decision;row.decisionBy=actor;row.decisionAt=decisionAt;row.lockedBy=null;row.lockedAt=null;if(payoutTxHash)row.txHash=payoutTxHash;
+    row.requestedAmount=Number(row.requestedAmount??row.amount);row.receivedAmount=approvedAmount;row.amount=approvedAmount;row.status=decision;row.decisionBy=actor;row.decisionAt=decisionAt;row.lockedBy=null;row.lockedAt=null;if(payoutTxHash)row.txHash=payoutTxHash;if(tx.type==='withdrawal'&&teamAccountId)row.teamAccountId=teamAccountId;
   }else throw new Error('decision_storage_context_required');
 
   if(decision==='approved'){
@@ -440,7 +467,7 @@ async function applyTransactionDecision({tx,decision,approvedAmount,actor,decisi
       isSynthetic:!!tx.isSynthetic,testRunId:tx.testRunId||null,createdAt:decisionAt
     },client,dbState);
   }
-  return {requestedAmount,approvedAmount,amountChanged,payoutTxHash,autoPausedTeamAccountId};
+  return {requestedAmount,approvedAmount,amountChanged,payoutTxHash,autoPausedTeamAccountId,autoResumedTeamAccountId};
 }
 function utcDateKey(value){const date=value?new Date(value):new Date();return Number.isNaN(date.getTime())?'':date.toISOString().slice(0,10);}
 function validDateKey(value){return /^\d{4}-\d{2}-\d{2}$/.test(String(value||''))&&utcDateKey(`${value}T00:00:00.000Z`)===value;}
@@ -449,7 +476,7 @@ async function getSyntheticFinanceRun(runId){
   if(pool){const result=await pool.query('SELECT id,target_user_id AS "targetUserId",created_at AS "createdAt",start_date AS "startDate",end_date AS "endDate",member_count AS "memberCount",transaction_count AS "transactionCount",commission_rate AS "commissionRate" FROM synthetic_finance_runs WHERE id=$1',[runId]);return result.rows[0]||null;}
   return (readDb().syntheticFinanceRuns||[]).find(run=>run.id===runId)||null;
 }
-function buildFinanceReconciliation(transactions,{startDate,endDate,runId=null,commissionRate=0}){
+function buildFinanceReconciliation(transactions,{startDate,endDate,runId=null,commissionRate=0,commissionEnabled=!!runId,commissionPercent=Number(commissionRate||0)*100}){
   const start=new Date(`${startDate}T00:00:00.000Z`).getTime();
   const end=new Date(`${endDate}T00:00:00.000Z`).getTime();
   const dayCount=Math.round((end-start)/86400000)+1;
@@ -476,7 +503,7 @@ function buildFinanceReconciliation(transactions,{startDate,endDate,runId=null,c
     rejectedCount:sum.rejectedCount+day.rejectedCount,depositCount:sum.depositCount+day.depositCount
   }),{deposit:0,withdrawal:0,commission:0,cash:0,receivable:0,count:0,approvedCount:0,pendingCount:0,rejectedCount:0,depositCount:0});
   totals.averageDeposit=totals.depositCount?totals.deposit/totals.depositCount:0;
-  return {startDate,endDate,testRunId:runId,commissionRate,commissionEnabled:!!runId,days,totals};
+  return {startDate,endDate,testRunId:runId,commissionRate,commissionPercent,commissionEnabled,days,totals};
 }
 function isProductionUser(user){return !user?.isSynthetic&&!user?.isTestAccount;}
 function isProductionTransaction(tx){return !tx?.isSynthetic;}
@@ -514,8 +541,9 @@ async function walletTeamAllowed(teamId,currentWalletId=null){
   const wallets=await getWalletAddresses();return wallets.filter(wallet=>wallet.teamId===teamId&&wallet.id!==currentWalletId).length<limit;
 }
 function transactionTeamId(transaction,allTransactions,walletById){
-  if(transaction.type==='deposit'&&transaction.walletId)return walletById.get(transaction.walletId)?.teamId||null;
+  if(transaction.type==='deposit')return transaction.teamAccountId||walletById.get(transaction.walletId)?.teamId||null;
   if(transaction.type!=='withdrawal')return null;
+  if(transaction.teamAccountId)return transaction.teamAccountId;
   const timestamp=new Date(transaction.createdAt||0).getTime();
   const latestDeposit=allTransactions.filter(item=>item.userId===transaction.userId&&item.type==='deposit'&&item.status==='approved'&&new Date(item.createdAt||0).getTime()<=timestamp).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))[0];
   return latestDeposit?.walletId?walletById.get(latestDeposit.walletId)?.teamId||null:null;
@@ -533,6 +561,42 @@ async function saveWalletAddress(wallet){
 async function getDepositIntent(id,userId){
   if(!pool)return (readDb().depositIntents||[]).find(x=>x.id===id&&x.userId===userId)||null;
   const r=await pool.query('SELECT id,user_id AS "userId",wallet_id AS "walletId",amount,network,created_at AS "createdAt",expires_at AS "expiresAt",used_at AS "usedAt" FROM deposit_intents WHERE id=$1 AND user_id=$2',[id,userId]);return r.rows[0]||null;
+}
+async function getDepositIntents(){
+  if(!pool)return readDb().depositIntents||[];
+  const r=await pool.query('SELECT id,user_id AS "userId",wallet_id AS "walletId",amount,network,created_at AS "createdAt",expires_at AS "expiresAt",used_at AS "usedAt" FROM deposit_intents');return r.rows;
+}
+function teamCollateralMetrics(teamId,transactions,wallets,intents=[]){
+  const walletById=new Map(wallets.map(wallet=>[wallet.id,wallet]));
+  const belongs=tx=>transactionTeamId(tx,transactions,walletById)===teamId;
+  const exposureDeposits=transactions.filter(tx=>!tx.isSynthetic&&tx.type==='deposit'&&['approved','pending'].includes(tx.status)&&belongs(tx)).reduce((sum,tx)=>sum+Number(tx.amount||0),0);
+  const paidWithdrawals=transactions.filter(tx=>!tx.isSynthetic&&tx.type==='withdrawal'&&tx.status==='approved'&&belongs(tx)).reduce((sum,tx)=>sum+Number(tx.amount||0),0);
+  const activeReservations=intents.filter(intent=>!intent.usedAt&&new Date(intent.expiresAt).getTime()>Date.now()&&walletById.get(intent.walletId)?.teamId===teamId).reduce((sum,intent)=>sum+Number(intent.amount||0),0);
+  const approvedDeposits=transactions.filter(tx=>!tx.isSynthetic&&tx.type==='deposit'&&tx.status==='approved'&&belongs(tx)).reduce((sum,tx)=>sum+Number(tx.amount||0),0);
+  return {collateralExposure:Math.max(0,exposureDeposits-paidWithdrawals+activeReservations),commissionEarned:approvedDeposits};
+}
+async function getTeamMetrics(accounts){
+  const [transactions,wallets,intents]=await Promise.all([getTransactions(),getWalletAddresses(),getDepositIntents()]);
+  return new Map(accounts.map(account=>[account.id,teamCollateralMetrics(account.id,transactions,wallets,intents)]));
+}
+async function getTeamCollateralExposure(client,teamId){
+  const result=await client.query(`WITH assigned AS (
+    SELECT t.type,t.status,t.amount,
+      CASE WHEN t.type='deposit' THEN COALESCE(t.team_account_id,w.team_id)
+           WHEN t.type='withdrawal' THEN COALESCE(t.team_account_id,(
+             SELECT wd.team_id FROM transactions d JOIN wallet_addresses wd ON wd.id=d.wallet_id
+             WHERE d.user_id=t.user_id AND d.type='deposit' AND d.status='approved' AND d.is_synthetic=FALSE AND d.created_at<=t.created_at
+             ORDER BY d.created_at DESC LIMIT 1))
+           ELSE NULL END AS team_id
+    FROM transactions t LEFT JOIN wallet_addresses w ON w.id=t.wallet_id
+    WHERE t.is_synthetic=FALSE
+  )
+  SELECT GREATEST(0,
+    COALESCE(SUM(amount) FILTER (WHERE type='deposit' AND status IN ('approved','pending') AND team_id=$1),0)
+    - COALESCE(SUM(amount) FILTER (WHERE type='withdrawal' AND status='approved' AND team_id=$1),0)
+    + COALESCE((SELECT SUM(di.amount) FROM deposit_intents di JOIN wallet_addresses wi ON wi.id=di.wallet_id WHERE wi.team_id=$1 AND di.used_at IS NULL AND di.expires_at>NOW()),0)
+  ) AS exposure FROM assigned`,[teamId]);
+  return Number(result.rows[0]?.exposure||0);
 }
 function isValidNetwork(n){return n==='TRC20'||n==='ERC20';}
 function isValidAddress(n,a){
@@ -598,7 +662,8 @@ async function route(req,res){
     const b=await body(req),email=String(b.email||'').trim().toLowerCase(),password=String(b.password||''),code=String(b.code||'').trim();
     const account=(await getTeamAccounts()).find(item=>item.email.toLowerCase()===email);
     if(!account)return json(res,503,{error:'team_login_not_configured'});
-    if(account.active===false||!verifyPassword(password,account.passwordHash)){addAudit('team_login_failed',email||'unknown',{...requestAuditMeta(req),reason:account.active===false?'inactive_account':'invalid_credentials'});return json(res,401,{error:'invalid_team_credentials'});}
+    if(!verifyPassword(password,account.passwordHash)){addAudit('team_login_failed',email||'unknown',{...requestAuditMeta(req),reason:'invalid_credentials'});return json(res,401,{error:'invalid_team_credentials'});}
+    if(account.active===false){addAudit('team_login_blocked_inactive',email,{...requestAuditMeta(req),teamAccountId:account.id});return json(res,403,{error:'team_account_inactive',message:'Hesabınız pasife alınmış. Lütfen yöneticinizle iletişime geçin.'});}
     const credentialsOverlap=account.email.toLowerCase()===ADMIN_EMAIL.toLowerCase()||(ADMIN_PASSWORD&&verifyPassword(ADMIN_PASSWORD,account.passwordHash))||(account.totpSecret&&account.totpSecret===ADMIN_TOTP_SECRET);
     if(credentialsOverlap)return json(res,503,{error:'team_credentials_not_separate'});
     if(account.totpSecret&&!account.twoFactorEnabled)return json(res,403,{error:'team_2fa_setup_pending',message:'Ekip hesabının 2FA kurulumu tamamlanmamış. Owner ile iletişime geçin.'});
@@ -652,7 +717,8 @@ async function route(req,res){
   if(req.url==='/api/owner/team-accounts' && req.method==='GET'){
     if(!owner)return json(res,teamAdmin?403:401,{error:teamAdmin?'owner_only':'unauthorized'});
     const accounts=await getTeamAccounts();
-    return json(res,200,{accounts:accounts.map(publicTeamAccount),configured:accounts.length>0});
+    const metrics=await getTeamMetrics(accounts);
+    return json(res,200,{accounts:accounts.map(account=>publicTeamAccount(account,metrics.get(account.id))),configured:accounts.length>0});
   }
   if(req.url==='/api/admin/team/self-disable'&&req.method==='POST'){
     if(!teamAdmin)return json(res,owner?403:401,{error:owner?'team_admin_only':'unauthorized'});
@@ -664,7 +730,7 @@ async function route(req,res){
     return json(res,200,{ok:true});
   }
   if(req.url==='/api/admin/me' && req.method==='GET'){
-    if(!teamAdmin)return json(res,owner?403:401,{error:owner?'team_admin_only':'unauthorized'});const settings=(await getTeamAccounts()).find(account=>account.id===teamAdmin.adminId);return json(res,200,{admin:{id:teamAdmin.adminId,email:teamAdmin.email,role:teamAdmin.role,permissions:cleanTeamPermissions(teamAdmin.permissions),allowSelfDisable:!!settings?.allowSelfDisable,collateralBalance:Number(settings?.collateralBalance||0),collateralTotal:Number(settings?.collateralTotal||0),collateralAutoPause:!!settings?.collateralAutoPause,collateralPausePercent:Number(settings?.collateralPausePercent||80)}},{'Set-Cookie':sessionCookie(ADMIN_COOKIE,parseCookies(req)[ADMIN_COOKIE],STAFF_TTL)});
+    if(!teamAdmin)return json(res,owner?403:401,{error:owner?'team_admin_only':'unauthorized'});const settings=(await getTeamAccounts()).find(account=>account.id===teamAdmin.adminId);const metrics=settings?await getTeamMetrics([settings]):new Map();const exposure=Number(metrics.get(teamAdmin.adminId)?.collateralExposure||0),collateralTotal=Number(settings?.collateralTotal||0),commissionPercent=Number(settings?.commissionPercent??3),collateralAutoPause=!!settings?.collateralAutoPause,collateralPausePercent=Number(settings?.collateralPausePercent||80),atPauseThreshold=collateralTotal>0&&exposure>=collateralTotal*(collateralAutoPause?collateralPausePercent:100)/100;return json(res,200,{admin:{id:teamAdmin.adminId,email:teamAdmin.email,role:teamAdmin.role,permissions:cleanTeamPermissions(teamAdmin.permissions),allowSelfDisable:!!settings?.allowSelfDisable,collateralBalance:Number(settings?.collateralBalance||0),collateralTotal,collateralExposure:exposure,collateralAvailable:Math.max(0,collateralTotal-exposure),commissionPercent,commissionEarned:Number(metrics.get(teamAdmin.adminId)?.commissionEarned||0)*commissionPercent/100,collateralAutoPause,collateralPausePercent,collateralPaused:!!settings?.collateralPaused||atPauseThreshold}},{'Set-Cookie':sessionCookie(ADMIN_COOKIE,parseCookies(req)[ADMIN_COOKIE],STAFF_TTL)});
   }
   const requestedApiPath=new URL(req.url,'http://localhost').pathname;
   const ownerApiRequest=requestedApiPath==='/api/owner'||requestedApiPath.startsWith('/api/owner/');
@@ -679,7 +745,7 @@ async function route(req,res){
   if(requestedTestRunId&&!owner)return json(res,403,{error:'owner_only'});
   const requestedTestRun=requestedTestRunId?await getSyntheticFinanceRun(requestedTestRunId):null;
   if(requestedTestRunId&&!requestedTestRun)return json(res,404,{error:'synthetic_run_not_found'});
-  const ownerOnlyAdminRequest=adminPath==='/api/admin/content'||adminPath==='/api/admin/maintenance'||adminPath==='/api/admin/request-limits'||adminPath.startsWith('/api/admin/synthetic-finance')||adminPath.startsWith('/api/admin/team-accounts')||adminPath.startsWith('/api/admin/audit')||adminPath.startsWith('/api/admin/users')||adminPath.startsWith('/api/admin/user-center')||adminPath.startsWith('/api/admin/user/')||adminPath.startsWith('/api/admin/kyc')||(adminPath==='/api/admin/rates'&&req.method==='POST');
+  const ownerOnlyAdminRequest=adminPath==='/api/admin/content'||adminPath==='/api/admin/maintenance'||adminPath==='/api/admin/request-limits'||adminPath.startsWith('/api/admin/synthetic-finance')||adminPath.startsWith('/api/admin/team-accounts')||adminPath.startsWith('/api/admin/audit')||adminPath.startsWith('/api/admin/user-center')||adminPath.startsWith('/api/admin/user/')||adminPath.startsWith('/api/admin/kyc')||(adminPath==='/api/admin/rates'&&req.method==='POST');
   if(teamAdmin&&!owner&&ownerOnlyAdminRequest)return json(res,403,{error:'owner_only'});
   if(teamAdmin&&!owner){const permission=teamPermissionForPath(adminPath);if(!teamAdmin.permissions?.[permission])return json(res,403,{error:'team_permission_denied',permission});}
   if(req.url==='/api/admin/verify-2fa' && req.method==='POST'){if(!admin)return json(res,401,{error:'unauthorized'});const b=await body(req),code=String(b.code||'').trim(),teamAccount=teamAdmin? (await getTeamAccounts()).find(account=>account.id===teamAdmin.adminId):null,secret=owner?ADMIN_TOTP_SECRET:teamAccount?.totpSecret,valid=!!secret&&verifyTotp(secret,code);if(!/^\d{6}$/.test(code)||!valid)return json(res,401,{error:'invalid_2fa_code'});addAudit('admin_sensitive_change_verified',admin.email,{role:admin.role});return json(res,200,{ok:true})}
@@ -741,13 +807,16 @@ async function route(req,res){
     if(action!=='update')return json(res,400,{error:'unknown_team_account_action'});
     if(b.email!==undefined){const email=String(b.email||'').trim().toLowerCase();if(!validEmail(email)||email===ADMIN_EMAIL.toLowerCase())return json(res,400,{error:'invalid_team_email'});if(accounts.some(item=>item.id!==id&&item.email.toLowerCase()===email))return json(res,409,{error:'team_email_in_use'});account.email=email;}
     if(b.password!==undefined&&String(b.password)){const password=String(b.password);if(password.length<12||password===ADMIN_PASSWORD)return json(res,400,{error:'invalid_team_password'});account.passwordHash=hashPassword(password);}
-    const previousBalance=Number(account.collateralBalance||0),wasCollateralPaused=!!account.collateralPaused,controls=readTeamControls(b,account);if(!controls)return json(res,400,{error:'invalid_team_settings',message:'Cüzdan sınırı, teminat ve otomatik duraklatma değerlerini kontrol edin.'});Object.assign(account,controls);
-    if(wasCollateralPaused&&b.active===true&&account.collateralBalance<=previousBalance)return json(res,409,{error:'team_collateral_top_up_required',message:'Ekibi yeniden etkinleştirmek için teminat bakiyesini artırın.'});
-    if(wasCollateralPaused&&account.collateralBalance>previousBalance){account.collateralPaused=false;if(b.active!==false)account.active=true;}
+    const wasCollateralPaused=!!account.collateralPaused,controls=readTeamControls(b,account);if(!controls)return json(res,400,{error:'invalid_team_settings',message:'Cüzdan sınırı, komisyon, teminat ve otomatik duraklatma değerlerini kontrol edin.'});Object.assign(account,controls);
     if(b.active!==undefined)account.active=!!b.active;
+    const teamMetrics=teamCollateralMetrics(id,await getTransactions(),await getWalletAddresses(),await getDepositIntents()),currentExposure=teamMetrics.collateralExposure,threshold=Number(account.collateralTotal||0)*Number(account.collateralPausePercent||80)/100;
+    if(Number(account.collateralTotal||0)>0&&currentExposure>Number(account.collateralTotal)+1e-8)return json(res,409,{error:'team_collateral_below_exposure',message:'Teminat tutarı mevcut ekip kullanımından düşük olamaz.'});
+    if(b.active===false)account.collateralPaused=false;
+    else if(account.collateralAutoPause&&account.collateralTotal>0&&currentExposure>=threshold-1e-8){if(b.active===true&&wasCollateralPaused)return json(res,409,{error:'team_collateral_threshold_reached',message:'Teminat kullanımı otomatik duraklatma eşiğinin üzerinde; ekip çekim ödemesiyle kapasite açıldığında yeniden etkinleşir.'});account.collateralPaused=true;}
+    else if(wasCollateralPaused){account.collateralPaused=false;if(b.active===undefined)account.active=true;}
     if(b.permissions!==undefined)account.permissions=cleanTeamPermissions(b.permissions);
-    account.updatedAt=now;await saveTeamAccount(account);await clearTeamSessions(id);addAudit('team_account_updated',admin.email,{teamAccountId:id,emailChanged:b.email!==undefined,passwordChanged:!!b.password,active:account.active,permissions:account.permissions,walletLimit:account.walletLimit,collateralBalance:account.collateralBalance});
-    return json(res,200,{ok:true,account:publicTeamAccount(account)});
+    account.updatedAt=now;await saveTeamAccount(account);await clearTeamSessions(id);addAudit('team_account_updated',admin.email,{teamAccountId:id,emailChanged:b.email!==undefined,passwordChanged:!!b.password,active:account.active,permissions:account.permissions,walletLimit:account.walletLimit,collateralExposure:currentExposure,commissionPercent:account.commissionPercent});
+    return json(res,200,{ok:true,account:publicTeamAccount(account,teamMetrics)});
   }
   if(adminUrl.pathname==='/api/admin/synthetic-finance/eligible-users' && req.method==='GET'){
     if(!owner)return json(res,403,{error:'owner_only'});
@@ -862,7 +931,13 @@ async function route(req,res){
     if(span>366)return json(res,400,{error:'date_range_too_large'});
     const run=testRunId?await getSyntheticFinanceRun(testRunId):null;
     if(testRunId&&!run)return json(res,404,{error:'synthetic_run_not_found'});
-    const finance=buildFinanceReconciliation(await getTransactions(),{startDate,endDate,runId:testRunId,commissionRate:run?Number(run.commissionRate):0});
+    let financeTransactions=await getTransactions(),commissionRate=run?Number(run.commissionRate):0,commissionEnabled=!!run,commissionPercent=commissionRate*100;
+    if(teamAdmin&&!owner&&!testRunId){
+      const accounts=await getTeamAccounts(),account=accounts.find(item=>item.id===teamAdmin.adminId),wallets=await getWalletAddresses(),walletById=new Map(wallets.map(wallet=>[wallet.id,wallet]));
+      financeTransactions=financeTransactions.filter(tx=>transactionTeamId(tx,financeTransactions,walletById)===teamAdmin.adminId);
+      commissionPercent=Number(account?.commissionPercent??3);commissionRate=commissionPercent/100;commissionEnabled=true;
+    }
+    const finance=buildFinanceReconciliation(financeTransactions,{startDate,endDate,runId:testRunId,commissionRate,commissionEnabled,commissionPercent});
     return json(res,200,{...finance,run:run?{id:run.id,targetUserId:run.targetUserId,createdAt:run.createdAt,memberCount:Number(run.memberCount),transactionCount:Number(run.transactionCount)}:null});
   }
   if(adminQuery.pathname==='/api/admin/stats' && req.method==='GET'){
@@ -874,7 +949,15 @@ async function route(req,res){
     return json(res,200,stats);
   }
   if(adminQuery.pathname==='/api/admin/users' && req.method==='GET'){
-    if(!admin)return json(res,401,{error:'unauthorized'}); const users=(await getUsers()).filter(user=>requestedTestRunId?user.testRunId===requestedTestRunId:isProductionUser(user)); return json(res,200,{users:users.map(safeUser)});
+    if(!admin)return json(res,401,{error:'unauthorized'});
+    let users=(await getUsers()).filter(user=>requestedTestRunId?user.testRunId===requestedTestRunId:isProductionUser(user));
+    if(teamAdmin&&!owner){
+      const transactions=(await getTransactions()).filter(item=>isProductionTransaction(item)),wallets=await getWalletAddresses(),walletById=new Map(wallets.map(wallet=>[wallet.id,wallet]));
+      const teamUserIds=new Set(transactions.filter(item=>transactionTeamId(item,transactions,walletById)===teamAdmin.adminId).map(item=>item.userId));
+      users=users.filter(user=>teamUserIds.has(user.id));
+      return json(res,200,{users:users.map(safeTeamMember)});
+    }
+    return json(res,200,{users:users.map(safeUser)});
   }
   if(req.url.startsWith('/api/admin/user-center') && req.method==='GET'){
     if(!admin)return json(res,401,{error:'unauthorized'});
@@ -972,8 +1055,8 @@ async function route(req,res){
   }
   if(new URL(req.url,'http://localhost').pathname==='/api/admin/support/tickets' && req.method==='GET'){
     if(!admin)return json(res,401,{error:'unauthorized'});
-    if(pool){const r=await pool.query('SELECT t.id,t.user_id AS "userId",t.subject,t.status,t.created_at AS "createdAt",t.updated_at AS "updatedAt",u.email,u.first_name AS "firstName",u.last_name AS "lastName" FROM support_tickets t JOIN users u ON u.id=t.user_id ORDER BY t.updated_at DESC');const ids=r.rows.map(x=>x.id);const m=ids.length?await pool.query('SELECT id,ticket_id AS "ticketId",sender_role AS "senderRole",sender_id AS "senderId",message,created_at AS "createdAt" FROM support_messages WHERE ticket_id=ANY($1::text[]) ORDER BY created_at',[ids]):{rows:[]};const byId=new Map();for(const msg of m.rows){if(!byId.has(msg.ticketId))byId.set(msg.ticketId,[]);byId.get(msg.ticketId).push(msg);}return json(res,200,{tickets:r.rows.map(x=>({...x,messages:byId.get(x.id)||[]}))});}
-    const db=readDb(),users=db.users||[],messages=db.supportMessages||[];return json(res,200,{tickets:(db.supportTickets||[]).map(t=>({...t,user:users.find(u=>u.id===t.userId)?safeUser(users.find(u=>u.id===t.userId)):null,messages:messages.filter(m=>m.ticketId===t.id)})).sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt))});
+    if(pool){const r=await pool.query('SELECT t.id,t.user_id AS "userId",t.subject,t.status,t.created_at AS "createdAt",t.updated_at AS "updatedAt",u.email,u.first_name AS "firstName",u.last_name AS "lastName" FROM support_tickets t JOIN users u ON u.id=t.user_id ORDER BY t.updated_at DESC');const ids=r.rows.map(x=>x.id);const m=ids.length?await pool.query('SELECT id,ticket_id AS "ticketId",sender_role AS "senderRole",sender_id AS "senderId",message,created_at AS "createdAt" FROM support_messages WHERE ticket_id=ANY($1::text[]) ORDER BY created_at',[ids]):{rows:[]};const byId=new Map();for(const msg of m.rows){if(!byId.has(msg.ticketId))byId.set(msg.ticketId,[]);byId.get(msg.ticketId).push(msg);}return json(res,200,{tickets:r.rows.map(({email,...ticket})=>({...ticket,...(owner?{email}:{}),messages:byId.get(ticket.id)||[]}))});}
+    const db=readDb(),users=db.users||[],messages=db.supportMessages||[];return json(res,200,{tickets:(db.supportTickets||[]).map(t=>{const user=users.find(u=>u.id===t.userId);return {...t,...(user?{user:owner?safeUser(user):safeTeamMember(user)}:{}),messages:messages.filter(m=>m.ticketId===t.id)}}).sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt))});
   }
   const adminSupportMatch=new URL(req.url,'http://localhost').pathname.match(/^\/api\/admin\/support\/tickets\/([^/]+)\/messages$/);
   if(adminSupportMatch&&req.method==='POST'){
@@ -993,9 +1076,36 @@ async function route(req,res){
     if(isLocked(tx) && tx.lockedBy!==admin.email)return json(res,409,{error:'transaction_locked',lockedBy:tx.lockedBy});
     const now=new Date().toISOString(); if(pool) await pool.query('UPDATE transactions SET locked_by=$1, locked_at=$2 WHERE id=$3',[admin.email,now,id]); else {const db=readDb();const row=db.transactions.find(x=>x.id===id);row.lockedBy=admin.email;row.lockedAt=now;writeDb(db);} txLocks.set(lockKey(id),admin.email); addAudit('transaction_lock',admin.email,{transactionId:id,lockMinutes:TX_CONTROL.lockMinutes}); return json(res,200,{ok:true,lockedBy:admin.email,lockedAt:now,lockMinutes:TX_CONTROL.lockMinutes});
   }
-    if(req.url==='/api/admin/transactions/reopen' && req.method==='POST'){
-    if(!admin)return json(res,401,{error:'unauthorized'}); const b=await body(req); const id=String(b.transactionId||''); const all=await getTransactions(); const tx=all.find(x=>x.id===id); if(!tx||teamAdmin&&!owner&&!(await teamOwnsTransaction(teamAdmin.adminId,tx,all)))return json(res,404,{error:'transaction_not_found'}); if(tx.isSynthetic&&!owner)return json(res,404,{error:'transaction_not_found'}); if(!['auto-rejected','rejected'].includes(tx.status))return json(res,409,{error:'not_reopenable',status:tx.status});
-    const expiresAt=new Date(Date.now()+TX_CONTROL.autoRejectMinutes*60000).toISOString(); if(pool) await pool.query("UPDATE transactions SET status='pending', decision_by=NULL, decision_at=NULL, locked_by=NULL, locked_at=NULL, expires_at=$1 WHERE id=$2",[expiresAt,id]); else {const db=readDb();const row=db.transactions.find(x=>x.id===id);row.status='pending';row.decisionBy=null;row.decisionAt=null;row.lockedBy=null;row.lockedAt=null;row.expiresAt=expiresAt;writeDb(db);} addAudit('transaction_reopen',admin.email,{transactionId:id,expiresAt}); return json(res,200,{ok:true,status:'pending',expiresAt});
+  if(req.url==='/api/admin/transactions/reopen' && req.method==='POST'){
+    if(!admin)return json(res,401,{error:'unauthorized'});
+    const b=await body(req),id=String(b.transactionId||''),all=await getTransactions(),tx=all.find(x=>x.id===id);
+    if(!tx||teamAdmin&&!owner&&!(await teamOwnsTransaction(teamAdmin.adminId,tx,all)))return json(res,404,{error:'transaction_not_found'});
+    if(tx.isSynthetic&&!owner)return json(res,404,{error:'transaction_not_found'});
+    if(!['auto-rejected','rejected'].includes(tx.status))return json(res,409,{error:'not_reopenable',status:tx.status});
+    const expiresAt=new Date(Date.now()+TX_CONTROL.autoRejectMinutes*60000).toISOString();let reopenTeamId=tx.teamAccountId||null,collateralResult=null;
+    if(tx.type==='deposit'&&!reopenTeamId){const wallets=await getWalletAddresses();reopenTeamId=wallets.find(wallet=>wallet.id===tx.walletId)?.teamId||null;}
+    if(pool){
+      const client=await pool.connect();
+      try{
+        await client.query('BEGIN');const lock=await client.query('SELECT status FROM transactions WHERE id=$1 FOR UPDATE',[id]);
+        if(!lock.rows[0]||!['auto-rejected','rejected'].includes(lock.rows[0].status)){await client.query('ROLLBACK');return json(res,409,{error:'not_reopenable'});}
+        if(tx.type==='deposit'&&reopenTeamId){
+          const team=await client.query('SELECT collateral_total AS "collateralTotal" FROM team_accounts WHERE id=$1 FOR UPDATE',[reopenTeamId]);
+          if(team.rows[0]&&Number(team.rows[0].collateralTotal||0)>0){const exposure=await getTeamCollateralExposure(client,reopenTeamId);if(exposure+Number(tx.requestedAmount??tx.amount)>Number(team.rows[0].collateralTotal)+1e-8){await client.query('ROLLBACK');return json(res,409,{error:'team_collateral_limit_exceeded',message:'Bu yatırım talebi yeniden açıldığında ekip teminat sınırı aşılacak.'});}}
+        }
+        await client.query("UPDATE transactions SET status='pending',decision_by=NULL,decision_at=NULL,locked_by=NULL,locked_at=NULL,expires_at=$1,team_account_id=COALESCE($2,team_account_id) WHERE id=$3",[expiresAt,reopenTeamId,id]);
+        if(tx.type==='deposit'&&reopenTeamId){const exposure=await getTeamCollateralExposure(client,reopenTeamId);collateralResult=await syncTeamCollateral({teamId:reopenTeamId,exposure,client,at:new Date().toISOString()});}
+        await client.query('COMMIT');
+      }catch(error){await client.query('ROLLBACK');if(error.message==='team_collateral_limit_exceeded')return json(res,409,{error:'team_collateral_limit_exceeded',message:'Bu yatırım talebi yeniden açıldığında ekip teminat sınırı aşılacak.'});throw error;}finally{client.release();}
+    }else{
+      const db=readDb(),row=db.transactions.find(x=>x.id===id);if(!row||!['auto-rejected','rejected'].includes(row.status))return json(res,409,{error:'not_reopenable'});
+      if(tx.type==='deposit'&&reopenTeamId){const account=(db.teamAccounts||[]).find(item=>item.id===reopenTeamId);if(account&&Number(account.collateralTotal||0)>0){const exposure=teamCollateralMetrics(reopenTeamId,db.transactions||[],db.walletAddresses||[],db.depositIntents||[]).collateralExposure;if(exposure+Number(tx.requestedAmount??tx.amount)>Number(account.collateralTotal)+1e-8)return json(res,409,{error:'team_collateral_limit_exceeded',message:'Bu yatırım talebi yeniden açıldığında ekip teminat sınırı aşılacak.'});}}
+      row.status='pending';row.decisionBy=null;row.decisionAt=null;row.lockedBy=null;row.lockedAt=null;row.expiresAt=expiresAt;if(reopenTeamId)row.teamAccountId=reopenTeamId;
+      if(tx.type==='deposit'&&reopenTeamId){const exposure=teamCollateralMetrics(reopenTeamId,db.transactions||[],db.walletAddresses||[],db.depositIntents||[]).collateralExposure;collateralResult=await syncTeamCollateral({teamId:reopenTeamId,exposure,dbState:db,at:new Date().toISOString()});}
+      writeDb(db);
+    }
+    if(collateralResult?.autoPausedTeamAccountId){if(!pool)await clearTeamSessions(collateralResult.autoPausedTeamAccountId);addAudit('team_account_collateral_auto_paused',reopenTeamId,{teamAccountId:reopenTeamId,transactionId:id});}
+    addAudit('transaction_reopen',admin.email,{transactionId:id,expiresAt});return json(res,200,{ok:true,status:'pending',expiresAt});
   }
   if(adminQuery.pathname==='/api/admin/transactions/decision' && req.method==='POST'){
     if(!admin)return json(res,401,{error:'unauthorized'}); const b=await body(req); const id=String(b.transactionId||''); const decision=['approved','rejected'].includes(b.decision)?b.decision:null; if(!decision)return json(res,400,{error:'invalid_decision'});
@@ -1006,10 +1116,13 @@ async function route(req,res){
     if(payoutTxHash!==null&&payoutTxHash.length<16)return json(res,400,{error:'payout_tx_hash_required',message:'Çekimi onaylamadan önce gönderdiğiniz transferin işlem kimliğini girin.'});
     if(decision==='approved' && tx.type==='withdrawal'){const u=await findUserById(tx.userId);if(approvedAmount>Number(u.balance||0))return json(res,409,{error:'insufficient_balance_at_approval'});}
     const decisionAt=new Date().toISOString(); const amountChanged=Math.abs(approvedAmount-requestedAmount)>1e-8;
+    let decisionTeamAccountId=teamAdmin&&!owner?teamAdmin.adminId:null;
+    if(owner&&tx.type==='withdrawal'){const wallets=await getWalletAddresses();decisionTeamAccountId=transactionTeamId(tx,all,new Map(wallets.map(wallet=>[wallet.id,wallet])))||null;}
     let decisionResult;
-    if(pool){const client=await pool.connect(); try {await client.query('BEGIN'); const lock=await client.query("SELECT status, locked_by FROM transactions WHERE id=$1 FOR UPDATE",[id]); if(!lock.rows[0]||lock.rows[0].status!=='pending'){await client.query('ROLLBACK');return json(res,409,{error:'already_processed'});} if(lock.rows[0].locked_by&&lock.rows[0].locked_by!==admin.email){await client.query('ROLLBACK');return json(res,409,{error:'transaction_locked',lockedBy:lock.rows[0].locked_by});} if(decision==='approved'&&tx.type==='withdrawal'){const lockedUser=await client.query('SELECT balance FROM users WHERE id=$1 FOR UPDATE',[tx.userId]);if(!lockedUser.rows[0]||approvedAmount>Number(lockedUser.rows[0].balance||0)){await client.query('ROLLBACK');return json(res,409,{error:'insufficient_balance_at_approval'});}} decisionResult=await applyTransactionDecision({tx,decision,approvedAmount,actor:admin.email,decisionAt,payoutTxHash,client,teamAccountId:teamAdmin&&!owner?teamAdmin.adminId:null}); await client.query('COMMIT');} catch(e){await client.query('ROLLBACK');if(e.message==='insufficient_team_collateral')return json(res,409,{error:'insufficient_team_collateral',message:'Ekip teminat bakiyesi bu çekimi karşılamıyor.'});throw e;} finally{client.release();}}
-    else{const db=readDb();const row=db.transactions.find(x=>x.id===id);if(!row||row.status!=='pending')return json(res,409,{error:'already_processed'});if(row.lockedBy&&row.lockedBy!==admin.email&&isLocked(row))return json(res,409,{error:'transaction_locked',lockedBy:row.lockedBy});try{decisionResult=await applyTransactionDecision({tx,decision,approvedAmount,actor:admin.email,decisionAt,payoutTxHash,dbState:db,teamAccountId:teamAdmin&&!owner?teamAdmin.adminId:null});}catch(e){if(e.message==='negative_balance')return json(res,409,{error:'negative_balance_at_approval'});if(e.message==='insufficient_team_collateral')return json(res,409,{error:'insufficient_team_collateral',message:'Ekip teminat bakiyesi bu çekimi karşılamıyor.'});throw e;}writeDb(db);}
+    if(pool){const client=await pool.connect(); try {await client.query('BEGIN'); const lock=await client.query("SELECT status, locked_by FROM transactions WHERE id=$1 FOR UPDATE",[id]); if(!lock.rows[0]||lock.rows[0].status!=='pending'){await client.query('ROLLBACK');return json(res,409,{error:'already_processed'});} if(lock.rows[0].locked_by&&lock.rows[0].locked_by!==admin.email){await client.query('ROLLBACK');return json(res,409,{error:'transaction_locked',lockedBy:lock.rows[0].locked_by});} if(decision==='approved'&&tx.type==='withdrawal'){const lockedUser=await client.query('SELECT balance FROM users WHERE id=$1 FOR UPDATE',[tx.userId]);if(!lockedUser.rows[0]||approvedAmount>Number(lockedUser.rows[0].balance||0)){await client.query('ROLLBACK');return json(res,409,{error:'insufficient_balance_at_approval'});}} decisionResult=await applyTransactionDecision({tx,decision,approvedAmount,actor:admin.email,decisionAt,payoutTxHash,client,teamAccountId:decisionTeamAccountId}); await client.query('COMMIT');} catch(e){await client.query('ROLLBACK');if(e.message==='team_collateral_limit_exceeded')return json(res,409,{error:'team_collateral_limit_exceeded',message:'Bu yatırım onaylandığında ekibin teminat sınırı aşılacak.'});throw e;} finally{client.release();}}
+    else{const db=readDb();const row=db.transactions.find(x=>x.id===id);if(!row||row.status!=='pending')return json(res,409,{error:'already_processed'});if(row.lockedBy&&row.lockedBy!==admin.email&&isLocked(row))return json(res,409,{error:'transaction_locked',lockedBy:row.lockedBy});try{decisionResult=await applyTransactionDecision({tx,decision,approvedAmount,actor:admin.email,decisionAt,payoutTxHash,dbState:db,teamAccountId:decisionTeamAccountId});}catch(e){if(e.message==='negative_balance')return json(res,409,{error:'negative_balance_at_approval'});if(e.message==='team_collateral_limit_exceeded')return json(res,409,{error:'team_collateral_limit_exceeded',message:'Bu yatırım onaylandığında ekibin teminat sınırı aşılacak.'});throw e;}writeDb(db);}
     if(decisionResult?.autoPausedTeamAccountId){await clearTeamSessions(decisionResult.autoPausedTeamAccountId);addAudit('team_account_collateral_auto_paused',decisionResult.autoPausedTeamAccountId,{teamAccountId:decisionResult.autoPausedTeamAccountId,transactionId:id,approvedAmount});}
+    if(decisionResult?.autoResumedTeamAccountId)addAudit('team_account_collateral_auto_resumed',decisionResult.autoResumedTeamAccountId,{teamAccountId:decisionResult.autoResumedTeamAccountId,transactionId:id,approvedAmount});
     addAudit('transaction_decision',admin.email,{transactionId:id,userId:tx.userId,type:tx.type,decision,requestedAmount,approvedAmount,amountChanged,payoutTxHash}); return json(res,200,{ok:true,status:decision,decisionBy:admin.email,decisionAt,requestedAmount,approvedAmount,amountChanged,payoutTxHash});
   }
   if(req.url==='/api/admin/audit' && req.method==='GET'){
@@ -1195,22 +1308,58 @@ async function route(req,res){
     const b=await body(req),amount=Number(b.amount),network=String(b.network||'').toUpperCase(),user=await findUserById(uid);
     if(user?.securityStatus==='locked'||user?.securityStatus==='suspended'||user?.depositFrozen)return json(res,403,{error:'deposits_blocked'});
     if(!Number.isFinite(amount)||amount<10)return json(res,400,{error:'invalid_amount'});if(!isValidNetwork(network))return json(res,400,{error:'invalid_network'});
-    const available=(await getWalletAddresses({activeOnly:true})).filter(w=>w.network===network);if(!available.length)return json(res,409,{error:'wallet_unavailable',message:'Bu ağ için aktif yatırım adresi henüz yapılandırılmadı.'});
+    const available=(await getWalletAddresses()).filter(w=>w.network===network&&w.active!==false);if(!available.length)return json(res,409,{error:'wallet_unavailable',message:'Bu ağ için aktif yatırım adresi henüz yapılandırılmadı.'});
     const now=new Date(),expiresAt=new Date(now.getTime()+20*60*1000).toISOString();let wallet,intent;
     if(pool){
       const client=await pool.connect();
       try{
         await client.query('BEGIN');
-        const picked=await client.query('SELECT w.id,w.network,w.address,w.label FROM wallet_addresses w LEFT JOIN team_accounts t ON t.id=w.team_id WHERE w.network=$1 AND w.active=TRUE AND (w.team_id IS NULL OR (t.active=TRUE AND t.collateral_paused=FALSE)) ORDER BY w.last_used_at NULLS FIRST,w.use_count,w.created_at LIMIT 1 FOR UPDATE OF w SKIP LOCKED',[network]);
-        if(!picked.rows[0]){await client.query('ROLLBACK');return json(res,409,{error:'wallet_unavailable'});}
-        wallet=picked.rows[0];await client.query('UPDATE wallet_addresses SET use_count=use_count+1,last_used_at=$1,updated_at=$1 WHERE id=$2',[now.toISOString(),wallet.id]);
+        const candidates=await client.query('SELECT w.id,w.network,w.address,w.label,w.team_id AS "teamId" FROM wallet_addresses w LEFT JOIN team_accounts t ON t.id=w.team_id WHERE w.network=$1 AND w.active=TRUE AND (w.team_id IS NULL OR (t.active=TRUE OR t.collateral_paused=TRUE)) ORDER BY w.last_used_at NULLS FIRST,w.use_count,w.created_at FOR UPDATE OF w SKIP LOCKED',[network]);
+        let capacityBlocked=false;
+        for(const candidate of candidates.rows){
+          if(candidate.teamId){
+            const lockedTeam=await client.query('SELECT id,collateral_total AS "collateralTotal",collateral_auto_pause AS "collateralAutoPause",collateral_pause_percent AS "collateralPausePercent",collateral_paused AS "collateralPaused",active FROM team_accounts WHERE id=$1 FOR UPDATE',[candidate.teamId]);
+            const team=lockedTeam.rows[0];if(!team)continue;
+            const exposure=await getTeamCollateralExposure(client,candidate.teamId),total=Number(team.collateralTotal||0),threshold=total*Number(team.collateralPausePercent||80)/100;
+            const pauseLimit=total>0?(team.collateralAutoPause?threshold:total):Infinity;
+            if(team.collateralPaused&&exposure<pauseLimit-1e-8){await syncTeamCollateral({teamId:candidate.teamId,exposure,client,at:now.toISOString()});team.collateralPaused=false;}
+            if(team.active===false&&!team.collateralPaused)continue;
+            if(team.collateralPaused){capacityBlocked=true;continue;}
+            if(total>0&&exposure+amount>total+1e-8){capacityBlocked=true;continue;}
+            if(total>0&&team.collateralAutoPause&&exposure>=threshold-1e-8){await syncTeamCollateral({teamId:candidate.teamId,exposure,client,at:now.toISOString()});capacityBlocked=true;continue;}
+          }
+          wallet=candidate;break;
+        }
+        if(!wallet){await client.query('COMMIT');return json(res,409,capacityBlocked?{error:'team_collateral_limit_exceeded',message:'Ekip teminat kapasitesi dolu; ekip çekimleri ödedikten sonra yeniden yatırım kabul edebilir.'}:{error:'wallet_unavailable'});}
+        await client.query('UPDATE wallet_addresses SET use_count=use_count+1,last_used_at=$1,updated_at=$1 WHERE id=$2',[now.toISOString(),wallet.id]);
         intent={id:`DPI-${crypto.randomBytes(12).toString('hex').toUpperCase()}`,userId:uid,walletId:wallet.id,amount,network,createdAt:now.toISOString(),expiresAt};
-        await client.query('INSERT INTO deposit_intents (id,user_id,wallet_id,amount,network,created_at,expires_at) VALUES ($1,$2,$3,$4,$5,$6,$7)',[intent.id,uid,wallet.id,amount,network,intent.createdAt,intent.expiresAt]);await client.query('COMMIT');
+        await client.query('INSERT INTO deposit_intents (id,user_id,wallet_id,amount,network,created_at,expires_at) VALUES ($1,$2,$3,$4,$5,$6,$7)',[intent.id,uid,wallet.id,amount,network,intent.createdAt,intent.expiresAt]);
+        if(wallet.teamId){const team=await client.query('SELECT id FROM team_accounts WHERE id=$1 FOR UPDATE',[wallet.teamId]);if(team.rows[0]){const exposure=await getTeamCollateralExposure(client,wallet.teamId);await syncTeamCollateral({teamId:wallet.teamId,exposure,client,at:now.toISOString()});}}
+        await client.query('COMMIT');
       }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
     }else{
-      wallet=available.sort((a,b)=>Number(a.useCount||0)-Number(b.useCount||0)||new Date(a.lastUsedAt||0)-new Date(b.lastUsedAt||0))[0];
-      const db=readDb(),saved=(db.walletAddresses||[]).find(w=>w.id===wallet.id);saved.useCount=Number(saved.useCount||0)+1;saved.lastUsedAt=now.toISOString();saved.updatedAt=now.toISOString();
-      intent={id:`DPI-${crypto.randomBytes(12).toString('hex').toUpperCase()}`,userId:uid,walletId:wallet.id,amount,network,createdAt:now.toISOString(),expiresAt,usedAt:null};db.depositIntents=db.depositIntents||[];db.depositIntents.unshift(intent);writeDb(db);
+      const db=readDb(),walletById=new Map((db.walletAddresses||[]).map(item=>[item.id,item]));let capacityBlocked=false;
+      const candidates=available.sort((a,b)=>Number(a.useCount||0)-Number(b.useCount||0)||new Date(a.lastUsedAt||0)-new Date(b.lastUsedAt||0));
+      for(const candidate of candidates){
+        if(candidate.teamId){
+          const team=(db.teamAccounts||[]).find(item=>item.id===candidate.teamId);if(!team)continue;
+          const exposure=teamCollateralMetrics(candidate.teamId,db.transactions||[],db.walletAddresses||[],db.depositIntents||[]).collateralExposure,total=Number(team.collateralTotal||0),threshold=total*Number(team.collateralPausePercent||80)/100,pauseLimit=total>0?(team.collateralAutoPause?threshold:total):Infinity;
+          if(team.collateralPaused&&exposure<pauseLimit-1e-8)await syncTeamCollateral({teamId:candidate.teamId,exposure,dbState:db,at:now.toISOString()});
+          if(team.active===false&&!team.collateralPaused)continue;
+          if(team.collateralPaused){capacityBlocked=true;continue;}
+          if(total>0&&exposure+amount>total+1e-8){capacityBlocked=true;continue;}
+          if(total>0&&team.collateralAutoPause&&exposure>=threshold-1e-8){
+            await syncTeamCollateral({teamId:candidate.teamId,exposure,dbState:db,at:now.toISOString()});
+            await clearTeamSessions(candidate.teamId);capacityBlocked=true;continue;
+          }
+        }
+        wallet=candidate;break;
+      }
+      if(!wallet){if(capacityBlocked)writeDb(db);return json(res,409,capacityBlocked?{error:'team_collateral_limit_exceeded',message:'Ekip teminat kapasitesi dolu; ekip çekimleri ödedikten sonra yeniden yatırım kabul edebilir.'}:{error:'wallet_unavailable'});}
+      const saved=walletById.get(wallet.id);saved.useCount=Number(saved.useCount||0)+1;saved.lastUsedAt=now.toISOString();saved.updatedAt=now.toISOString();
+      intent={id:`DPI-${crypto.randomBytes(12).toString('hex').toUpperCase()}`,userId:uid,walletId:wallet.id,amount,network,createdAt:now.toISOString(),expiresAt,usedAt:null};db.depositIntents=db.depositIntents||[];db.depositIntents.unshift(intent);
+      if(wallet.teamId){const team=(db.teamAccounts||[]).find(item=>item.id===wallet.teamId);if(team){const exposure=teamCollateralMetrics(wallet.teamId,db.transactions||[],db.walletAddresses||[],db.depositIntents).collateralExposure,paused=await syncTeamCollateral({teamId:wallet.teamId,exposure,dbState:db,at:now.toISOString()});if(paused.autoPausedTeamAccountId)await clearTeamSessions(wallet.teamId);}}
+      writeDb(db);
     }
     return json(res,201,{ok:true,intentId:intent.id,amount,network,address:wallet.address,label:wallet.label,walletId:wallet.id,createdAt:intent.createdAt,expiresAt:intent.expiresAt});
   }
@@ -1228,7 +1377,7 @@ async function route(req,res){
     if(existing)return json(res,409,{error:'duplicate_tx_hash',transactionId:existing.id});
     const cooldown=await requestCooldownRemaining(uid,'deposit');
     if(cooldown>0)return json(res,429,{error:'request_cooldown',cooldownSeconds:Math.ceil(cooldown/1000),message:'Yeni yatırım talebi için '+Math.ceil(cooldown/1000)+' saniye beklemelisiniz.'});
-    const createdAt=new Date(); const tx={id:makeTxId(),userId:uid,type:'deposit',amount,requestedAmount:amount,receivedAmount:null,currency:'USDT',network,status:'pending',createdAt:createdAt.toISOString(),txHash,address:wallet.address,walletId:wallet.id,requestKey,expiresAt:new Date(createdAt.getTime()+TX_CONTROL.autoRejectMinutes*60000).toISOString()};
+    const createdAt=new Date(); const tx={id:makeTxId(),userId:uid,type:'deposit',amount,requestedAmount:amount,receivedAmount:null,currency:'USDT',network,status:'pending',createdAt:createdAt.toISOString(),txHash,address:wallet.address,walletId:wallet.id,teamAccountId:wallet.teamId||null,requestKey,expiresAt:new Date(createdAt.getTime()+TX_CONTROL.autoRejectMinutes*60000).toISOString()};
     if(pool){
       const client=await pool.connect();
       try{
