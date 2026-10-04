@@ -235,7 +235,7 @@ html body.member-premium.public-landing .pl-globe-core { border-color:rgba(255,2
 html body.member-premium.public-landing .pl-globe-grid { opacity:.22 !important; }
 html body.member-premium.public-landing :where(.pl-globe-ring, .pl-globe-ring-b) { border-color:rgba(235,235,238,.26) !important; box-shadow:0 0 22px rgba(255,255,255,.07) !important; }
 html body.member-premium.public-landing .pl-globe-stage :where(.usdt1, .usdt2, .tag) { border-color:rgba(255,255,255,.24) !important; color:#f0f0f2 !important; background:linear-gradient(145deg,rgba(226,227,230,.22),rgba(37,38,42,.9)) !important; box-shadow:0 13px 34px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.23) !important; filter:grayscale(1) !important; }
-html body.member-premium.public-landing .pl-logo-ticker { border-color:rgba(255,255,255,.12) !important; background:rgba(17,18,20,.76) !important; backdrop-filter:blur(24px) !important; }
+html body.member-premium.public-landing .pl-logo-ticker { border-color:rgba(83,149,202,.24) !important; background:linear-gradient(112deg,rgba(10,37,65,.96),rgba(6,22,39,.98) 58%,rgba(8,32,56,.94)) !important; backdrop-filter:blur(24px) !important; }
 html body.member-premium.public-landing .pl-ticker-item { border-color:rgba(255,255,255,.15) !important; color:#d1d1d5 !important; background:rgba(255,255,255,.05) !important; }
 html body.member-premium.public-landing :where(.pl-feature-card, .pl-how-card, .pl-faq-item, .pl-news-card, .pl-join-card) {
   border-color:rgba(255,255,255,.15) !important;
@@ -249,7 +249,7 @@ html body.member-premium.public-landing :where(.pl-feature-card h3, .pl-how-card
 html body.member-premium.public-landing :where(.pl-feature-card p, .pl-how-card p, .pl-faq-item p, .pl-join-card p) { color:#b8b9be !important; }
 html body.member-premium.public-landing .pl-neon-icon { border-color:rgba(255,255,255,.2) !important; color:#ededee !important; background:linear-gradient(145deg,rgba(255,255,255,.14),rgba(255,255,255,.035)) !important; filter:grayscale(1) !important; }
 html body.member-premium.public-landing .pl-news-section { border-color:rgba(255,255,255,.12) !important; background:linear-gradient(112deg,rgba(42,43,47,.42),rgba(16,17,19,.78) 58%,rgba(37,38,42,.3)) !important; }
-html body.member-premium.public-landing .pl-news-img { filter:grayscale(.72) !important; }
+html body.member-premium.public-landing .pl-news-img { filter:none !important; }
 html body.member-premium.public-landing .pl-footer { border-color:rgba(255,255,255,.12) !important; color:#e0e0e3 !important; background:rgba(9,10,12,.82) !important; backdrop-filter:blur(26px) !important; }
 
 /* Login and registration share the same graphite glass language as the signed-in app. */
@@ -345,7 +345,7 @@ html body.member-premium .side .logo::before {
   height:38px !important;
   border-radius:11px !important;
   color:transparent !important;
-  background:url("safepays-obsidian-mark.svg") center/contain no-repeat !important;
+  background:url("safepays-mark.png") center/contain no-repeat !important;
   box-shadow:none !important;
 }
 html body.member-premium .avatar-sm,
@@ -824,7 +824,7 @@ html body.member-premium.public-landing .public-header {
 html body.member-premium.public-landing .public-logo .logo-words,
 html body.member-premium.public-landing .public-logo .logo-words b { color: #f2f8ff !important; }
 html body.member-premium.public-landing .public-logo .logo-words b:last-child { color: #65baff !important; }
-html body.member-premium.public-landing .public-logo img { filter: drop-shadow(0 5px 13px rgba(36,133,220,.2)) !important; }
+html body.member-premium.public-landing .public-logo img { width:46px !important; height:46px !important; object-fit:contain !important; opacity:1 !important; visibility:visible !important; filter: drop-shadow(0 5px 13px rgba(36,133,220,.3)) !important; }
 html body.member-premium.public-landing .public-header :is(.navlinks a, .public-login) { color: #c5d9ed !important; }
 html body.member-premium.public-landing :is(.public-register, .pl-cta-primary) {
   border-color: rgba(108,188,244,.4) !important;
@@ -895,3 +895,27 @@ html body.member-premium.public-landing .member-depth-ring,
 html body.member-premium.auth-public .member-depth-ring.ring-two,
 html body.member-premium.public-landing .member-depth-ring.ring-two { border-color: rgba(86,166,230,.16) !important; box-shadow: 0 0 54px rgba(44,145,229,.07), inset 0 0 38px rgba(48,136,206,.04) !important; }
 html body.member-premium.auth-public .auth-scene-brand span b:last-child { color: #63b8ff !important; }
+
+/* Navy refinements from the live landing-page review. */
+html body.member-premium.public-landing .pl-logo-ticker {
+  border-color: rgba(83,149,202,.24) !important;
+  background: linear-gradient(112deg,rgba(10,37,65,.96),rgba(6,22,39,.98) 58%,rgba(8,32,56,.94)) !important;
+}
+html body.member-premium.public-landing .pl-logo-ticker-fade {
+  background: linear-gradient(90deg,#07172b 0%,rgba(7,23,43,0) 12%,rgba(7,23,43,0) 88%,#07172b 100%) !important;
+}
+html body.member-premium.public-landing .pl-ticker-item {
+  opacity: 1 !important;
+  border-color: rgba(78,140,190,.38) !important;
+  color: #dcecff !important;
+  background: linear-gradient(145deg,rgba(17,52,84,.88),rgba(8,31,54,.94)) !important;
+}
+html body.member-premium.public-landing .pl-faq-section .faq-list {
+  border-color: rgba(73,139,194,.28) !important;
+  background: linear-gradient(145deg,rgba(11,33,57,.74),rgba(5,20,36,.84)) !important;
+  box-shadow: 0 22px 58px rgba(0,0,0,.25),inset 0 1px 0 rgba(133,187,229,.08) !important;
+  backdrop-filter: blur(22px) saturate(118%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(118%) !important;
+}
+html body.member-premium.public-landing .pl-news-grid .pl-news-img { filter: none !important; }
+html body.member-premium.public-landing .pl-news-grid .pl-news-img.has-image img { filter: none !important; }
