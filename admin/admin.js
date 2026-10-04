@@ -5,6 +5,45 @@ else if(location.pathname.includes('/owner/'))document.documentElement.classList
 function formatTime(s){let m=Math.floor(s/60),sec=s%60;return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0')}
 function tick(){document.querySelectorAll('.timer').forEach(el=>{let s=parseInt(el.dataset.seconds||'0');if(s>0)s--;el.dataset.seconds=s;el.textContent=s?formatTime(s):'Otomatik reddediliyor';el.classList.remove('timer-green','timer-yellow','timer-red');if(s>600)el.classList.add('timer-green');else if(s>300)el.classList.add('timer-yellow');else if(s>0)el.classList.add('timer-red');else{el.classList.add('timer-red');if(el.dataset.autored==='1'){el.textContent='Otomatik reddedildi'}}})}
 setInterval(tick,1000)
+
+// Apply consistent semantic colors to financial values in every staff table.
+// Header mapping covers report tables; transaction rows also use their type or
+// ledger direction when the amount column itself is generically labeled.
+(function installFinancialAmountColors(){
+  const normalize=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('tr-TR');
+  function category(label){
+    const text=normalize(label);
+    if(/komisyon|commission|bonus|prim/.test(text))return 'amount-commission';
+    if(/yatirim|deposit|gelen tutar|alinan yatirim/.test(text))return 'amount-deposit';
+    if(/cekim|withdraw|odenen tutar/.test(text))return 'amount-withdrawal';
+    if(/kasa|bakiye|balance|mevcut tutar/.test(text))return 'amount-cash';
+    return '';
+  }
+  function mark(cell,className){if(className&&!cell.classList.contains(className))cell.classList.add(className);}
+  function scan(root=document){
+    const tables=new Set(root.matches?.('table')?[root]:[]);
+    const parentTable=root.closest?.('table');if(parentTable)tables.add(parentTable);
+    root.querySelectorAll('table').forEach(table=>tables.add(table));
+    tables.forEach(table=>{
+      const headers=[...table.querySelectorAll('thead tr:last-child th')];
+      if(!headers.length)return;
+      const kinds=headers.map(header=>category(header.textContent));
+      const amountIndexes=headers.map((header,index)=>/tutar|miktar|amount|usdt/i.test(normalize(header.textContent))?index:-1).filter(index=>index>=0);
+      const typeIndex=headers.findIndex(header=>/tur|islem|direction|yon/.test(normalize(header.textContent)));
+      table.querySelectorAll('tbody tr').forEach(row=>{
+        const cells=[...row.cells];
+        kinds.forEach((kind,index)=>{if(kind&&cells[index])mark(cells[index],kind);});
+        if(typeIndex<0||!cells[typeIndex])return;
+        const type=normalize(cells[typeIndex].textContent);
+        const rowKind=/yatirim|deposit|credit|giris/.test(type)?'amount-deposit':/cekim|withdraw|debit|cikis/.test(type)?'amount-withdrawal':'';
+        if(rowKind)amountIndexes.forEach(index=>{if(cells[index])mark(cells[index],rowKind);});
+      });
+    });
+  }
+  function start(){scan();new MutationObserver(records=>{for(const record of records){for(const node of record.addedNodes){if(node.nodeType!==1)continue;if(node.matches('table'))scan(node.parentElement||document);else scan(node);}}}).observe(document.body,{childList:true,subtree:true});}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
+
 function filterTable(){let q=(document.getElementById('search')?.value||'').toLowerCase();document.querySelectorAll('#requests tr').forEach((r,i)=>{if(i===0)return;r.style.display=r.innerText.toLowerCase().includes(q)?'':'none'})}
 document.addEventListener('DOMContentLoaded',()=>{
   const a=window.SafeAdmin?.current?.();

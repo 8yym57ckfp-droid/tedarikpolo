@@ -7,7 +7,8 @@
   async function loadTeamOverview(){
     const rows=byId('recentRows');
     try{
-      const [stats,data]=await Promise.all([adminFetch('/stats'),adminFetch('/transactions')]);
+      const [stats,data,profile]=await Promise.all([adminFetch('/stats'),adminFetch('/transactions'),adminFetch('/me')]);
+      const selfDisable=byId('selfDisableTeam');if(selfDisable){selfDisable.hidden=!profile.admin?.allowSelfDisable;selfDisable.onclick=async()=>{if(!confirm('Ekip hesabınızı pasife almak istiyor musunuz? Giriş ve atanmış cüzdanların yeni yatırım rotasyonu durur.'))return;try{await adminFetch('/team/self-disable',{method:'POST',body:JSON.stringify({})});location.replace('login.html?disabled=1');}catch(error){alert('Hesap pasife alınamadı: '+error.message);}};}
       const tx=Array.isArray(data.transactions)?data.transactions:[];
       const pending=tx.filter(x=>x.status==='pending');
       byId('pendingCount').textContent=number(stats.pending);

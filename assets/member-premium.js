@@ -78,7 +78,7 @@
 
   const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
   const selector=[
-    '.pl-hero .hero-copy','.pl-globe-stage','.pl-logo-ticker','.pl-feature-card','.pl-news-card','.pl-how-card','.pl-faq-item','.pl-join-card',
+    '.pl-hero .hero-copy','.pl-globe-stage','.pl-logo-ticker','.pl-feature-card','.pl-news-card','.pl-how-card','.pl-join-card',
     '.dash-content>.balance-grid','.dash-content>.dashboard-published-feed','.dash-content>.network-live-panel','.dash-content>.assets-summary',
     '.dash-content>.member-earning-guide','.dash-content>.network-invest','.dash-content>.quick-grid>.quick',
     '.dash-content #publishedContent .events-grid>.event-card',
@@ -145,6 +145,24 @@
     card.dataset.depthSide=String(cards.size%2?-1:1);
     if(observer)observer.observe(card);else{card.classList.add('member-depth-visible');visible.add(card)}
   }
+  document.querySelectorAll('.public-landing .pl-faq-item').forEach(card=>{
+    const resetTilt=()=>{
+      card.style.setProperty('--faq-tilt-x','0deg');
+      card.style.setProperty('--faq-tilt-y','0deg');
+    };
+    card.addEventListener('pointermove',event=>{
+      if(event.pointerType==='touch')return;
+      const rect=card.getBoundingClientRect();
+      if(!rect.width||!rect.height)return;
+      const x=(event.clientX-rect.left)/rect.width-.5;
+      const y=(event.clientY-rect.top)/rect.height-.5;
+      card.style.setProperty('--faq-tilt-x',(-y*2.4).toFixed(2)+'deg');
+      card.style.setProperty('--faq-tilt-y',(x*2.4).toFixed(2)+'deg');
+    });
+    card.addEventListener('pointerleave',resetTilt);
+    card.addEventListener('pointercancel',resetTilt);
+    card.addEventListener('focusout',event=>{if(!card.contains(event.relatedTarget))resetTilt();});
+  });
   function scan(node){
     if(node.nodeType!==1)return;
     if(node.matches(selector))registerCard(node);

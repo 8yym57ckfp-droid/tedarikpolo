@@ -15,7 +15,7 @@
   }
   function updateTable(rows,commissionEnabled){
     const body=el('reportRows');if(!body)return;
-    body.innerHTML=rows.length?rows.map(day=>`<tr><td>${new Date(day.date+'T00:00:00Z').toLocaleDateString('tr-TR',{timeZone:'UTC'})}</td><td>${money(day.deposit)}</td><td>${money(day.withdrawal)}</td><td>${commissionEnabled?money(day.commission):'—'}</td><td>${money(day.cash)}</td><td>${day.count}</td></tr>`).join(''):'<tr><td colspan="6">Seçilen dönemde kayıt yok.</td></tr>';
+    body.innerHTML=rows.length?rows.map(day=>`<tr><td>${new Date(day.date+'T00:00:00Z').toLocaleDateString('tr-TR',{timeZone:'UTC'})}</td><td class="amount-deposit">${money(day.deposit)}</td><td class="amount-withdrawal">${money(day.withdrawal)}</td><td class="amount-commission">${commissionEnabled?money(day.commission):'—'}</td><td class="amount-cash">${money(day.cash)}</td><td>${day.count}</td></tr>`).join(''):'<tr><td colspan="6">Seçilen dönemde kayıt yok.</td></tr>';
   }
   async function refreshReports(){
     const range=Number(el('range')?.value||90),end=localDate(new Date()),start=new Date(end);start.setDate(start.getDate()-range+1);
@@ -23,6 +23,7 @@
     if(testRunId)params.set('testRunId',testRunId);
     try{
       const data=await adminFetch('/finance/reconciliation?'+params.toString()),totals=data.totals||{},rows=data.days||[];
+      el('dep').className='admin-value amount-deposit';el('wd').className='admin-value amount-withdrawal';el('commission').className='admin-value amount-commission';el('cash').className='admin-value amount-cash';
       el('dep').textContent=money(totals.deposit);el('wd').textContent=money(totals.withdrawal);el('commission').textContent=data.commissionEnabled?money(totals.commission):'Etkin değil';
       el('cash').textContent=money(totals.cash);el('cnt').textContent=String(totals.count||0);el('pend').textContent=String(totals.pendingCount||0);
       const note=el('reportNote');if(note)note.textContent=data.commissionEnabled?'Onaylı yatırımlar üzerinden %3 hesaplanır.':'Komisyon modeli etkin değil.';

@@ -1,0 +1,16 @@
+html.owner-portal .ticket-list,html.owner-portal .ticket-thread{background:linear-gradient(145deg,#170b29,#0f071b)!important;border-color:#46216b!important;color:#f4ecff!important;box-shadow:0 12px 34px rgba(76,22,125,.14)}
+html.admin-portal .ticket-list,html.admin-portal .ticket-thread{background:linear-gradient(145deg,#0b1b30,#081625)!important;border-color:#203c5b!important;color:#eaf3ff!important}
+html.owner-portal .ticket-list h3,html.owner-portal .ticket-thread h3{color:#f4ecff!important}
+html.admin-portal .ticket-list h3,html.admin-portal .ticket-thread h3{color:#eaf3ff!important}
+html.owner-portal .ticket-item{background:#10071c!important;border-color:#442064!important;color:#f4ecff!important}
+html.owner-portal .ticket-item.active{background:#24113b!important;border-color:#8d40d5!important}
+html.admin-portal .ticket-item{background:#09182a!important;border-color:#213c59!important;color:#eaf3ff!important}
+html.admin-portal .ticket-item.active{background:#102944!important;border-color:#378add!important}
+html.owner-portal .ticket-item small,html.owner-portal .thread-meta,html.owner-portal .empty{color:#b8a6cd!important}
+html.admin-portal .ticket-item small,html.admin-portal .thread-meta,html.admin-portal .empty{color:#9bb0c7!important}
+html.owner-portal .thread-message{background:#211235!important;color:#f4ecff!important}
+html.owner-portal .thread-message.admin{background:#2a1450!important}
+html.admin-portal .thread-message{background:#14263b!important;color:#eaf3ff!important}
+html.admin-portal .thread-message.admin{background:#12375b!important}
+html.owner-portal .reply-box textarea{background:#0b0613!important;border-color:#4b2670!important;color:#f4ecff!important}
+html.admin-portal .reply-box textarea{background:#081625!important;border-color:#2a4868!important;color:#eaf3ff!important}

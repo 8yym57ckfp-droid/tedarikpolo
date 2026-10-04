@@ -38,6 +38,7 @@ html.dark-theme .admin-login .admin-card{background:#0b1b30;border-color:#1d3550
 html.dark-theme .admin-login h1{color:#f4f7fb}
 html.dark-theme .admin-login input{background:#09182a;border-color:#28415e;color:#e8eef7}
 html.dark-theme .admin-login .admin-login-note{background:#0d2138;color:#9fb0c4}
+html.admin-portal .amount-deposit{color:#34d399!important}html.admin-portal .amount-withdrawal{color:#ff6874!important}html.admin-portal .amount-commission{color:#fbbf24!important}html.admin-portal .amount-cash{color:#70b6ff!important}
 
 /* V48 — professional left navigation */
 .admin-side{z-index:1000;overflow-y:auto}.admin-side .logo{display:block;padding:0 9px;text-decoration:none;font-size:25px;font-weight:950;letter-spacing:-1.5px;color:#fff}.admin-side .logo span{color:#4f8cff}.admin-nav a{display:flex;align-items:center;gap:8px;text-decoration:none;min-height:18px;line-height:1.25}.admin-nav a.active{box-shadow:inset 3px 0 #4f8cff}.admin-menu-toggle{display:none;position:fixed;top:14px;left:14px;z-index:1100;width:42px;height:42px;border:1px solid #dfe7f1;border-radius:11px;background:#fff;color:#172b44;font-size:20px;box-shadow:0 6px 18px rgba(2,19,40,.12)}

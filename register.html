@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <script>(function(){try{var p=location.pathname,s=p.includes('/admin/')?'admin':(p.includes('/owner/')?'owner':'member'),k='safepays-'+s+'-theme';if(localStorage.getItem(k)==='dark')document.documentElement.classList.add('dark-theme')}catch(e){}})();</script>
-<meta charset="utf-8">
+<meta charset="utf-8"><script data-theme-early>(function(){var p=location.pathname||"",isAdmin=p.indexOf("/admin/")!==-1,isOwner=p.indexOf("/owner/")!==-1,scope=isAdmin?"admin":isOwner?"owner":"member",theme="dark";try{theme=localStorage.getItem("safepays-"+scope+"-theme")||"dark"}catch(_){}theme="dark";var root=document.documentElement;root.classList.toggle("dark-theme",theme==="dark");if(isAdmin)root.classList.add("admin-portal");if(isOwner)root.classList.add("owner-portal");function apply(){var b=document.body;if(!b)return false;if(isAdmin)b.classList.add("admin-body");else if(isOwner)b.classList.add("admin-body","owner-page");else if(!b.classList.contains("maintenance-page")){b.classList.add("member-premium");b.dataset.memberTheme="obsidian"}b.classList.toggle("dark-theme",theme==="dark");return true}if(!apply()){var watch=new MutationObserver(function(){if(apply())watch.disconnect()});watch.observe(root,{childList:true})}})();</script>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Safepays — Hesabınızı Oluşturun</title>
 <meta name="theme-color" content="#061426">
@@ -23,9 +23,9 @@
 .field.field-invalid .field-error{color:#ff4d68!important}
 </style>
 <script src="assets/maintenance.js"></script>
-<link rel="stylesheet" href="assets/member-premium.css?v=16"><link rel="stylesheet" href="assets/member-obsidian.css?v=5">
+<link rel="stylesheet" href="assets/member-premium.css?v=17"><link rel="stylesheet" href="assets/member-obsidian.css?v=5"><link rel="stylesheet" href="assets/member-mobile-polish.css?v=4">
 </head>
-<body class="auth-public">
+<body class="auth-public member-premium dark-theme" data-member-theme="obsidian">
 <div class="pl-ambient-bg" aria-hidden="true">
   <span class="pl-ambient-orb pl-ambient-orb-a"></span>
   <span class="pl-ambient-orb pl-ambient-orb-b"></span>

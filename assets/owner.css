@@ -94,6 +94,7 @@ body.admin-body .bonus-actions,
 body.admin-body .form-actions{background:linear-gradient(145deg,#170a27,#0e0419)!important;border-color:#47206d!important;color:#f5edff!important;box-shadow:0 10px 30px rgba(91,25,145,.10)!important}
 body.admin-body .admin-grid .card .admin-value,
 body.admin-body .admin-value{color:#f8f3ff!important}
+html.owner-portal .amount-deposit{color:#34d399!important}html.owner-portal .amount-withdrawal{color:#ff6874!important}html.owner-portal .amount-commission{color:#fbbf24!important}html.owner-portal .amount-cash{color:#70b6ff!important}
 body.admin-body .admin-card h2,
 body.admin-body .admin-card h3,
 body.admin-body .team-card h3,

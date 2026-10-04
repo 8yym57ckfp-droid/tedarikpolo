@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8"><script data-theme-early>(function(){var p=location.pathname||"",isAdmin=p.indexOf("/admin/")!==-1,isOwner=p.indexOf("/owner/")!==-1,scope=isAdmin?"admin":isOwner?"owner":"member",theme="dark";try{theme=localStorage.getItem("safepays-"+scope+"-theme")||"dark"}catch(_){}theme="dark";var root=document.documentElement;root.classList.toggle("dark-theme",theme==="dark");if(isAdmin)root.classList.add("admin-portal");if(isOwner)root.classList.add("owner-portal");function apply(){var b=document.body;if(!b)return false;if(isAdmin)b.classList.add("admin-body");else if(isOwner)b.classList.add("admin-body","owner-page");else if(!b.classList.contains("maintenance-page")){b.classList.add("member-premium");b.dataset.memberTheme="obsidian"}b.classList.toggle("dark-theme",theme==="dark");return true}if(!apply()){var watch=new MutationObserver(function(){if(apply())watch.disconnect()});watch.observe(root,{childList:true})}})();</script>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>SafePays Admin — Yönetim Merkezi</title>
   <script>(function(){try{if(localStorage.getItem('safepays-admin-theme')==='dark')document.documentElement.classList.add('dark-theme')}catch(_){}})();</script>
@@ -49,9 +49,10 @@
     html.dark-theme .overview-status.pending{background:#392f15;color:#ffd66a}html.dark-theme .overview-status.approved{background:#0c2a20;color:#5ee3aa}html.dark-theme .overview-status.rejected{background:#32171b;color:#ff8893}
     @media(max-width:1050px){.team-overview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.overview-columns{grid-template-columns:1fr}}
     @media(max-width:520px){.team-overview-grid{gap:8px}.team-stat{padding:13px;min-height:112px}.team-stat-value{font-size:25px}.overview-card{padding:14px}.overview-head{flex-direction:column}}
+    .team-dashboard-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.team-self-disable{background:rgba(185,48,64,.16)!important;border:1px solid rgba(255,110,124,.45)!important;color:#ffb4bc!important}
   </style>
 </head>
-<body class="admin-body">
+<body class="admin-body dark-theme">
   <div class="admin-layout">
     <aside class="admin-side">
       <a class="logo" href="team-dashboard.html">Safe<span>Pays</span></a>
@@ -64,7 +65,7 @@
           <h1>Yönetim Merkezi</h1>
           <div class="admin-muted">Bekleyen işlemleri ve hesap durumunu tek ekrandan takip et.</div>
         </div>
-        <a class="admin-btn" href="requests.html">Bekleyen işlemleri aç</a>
+        <div class="team-dashboard-actions"><a class="admin-btn" href="requests.html">Bekleyen işlemleri aç</a><button id="selfDisableTeam" class="admin-btn team-self-disable" type="button" hidden>Hesabımı pasife al</button></div>
       </header>
       <section class="team-overview-grid" aria-label="Güncel özet">
         <article class="team-stat amber"><div class="team-stat-label">Bekleyen işlem</div><div class="team-stat-value" id="pendingCount">—</div><div class="team-stat-note" id="pendingNote">Yatırım ve çekim talepleri</div></article>

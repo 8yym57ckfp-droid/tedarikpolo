@@ -1,15 +1,15 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><script data-theme-early>(function(){var p=location.pathname||"",isAdmin=p.indexOf("/admin/")!==-1,isOwner=p.indexOf("/owner/")!==-1,scope=isAdmin?"admin":isOwner?"owner":"member",theme="dark";try{theme=localStorage.getItem("safepays-"+scope+"-theme")||"dark"}catch(_){}theme="dark";var root=document.documentElement;root.classList.toggle("dark-theme",theme==="dark");if(isAdmin)root.classList.add("admin-portal");if(isOwner)root.classList.add("owner-portal");function apply(){var b=document.body;if(!b)return false;if(isAdmin)b.classList.add("admin-body");else if(isOwner)b.classList.add("admin-body","owner-page");else if(!b.classList.contains("maintenance-page")){b.classList.add("member-premium");b.dataset.memberTheme="obsidian"}b.classList.toggle("dark-theme",theme==="dark");return true}if(!apply()){var watch=new MutationObserver(function(){if(apply())watch.disconnect()});watch.observe(root,{childList:true})}})();</script><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Safepays Admin — Raporlar</title>
 <link rel="stylesheet" href="../assets/styles.css"><link rel="stylesheet" href="admin.css"><link rel="stylesheet" href="../assets/dark-theme.css">
 <style>
 .report-chart-wrap{height:250px;overflow:auto;margin-top:14px}.report-bars{height:220px;min-width:620px;display:flex;align-items:flex-end;gap:8px;border-bottom:1px solid #dfe7f1;padding:0 6px}.report-bar-group{height:100%;min-width:34px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px}.report-bar-stack{height:195px;display:flex;align-items:flex-end;gap:2px}.report-bar-stack i{display:block;width:8px;min-height:2px;border-radius:4px 4px 0 0}.report-bar-stack .deposit{background:#178bff}.report-bar-stack .withdrawal{background:#7b61ff}.report-bar-stack .commission{background:#34d399}.report-bar-group small{font-size:9px;color:#7b8798;white-space:nowrap}.report-legend{display:flex;gap:14px;flex-wrap:wrap;color:#65758b;font-size:11px}.report-legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}.report-legend .dep{background:#178bff}.report-legend .wd{background:#7b61ff}.report-legend .com{background:#34d399}.report-table-wrap{overflow:auto}.report-table{width:100%;min-width:720px;border-collapse:collapse}.report-table th,.report-table td{text-align:left;padding:10px 8px;border-bottom:1px solid #e6ebf1;font-size:11px}.report-table th{font-size:9px;color:#7b8798;text-transform:uppercase}.dark-theme .report-table th,.dark-theme .report-table td{border-color:#1d3550;color:#dce8f5}.dark-theme .report-bars{border-color:#28415e}
 </style>
 <script src="admin.js"></script><script src="../assets/maintenance.js"></script>
-</head>
-<body class="admin-body">
+<style>.report-bar-stack .deposit{background:#22c55e!important}.report-bar-stack .withdrawal{background:#ef4444!important}.report-bar-stack .commission{background:#fbbf24!important}.report-legend .dep{background:#22c55e!important}.report-legend .wd{background:#ef4444!important}.report-legend .com{background:#fbbf24!important}</style></head>
+<body class="admin-body dark-theme">
 <div class="admin-layout"><aside class="admin-side"><a class="logo" href="dashboard.html">Safe<span>Pays</span></a><nav class="admin-nav"></nav></aside>
 <main class="admin-main">
   <div class="admin-head"><div><div class="admin-muted">ANALYTICS</div><h1>Raporlar</h1><div class="admin-muted">Finansal hareketleri ve işlem sayılarını özetle.</div></div></div>

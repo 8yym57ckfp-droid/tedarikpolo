@@ -17,7 +17,7 @@
 })();
 </script>
 
-<meta charset="utf-8">
+<meta charset="utf-8"><script data-theme-early>(function(){var p=location.pathname||"",isAdmin=p.indexOf("/admin/")!==-1,isOwner=p.indexOf("/owner/")!==-1,scope=isAdmin?"admin":isOwner?"owner":"member",theme="dark";try{theme=localStorage.getItem("safepays-"+scope+"-theme")||"dark"}catch(_){}theme="dark";var root=document.documentElement;root.classList.toggle("dark-theme",theme==="dark");if(isAdmin)root.classList.add("admin-portal");if(isOwner)root.classList.add("owner-portal");function apply(){var b=document.body;if(!b)return false;if(isAdmin)b.classList.add("admin-body");else if(isOwner)b.classList.add("admin-body","owner-page");else if(!b.classList.contains("maintenance-page")){b.classList.add("member-premium");b.dataset.memberTheme="obsidian"}b.classList.toggle("dark-theme",theme==="dark");return true}if(!apply()){var watch=new MutationObserver(function(){if(apply())watch.disconnect()});watch.observe(root,{childList:true})}})();</script>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
 <title>Safepays — Yatırım</title>
@@ -41,10 +41,10 @@ document.documentElement.classList.add('member-finance');
 
 <script src="assets/maintenance.js"></script>
 
-<link rel="stylesheet" href="assets/member-premium.css?v=16"><link rel="stylesheet" href="assets/member-obsidian.css?v=4">
+<link rel="stylesheet" href="assets/member-premium.css?v=17"><link rel="stylesheet" href="assets/member-obsidian.css?v=5">
 </head>
 
-<body>
+<body class="member-premium dark-theme" data-member-theme="obsidian">
 
 <div class="app">
 

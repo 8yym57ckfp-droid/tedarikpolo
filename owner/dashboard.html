@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8"><script data-theme-early>(function(){var p=location.pathname||"",isAdmin=p.indexOf("/admin/")!==-1,isOwner=p.indexOf("/owner/")!==-1,scope=isAdmin?"admin":isOwner?"owner":"member",theme="dark";try{theme=localStorage.getItem("safepays-"+scope+"-theme")||"dark"}catch(_){}theme="dark";var root=document.documentElement;root.classList.toggle("dark-theme",theme==="dark");if(isAdmin)root.classList.add("admin-portal");if(isOwner)root.classList.add("owner-portal");function apply(){var b=document.body;if(!b)return false;if(isAdmin)b.classList.add("admin-body");else if(isOwner)b.classList.add("admin-body","owner-page");else if(!b.classList.contains("maintenance-page")){b.classList.add("member-premium");b.dataset.memberTheme="obsidian"}b.classList.toggle("dark-theme",theme==="dark");return true}if(!apply()){var watch=new MutationObserver(function(){if(apply())watch.disconnect()});watch.observe(root,{childList:true})}})();</script>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Safepays — Owner Kontrol Merkezi</title>
   <script>(function(){try{if(localStorage.getItem('safepays-owner-theme')==='dark')document.documentElement.classList.add('dark-theme')}catch(e){}})();</script>
@@ -29,7 +29,7 @@
     @media(max-width:560px){.owner-summary-grid,.owner-shortcuts{grid-template-columns:1fr}.owner-summary-card strong{font-size:22px}}
   </style>
 </head>
-<body class="admin-body owner-page">
+<body class="admin-body owner-page dark-theme">
   <div class="admin-layout">
     <aside class="admin-side"><a class="logo" href="dashboard.html">Safe<span>Pays</span><small>OWNER PANEL</small></a><nav class="admin-nav"></nav></aside>
     <main class="admin-main">

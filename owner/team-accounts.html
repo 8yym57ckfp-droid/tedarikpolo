@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8"><script data-theme-early>(function(){var p=location.pathname||"",isAdmin=p.indexOf("/admin/")!==-1,isOwner=p.indexOf("/owner/")!==-1,scope=isAdmin?"admin":isOwner?"owner":"member",theme="dark";try{theme=localStorage.getItem("safepays-"+scope+"-theme")||"dark"}catch(_){}theme="dark";var root=document.documentElement;root.classList.toggle("dark-theme",theme==="dark");if(isAdmin)root.classList.add("admin-portal");if(isOwner)root.classList.add("owner-portal");function apply(){var b=document.body;if(!b)return false;if(isAdmin)b.classList.add("admin-body");else if(isOwner)b.classList.add("admin-body","owner-page");else if(!b.classList.contains("maintenance-page")){b.classList.add("member-premium");b.dataset.memberTheme="obsidian"}b.classList.toggle("dark-theme",theme==="dark");return true}if(!apply()){var watch=new MutationObserver(function(){if(apply())watch.disconnect()});watch.observe(root,{childList:true})}})();</script>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Safepays Owner — Ekip Hesapları</title>
   <link rel="stylesheet" href="../assets/styles.css">
@@ -28,6 +28,7 @@
     .team-account-form{display:grid;gap:14px;margin:20px 0;padding:18px;border:1px solid #3b2b52;border-radius:14px;background:rgba(255,255,255,.025)}
     .team-account-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
     .team-account-form label{display:grid;gap:7px;color:#e9e1f0;font-size:12px;font-weight:750}
+    .team-account-fields small{color:#a88dbc;font-size:10px;font-weight:600}
     .team-account-form input:not([type=checkbox]){width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #49385e;border-radius:10px;background:#100c17;color:#f7f2fb;font:inherit}
     .team-permissions{display:flex;flex-wrap:wrap;gap:9px}
     .team-permissions label{display:flex;align-items:center;gap:7px;padding:9px 11px;border:1px solid #49385e;border-radius:10px;background:rgba(255,255,255,.025)}
@@ -44,19 +45,27 @@
     @media(max-width:640px){.team-account-fields{grid-template-columns:1fr}}
   </style>
 </head>
-<body class="admin-body owner-page">
+<body class="admin-body owner-page dark-theme">
   <div class="admin-layout">
     <aside class="admin-side"><a class="logo" href="dashboard.html"><span class="owner-brand-wordmark">Safe<span>Pays</span></span><small>OWNER PANEL</small></a><nav class="admin-nav" aria-label="Owner yönetim menüsü"></nav></aside>
     <main class="admin-main">
       <header class="admin-head"><div><div class="admin-muted">OWNER CONTROL CENTER</div><h1>Ekip Hesapları</h1><div class="admin-muted">Ekip giriş bilgilerini, durumunu ve panel erişimlerini yönetin.</div></div><div class="owner-badge">● OWNER</div></header>
       <section class="team-account-card">
         <h2>Admin ekip girişi</h2>
-        <p class="team-account-intro">E-posta, parola, 2FA, hesap durumu ve erişim yetkileri sunucuda güvenli biçimde saklanır. Parola ve doğrulayıcı gizli anahtarı bu listede gösterilmez. Ekip kullanıcı ve audit kayıtlarını göremez.</p>
+        <p class="team-account-intro">Ekip hesabına özel doğrulayıcı anahtarı oluşturma sırasında hazırlanır. Her ekibe cüzdan sınırı, teminat kasası ve gerekirse kendi hesabını pasife alma yetkisi tanımlayabilirsin. Teminat kullanım eşiği aşılırsa ekip durur ve atanan cüzdanlar yeni yatırım rotasyonundan çıkar; yeniden etkinleştirmek için teminat bakiyesini artır.</p>
         <form class="team-account-form" id="teamAccountForm">
           <input id="teamAccountId" type="hidden">
           <div class="team-account-fields">
             <label for="teamEmail">Giriş e-postası<input id="teamEmail" type="email" required autocomplete="off"></label>
             <label for="teamPassword">Yeni parola<input id="teamPassword" type="password" minlength="12" autocomplete="new-password" placeholder="Yeni hesapta zorunlu, düzenlemede isteğe bağlı"></label>
+            <label for="teamWalletLimit">Cüzdan sınırı<input id="teamWalletLimit" type="number" min="0" max="5000" step="1" value="0"><small>0 = sınırsız</small></label>
+            <label for="teamCollateralTotal">Toplam teminat (USDT)<input id="teamCollateralTotal" type="number" min="0" step="0.01" value="0"></label>
+            <label for="teamCollateralBalance">Mevcut kasa bakiyesi (USDT)<input id="teamCollateralBalance" type="number" min="0" step="0.01" value="0"></label>
+            <label for="teamCollateralPausePercent">Otomatik pasife düşme eşiği (%)<input id="teamCollateralPausePercent" type="number" min="1" max="100" step="1" value="80"></label>
+          </div>
+          <div class="team-permissions">
+            <label><input id="teamAllowSelfDisable" type="checkbox"> Ekibin kendi hesabını pasife alma düğmesine izin ver</label>
+            <label><input id="teamCollateralAutoPause" type="checkbox"> Teminat eşiğine ulaşınca ekibi otomatik pasife al</label>
           </div>
           <div><div class="admin-muted">İşlem yetkileri</div><div class="team-permissions">
             <label><input id="permTransactions" type="checkbox" checked> Yatırım ve çekim talepleri</label>
@@ -68,7 +77,7 @@
         </form>
         <div id="teamAccountContent" class="team-account-state" role="status" aria-live="polite">Ekip hesabı bilgisi yükleniyor…</div>
         <div class="team-account-actions"><a class="admin-btn dark" href="../admin/login.html">Ekip giriş sayfası</a></div>
-        <p class="team-account-footnote">Her kaydetme, e-posta/parola değişikliği, etkinleştirme ve 2FA işlemi Owner doğrulama kodu ister. Yeni parola en az 12 karakter olmalıdır.</p>
+        <p class="team-account-footnote">Cüzdan sınırında 0 sınırsız demektir. Teminat otomatik duraklatma için toplam teminat belirle; eşik, toplam teminatın kullanılan yüzdesidir. Yeni parola en az 12 karakter olmalıdır.</p>
       </section>
     </main>
   </div>

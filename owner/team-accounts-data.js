@@ -6,6 +6,8 @@
   let accounts=[];
   function permissions(){return {dashboard:true,transactions:$('permTransactions').checked,reports:$('permReports').checked,wallets:$('permWallets').checked,support:$('permSupport').checked};}
   function setPermissions(value={}){$('permTransactions').checked=value.transactions!==false;$('permReports').checked=value.reports!==false;$('permWallets').checked=value.wallets!==false;$('permSupport').checked=value.support!==false;}
+  function controls(){return {walletLimit:Number($('teamWalletLimit').value||0),collateralTotal:Number($('teamCollateralTotal').value||0),collateralBalance:Number($('teamCollateralBalance').value||0),collateralPausePercent:Number($('teamCollateralPausePercent').value||80),allowSelfDisable:$('teamAllowSelfDisable').checked,collateralAutoPause:$('teamCollateralAutoPause').checked};}
+  function setControls(account={}){$('teamWalletLimit').value=Number(account.walletLimit||0);$('teamCollateralTotal').value=Number(account.collateralTotal||0);$('teamCollateralBalance').value=Number(account.collateralBalance||0);$('teamCollateralPausePercent').value=Number(account.collateralPausePercent||80);$('teamAllowSelfDisable').checked=!!account.allowSelfDisable;$('teamCollateralAutoPause').checked=!!account.collateralAutoPause;}
   async function request(url,body){
     const response=await fetch('../api/owner/team-accounts'+url,{method:body?'POST':'GET',credentials:'include',cache:'no-store',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
     const data=await response.json().catch(()=>({error:'invalid_response'}));
@@ -15,9 +17,12 @@
   function render(){
     if(!accounts.length){target.className='team-account-state';target.textContent='Henüz ekip hesabı eklenmemiş.';return;}
     target.className='team-account-table-wrap';
-    target.innerHTML='<table class="team-account-table"><thead><tr><th>Hesap</th><th>E-posta</th><th>2FA</th><th>Durum</th><th>Erişimler</th><th>İşlemler</th></tr></thead><tbody>'+accounts.map(account=>{
+    target.innerHTML='<table class="team-account-table"><thead><tr><th>Hesap</th><th>E-posta</th><th>2FA</th><th>Cüzdan</th><th>Teminat</th><th>Durum</th><th>Erişimler</th><th>İşlemler</th></tr></thead><tbody>'+accounts.map(account=>{
       const access=Object.entries(permissionLabels).filter(([key])=>account.permissions?.[key]).map(([,label])=>`<span>${label}</span>`).join('')||'<span>Yok</span>';
-      return `<tr><td><b>${esc(account.id)}</b></td><td class="team-account-email">${esc(account.email)}</td><td>${account.twoFactorEnabled?'Açık':'Kapalı'}</td><td><span class="team-account-badge ${account.active?'':'is-error'}">${account.active?'Aktif':'Pasif'}</span></td><td><div class="team-account-permission-list">${access}</div></td><td><button class="team-row-action" type="button" onclick="editTeamAccount('${esc(account.id)}')">Düzenle</button><button class="team-row-action ${account.active?'danger':''}" type="button" onclick="toggleTeamAccount('${esc(account.id)}')">${account.active?'Pasif yap':'Aktif yap'}</button><button class="team-row-action" type="button" onclick="toggleTeamTwoFactor('${esc(account.id)}')">2FA ${account.twoFactorEnabled?'kapat':'aç'}</button></td></tr>`;
+      const collateralTotal=Number(account.collateralTotal||0),collateralBalance=Number(account.collateralBalance||0),threshold=Number(account.collateralPausePercent||80);
+      const collateral=collateralTotal?`${collateralBalance.toLocaleString('tr-TR')} / ${collateralTotal.toLocaleString('tr-TR')} USDT`:'Ayarlı değil';
+      const twoFactor=account.twoFactorEnabled?'Açık':account.twoFactorSetupPending?'Kurulum bekliyor':'Kapalı';
+      return `<tr><td><b>${esc(account.id)}</b></td><td class="team-account-email">${esc(account.email)}</td><td>${twoFactor}</td><td>${Number(account.walletLimit||0)||'Sınırsız'}</td><td>${esc(collateral)}${account.collateralAutoPause?`<small class="team-account-sub">%${threshold} eşiği</small>`:''}${account.collateralPaused?'<small class="team-account-sub is-error">Teminat nedeniyle duraklatıldı</small>':''}</td><td><span class="team-account-badge ${account.active?'':'is-error'}">${account.active?'Aktif':'Pasif'}</span></td><td><div class="team-account-permission-list">${access}</div></td><td><button class="team-row-action" type="button" onclick="editTeamAccount('${esc(account.id)}')">Düzenle</button><button class="team-row-action ${account.active?'danger':''}" type="button" onclick="toggleTeamAccount('${esc(account.id)}')">${account.active?'Pasif yap':'Aktif yap'}</button><button class="team-row-action" type="button" onclick="toggleTeamTwoFactor('${esc(account.id)}')">2FA ${account.twoFactorEnabled?'kapat':'kur'}</button></td></tr>`;
     }).join('')+'</tbody></table>';
   }
   async function load(){
@@ -27,12 +32,12 @@
   }
   function resetForm(){
     $('teamAccountId').value='';$('teamEmail').value='';$('teamPassword').value='';$('teamEmail').readOnly=false;
-    $('saveTeamAccount').textContent='Ekip hesabı ekle';$('cancelTeamEdit').hidden=true;setPermissions({});$('teamAccountMessage').textContent='';
+    $('saveTeamAccount').textContent='Ekip hesabı ekle';$('cancelTeamEdit').hidden=true;setPermissions({});setControls({});$('teamAccountMessage').textContent='';
   }
   window.editTeamAccount=id=>{
     const account=accounts.find(item=>item.id===id);if(!account)return;
     $('teamAccountId').value=account.id;$('teamEmail').value=account.email;$('teamPassword').value='';$('teamEmail').readOnly=false;
-    setPermissions(account.permissions);$('saveTeamAccount').textContent='Değişiklikleri kaydet';$('cancelTeamEdit').hidden=false;
+    setPermissions(account.permissions);setControls(account);$('saveTeamAccount').textContent='Değişiklikleri kaydet';$('cancelTeamEdit').hidden=false;
     $('teamAccountMessage').textContent='Parolayı değiştirmeyeceksen boş bırak.';form.scrollIntoView({behavior:'smooth',block:'center'});
   };
   window.toggleTeamAccount=async id=>{
@@ -65,9 +70,17 @@
     event.preventDefault();const id=$('teamAccountId').value,email=$('teamEmail').value.trim(),password=$('teamPassword').value;
     if(!id&&password.length<12){$('teamAccountMessage').textContent='Yeni hesap parolası en az 12 karakter olmalı.';return;}
     const ownerTotpCode=prompt('Kaydetmek için Owner Google Authenticator kodunu girin:');if(!ownerTotpCode)return;
-    const payload={email,permissions:permissions(),ownerTotpCode};if(password)payload.password=password;
+    const payload={email,permissions:permissions(),ownerTotpCode,...controls()};if(password)payload.password=password;
     $('saveTeamAccount').disabled=true;$('teamAccountMessage').textContent='Kaydediliyor…';
-    try{if(id)await request('/'+encodeURIComponent(id),{action:'update',...payload});else await request('',payload);resetForm();$('teamAccountMessage').textContent='Ekip hesabı kaydedildi.';await load();}
+    try{
+      let resultMessage='Ekip hesabı kaydedildi.';
+      if(id){await request('/'+encodeURIComponent(id),{action:'update',...payload});$('teamAccountMessage').textContent='Ekip hesabı kaydedildi.';}
+      else{
+        const result=await request('',payload),setup=result.twoFactorSetup;
+        if(setup){alert(`Ekip hesabı için doğrulayıcı anahtarı:\n\n${setup.secret}\n\nAnahtarı ekip telefonundaki doğrulayıcı uygulamasına ekleyin.`);const teamTotpCode=prompt('Ekip doğrulayıcı uygulamasındaki 6 haneli kod:'),confirmOwnerCode=teamTotpCode?prompt('2FA kurulumunu tamamlamak için Owner doğrulama kodunu girin:'):null;if(teamTotpCode&&confirmOwnerCode)await request('/'+encodeURIComponent(result.account.id),{action:'verify_2fa',teamTotpCode,ownerTotpCode:confirmOwnerCode});else resultMessage='Hesap oluşturuldu; 2FA kurulumu tamamlanana kadar giriş kapalı kalır.';}
+      }
+      resetForm();$('teamAccountMessage').textContent=resultMessage;await load();
+    }
     catch(error){$('teamAccountMessage').textContent=error.message||'Ekip hesabı kaydedilemedi.';}
     finally{$('saveTeamAccount').disabled=false;}
   });

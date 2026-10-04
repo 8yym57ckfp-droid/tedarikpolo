@@ -44,12 +44,12 @@ const SYNTHETIC_TEST_COMMISSION_RATE = 0.03;
 const ADMIN_COOKIE = 'sp_admin_session';
 const OWNER_COOKIE = 'sp_owner_session';
 const DEFAULT_RATE_SETTINGS = { usdTrySpread: 1, trc20FeeUsdt: 0, erc20FeeUsdt: 0, quoteTtlSeconds: 60, maxRateAgeSeconds: 300, minRate: 0, maxRate: 100000 };
+const DEFAULT_REQUEST_LIMITS = { depositCooldownSeconds:120, withdrawalCooldownSeconds:120 };
 const TX_CONTROL = { autoRejectMinutes: 30, lockMinutes: 5, largeApprovalThreshold: 10000 };
 const txLocks = new Map();
 const idempotencyCache = new Map();
 const quoteStore = new Map();
 const requestCooldowns = new Map();
-const REQUEST_COOLDOWN_MS = 120000;
 const DEFAULT_MAINTENANCE = {
   site: { enabled:false, until:null, message:'Sitemiz güncelleniyor. Daha iyi bir deneyim için kısa bir bakım çalışması yapıyoruz.' },
   panel: { enabled:false, until:null, message:'Yönetim paneli güncelleniyor. Ekip erişimi bakım tamamlandığında yeniden açılacaktır.' }
@@ -82,6 +82,20 @@ async function savePublishedContent(items){const clean=cleanPublishedContent(ite
 function cleanTeamPermissions(value={}){
   return Object.fromEntries(Object.keys(DEFAULT_TEAM_PERMISSIONS).map(key=>[key,value?.[key]===true]));
 }
+async function getRequestLimits(){
+  let stored={};
+  if(pool){const result=await pool.query('SELECT content FROM site_content WHERE id=$1',['request-limits']);stored=result.rows[0]?.content||{};}
+  else stored=readDb().requestLimits||{};
+  const clean=value=>Math.min(86400,Math.max(0,Math.round(Number(value)||0)));
+  return {depositCooldownSeconds:clean(stored.depositCooldownSeconds??DEFAULT_REQUEST_LIMITS.depositCooldownSeconds),withdrawalCooldownSeconds:clean(stored.withdrawalCooldownSeconds??DEFAULT_REQUEST_LIMITS.withdrawalCooldownSeconds)};
+}
+async function saveRequestLimits(value){
+  const clean=field=>{const number=Number(value?.[field]);if(!Number.isInteger(number)||number<0||number>86400)throw new Error('Bekleme süreleri 0–86400 saniye arasında tam sayı olmalıdır.');return number;};
+  const limits={depositCooldownSeconds:clean('depositCooldownSeconds'),withdrawalCooldownSeconds:clean('withdrawalCooldownSeconds')};
+  if(pool)await pool.query('INSERT INTO site_content (id,content,updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (id) DO UPDATE SET content=EXCLUDED.content,updated_at=NOW()',['request-limits',JSON.stringify(limits)]);
+  else{const db=readDb();db.requestLimits=limits;writeDb(db);}
+  return limits;
+}
 function makeLegacyTeamAccount(){
   if(!TEAM_ADMIN_EMAIL||!TEAM_ADMIN_PASSWORD||!TEAM_ADMIN_TOTP_SECRET)return null;
   if(TEAM_ADMIN_EMAIL.toLowerCase()===ADMIN_EMAIL.toLowerCase()||TEAM_ADMIN_PASSWORD===ADMIN_PASSWORD||TEAM_ADMIN_TOTP_SECRET===ADMIN_TOTP_SECRET)return null;
@@ -94,14 +108,23 @@ async function bootstrapTeamAccounts(){
   await saveTeamAccount(account);
 }
 async function getTeamAccounts(){
-  if(pool){const result=await pool.query('SELECT id,email,password_hash AS "passwordHash",totp_secret AS "totpSecret",two_factor_enabled AS "twoFactorEnabled",active,permissions,created_at AS "createdAt",updated_at AS "updatedAt" FROM team_accounts ORDER BY created_at');return result.rows.map(account=>({...account,permissions:cleanTeamPermissions(account.permissions)}));}
-  return (readDb().teamAccounts||[]).map(account=>({...account,permissions:cleanTeamPermissions(account.permissions)}));
+  if(pool){const result=await pool.query('SELECT id,email,password_hash AS "passwordHash",totp_secret AS "totpSecret",two_factor_enabled AS "twoFactorEnabled",active,permissions,wallet_limit AS "walletLimit",collateral_total AS "collateralTotal",collateral_balance AS "collateralBalance",allow_self_disable AS "allowSelfDisable",collateral_auto_pause AS "collateralAutoPause",collateral_pause_percent AS "collateralPausePercent",collateral_paused AS "collateralPaused",created_at AS "createdAt",updated_at AS "updatedAt" FROM team_accounts ORDER BY created_at');return result.rows.map(account=>({...account,walletLimit:Number(account.walletLimit||0),collateralTotal:Number(account.collateralTotal||0),collateralBalance:Number(account.collateralBalance||0),collateralPausePercent:Number(account.collateralPausePercent||80),allowSelfDisable:!!account.allowSelfDisable,collateralAutoPause:!!account.collateralAutoPause,collateralPaused:!!account.collateralPaused,permissions:cleanTeamPermissions(account.permissions)}));}
+  return (readDb().teamAccounts||[]).map(account=>({...account,walletLimit:Number(account.walletLimit||0),collateralTotal:Number(account.collateralTotal||0),collateralBalance:Number(account.collateralBalance||0),collateralPausePercent:Number(account.collateralPausePercent||80),allowSelfDisable:!!account.allowSelfDisable,collateralAutoPause:!!account.collateralAutoPause,collateralPaused:!!account.collateralPaused,permissions:cleanTeamPermissions(account.permissions)}));
 }
 async function saveTeamAccount(account){
-  if(pool){await pool.query('INSERT INTO team_accounts (id,email,password_hash,totp_secret,two_factor_enabled,active,permissions,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9) ON CONFLICT (id) DO UPDATE SET email=EXCLUDED.email,password_hash=EXCLUDED.password_hash,totp_secret=EXCLUDED.totp_secret,two_factor_enabled=EXCLUDED.two_factor_enabled,active=EXCLUDED.active,permissions=EXCLUDED.permissions,updated_at=EXCLUDED.updated_at',[account.id,account.email,account.passwordHash,account.totpSecret||null,!!account.twoFactorEnabled,account.active!==false,JSON.stringify(cleanTeamPermissions(account.permissions)),account.createdAt||new Date().toISOString(),account.updatedAt||new Date().toISOString()]);return;}
+  if(pool){await pool.query('INSERT INTO team_accounts (id,email,password_hash,totp_secret,two_factor_enabled,active,permissions,wallet_limit,collateral_total,collateral_balance,allow_self_disable,collateral_auto_pause,collateral_pause_percent,collateral_paused,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10,$11,$12,$13,$14,$15,$16) ON CONFLICT (id) DO UPDATE SET email=EXCLUDED.email,password_hash=EXCLUDED.password_hash,totp_secret=EXCLUDED.totp_secret,two_factor_enabled=EXCLUDED.two_factor_enabled,active=EXCLUDED.active,permissions=EXCLUDED.permissions,wallet_limit=EXCLUDED.wallet_limit,collateral_total=EXCLUDED.collateral_total,collateral_balance=EXCLUDED.collateral_balance,allow_self_disable=EXCLUDED.allow_self_disable,collateral_auto_pause=EXCLUDED.collateral_auto_pause,collateral_pause_percent=EXCLUDED.collateral_pause_percent,collateral_paused=EXCLUDED.collateral_paused,updated_at=EXCLUDED.updated_at',[account.id,account.email,account.passwordHash,account.totpSecret||null,!!account.twoFactorEnabled,account.active!==false,JSON.stringify(cleanTeamPermissions(account.permissions)),Number(account.walletLimit||0),Number(account.collateralTotal||0),Number(account.collateralBalance||0),!!account.allowSelfDisable,!!account.collateralAutoPause,Number(account.collateralPausePercent||80),!!account.collateralPaused,account.createdAt||new Date().toISOString(),account.updatedAt||new Date().toISOString()]);return;}
   const db=readDb();db.teamAccounts=Array.isArray(db.teamAccounts)?db.teamAccounts:[];const index=db.teamAccounts.findIndex(item=>item.id===account.id);const clean={...account,permissions:cleanTeamPermissions(account.permissions),updatedAt:account.updatedAt||new Date().toISOString()};if(index<0)db.teamAccounts.push(clean);else db.teamAccounts[index]=clean;writeDb(db);
 }
-function publicTeamAccount(account){return {id:account.id,email:account.email,active:account.active!==false,twoFactorEnabled:!!account.twoFactorEnabled,permissions:cleanTeamPermissions(account.permissions),createdAt:account.createdAt||null,updatedAt:account.updatedAt||null};}
+function publicTeamAccount(account){return {id:account.id,email:account.email,active:account.active!==false,twoFactorEnabled:!!account.twoFactorEnabled,twoFactorSetupPending:!!account.totpSecret&&!account.twoFactorEnabled,permissions:cleanTeamPermissions(account.permissions),walletLimit:Number(account.walletLimit||0),collateralTotal:Number(account.collateralTotal||0),collateralBalance:Number(account.collateralBalance||0),allowSelfDisable:!!account.allowSelfDisable,collateralAutoPause:!!account.collateralAutoPause,collateralPausePercent:Number(account.collateralPausePercent||80),collateralPaused:!!account.collateralPaused,createdAt:account.createdAt||null,updatedAt:account.updatedAt||null};}
+function readTeamControls(value={},current={},creating=false){
+  const number=(key,fallback)=>value[key]===undefined?Number(current[key]??fallback):Number(value[key]);
+  const walletLimit=number('walletLimit',0),collateralTotal=number('collateralTotal',0),collateralBalance=number('collateralBalance',creating?collateralTotal:0),collateralPausePercent=number('collateralPausePercent',80);
+  if(!Number.isInteger(walletLimit)||walletLimit<0||walletLimit>5000||![collateralTotal,collateralBalance,collateralPausePercent].every(Number.isFinite)||collateralTotal<0||collateralBalance<0||collateralBalance>collateralTotal||collateralPausePercent<1||collateralPausePercent>100)return null;
+  const allowSelfDisable=value.allowSelfDisable===undefined?!!current.allowSelfDisable:!!value.allowSelfDisable;
+  const collateralAutoPause=value.collateralAutoPause===undefined?!!current.collateralAutoPause:!!value.collateralAutoPause;
+  if(collateralAutoPause&&collateralTotal<=0)return null;
+  return {walletLimit,collateralTotal,collateralBalance,allowSelfDisable,collateralAutoPause,collateralPausePercent};
+}
 async function clearTeamSessions(accountId){
   if(pool){await pool.query("DELETE FROM staff_sessions WHERE portal='admin' AND subject_id=$1",[accountId]);return;}
   for(const [sessionId,session] of adminSessions.entries())if(session.adminId===accountId)adminSessions.delete(sessionId);
@@ -220,8 +243,19 @@ async function pgInit(){
     id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, totp_secret TEXT,
     two_factor_enabled BOOLEAN NOT NULL DEFAULT FALSE, active BOOLEAN NOT NULL DEFAULT TRUE,
     permissions JSONB NOT NULL DEFAULT '{"dashboard":true,"transactions":true,"reports":true,"wallets":true,"support":true}'::jsonb,
+    wallet_limit INTEGER NOT NULL DEFAULT 0, collateral_total NUMERIC(20,8) NOT NULL DEFAULT 0,
+    collateral_balance NUMERIC(20,8) NOT NULL DEFAULT 0, allow_self_disable BOOLEAN NOT NULL DEFAULT FALSE,
+    collateral_auto_pause BOOLEAN NOT NULL DEFAULT FALSE, collateral_pause_percent NUMERIC(5,2) NOT NULL DEFAULT 80,
+    collateral_paused BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`);
+  await pool.query('ALTER TABLE team_accounts ADD COLUMN IF NOT EXISTS wallet_limit INTEGER NOT NULL DEFAULT 0');
+  await pool.query('ALTER TABLE team_accounts ADD COLUMN IF NOT EXISTS collateral_total NUMERIC(20,8) NOT NULL DEFAULT 0');
+  await pool.query('ALTER TABLE team_accounts ADD COLUMN IF NOT EXISTS collateral_balance NUMERIC(20,8) NOT NULL DEFAULT 0');
+  await pool.query('ALTER TABLE team_accounts ADD COLUMN IF NOT EXISTS allow_self_disable BOOLEAN NOT NULL DEFAULT FALSE');
+  await pool.query('ALTER TABLE team_accounts ADD COLUMN IF NOT EXISTS collateral_auto_pause BOOLEAN NOT NULL DEFAULT FALSE');
+  await pool.query('ALTER TABLE team_accounts ADD COLUMN IF NOT EXISTS collateral_pause_percent NUMERIC(5,2) NOT NULL DEFAULT 80');
+  await pool.query('ALTER TABLE team_accounts ADD COLUMN IF NOT EXISTS collateral_paused BOOLEAN NOT NULL DEFAULT FALSE');
   await pool.query(`CREATE TABLE IF NOT EXISTS staff_sessions (
     token_hash TEXT PRIMARY KEY, portal TEXT NOT NULL CHECK (portal IN ('admin','owner')),
     subject_id TEXT NOT NULL, email TEXT NOT NULL, role TEXT NOT NULL,
@@ -369,9 +403,26 @@ async function insertTransaction(tx, client=null){
   if(!pool){const db=readDb();db.transactions.unshift(tx);writeDb(db);return;}
   await (client||pool).query('INSERT INTO transactions (id,user_id,type,amount,requested_amount,received_amount,currency,network,status,created_at,tx_hash,address,wallet_id,request_key,locked_by,locked_at,decision_by,decision_at,expires_at,is_synthetic,test_run_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)',[tx.id,tx.userId,tx.type,tx.amount,tx.requestedAmount??tx.amount,tx.receivedAmount??null,tx.currency,tx.network,tx.status,tx.createdAt,tx.txHash||null,tx.address||null,tx.walletId||null,tx.requestKey||null,tx.lockedBy||null,tx.lockedAt||null,tx.decisionBy||null,tx.decisionAt||null,tx.expiresAt||null,!!tx.isSynthetic,tx.testRunId||null]);
 }
-async function applyTransactionDecision({tx,decision,approvedAmount,actor,decisionAt,payoutTxHash=null,client=null,dbState=null}){
+async function applyTransactionDecision({tx,decision,approvedAmount,actor,decisionAt,payoutTxHash=null,client=null,dbState=null,teamAccountId=null}){
   const requestedAmount=Number(tx.requestedAmount??tx.amount);
   const amountChanged=Math.abs(Number(approvedAmount)-requestedAmount)>1e-8;
+  let autoPausedTeamAccountId=null;
+  if(decision==='approved'&&tx.type==='withdrawal'&&teamAccountId){
+    let account;
+    if(client){const locked=await client.query('SELECT collateral_total AS "collateralTotal",collateral_balance AS "collateralBalance",collateral_auto_pause AS "collateralAutoPause",collateral_pause_percent AS "collateralPausePercent",active,collateral_paused AS "collateralPaused" FROM team_accounts WHERE id=$1 FOR UPDATE',[teamAccountId]);account=locked.rows[0];}
+    else if(dbState)account=(dbState.teamAccounts||[]).find(item=>item.id===teamAccountId);
+    if(!account)throw new Error('team_account_not_found');
+    const total=Number(account.collateralTotal||0),balance=Number(account.collateralBalance||0);
+    if(total>0){
+      if(Number(approvedAmount)>balance+1e-8)throw new Error('insufficient_team_collateral');
+      const nextBalance=Math.max(0,balance-Number(approvedAmount));
+      const usagePercent=total?((total-nextBalance)/total)*100:0;
+      const shouldPause=!!account.collateralAutoPause&&usagePercent>=Number(account.collateralPausePercent||80);
+      if(client){await client.query('UPDATE team_accounts SET collateral_balance=$1,collateral_paused=$2,active=CASE WHEN $2 THEN FALSE ELSE active END,updated_at=$3 WHERE id=$4',[nextBalance,shouldPause,decisionAt,teamAccountId]);if(shouldPause)await client.query("DELETE FROM staff_sessions WHERE portal='admin' AND subject_id=$1",[teamAccountId]);}
+      else{account.collateralBalance=nextBalance;account.collateralPaused=shouldPause;if(shouldPause)account.active=false;}
+      if(shouldPause)autoPausedTeamAccountId=teamAccountId;
+    }
+  }
   if(client){
     const result=await client.query("UPDATE transactions SET status=$1,amount=$2,requested_amount=COALESCE(requested_amount,$3),received_amount=$4,decision_by=$5,decision_at=$6,locked_by=NULL,locked_at=NULL,tx_hash=COALESCE($7,tx_hash) WHERE id=$8 AND status='pending'",[decision,approvedAmount,requestedAmount,approvedAmount,actor,decisionAt,payoutTxHash,tx.id]);
     if(!result.rowCount)throw new Error('transaction_not_pending');
@@ -389,7 +440,7 @@ async function applyTransactionDecision({tx,decision,approvedAmount,actor,decisi
       isSynthetic:!!tx.isSynthetic,testRunId:tx.testRunId||null,createdAt:decisionAt
     },client,dbState);
   }
-  return {requestedAmount,approvedAmount,amountChanged,payoutTxHash};
+  return {requestedAmount,approvedAmount,amountChanged,payoutTxHash,autoPausedTeamAccountId};
 }
 function utcDateKey(value){const date=value?new Date(value):new Date();return Number.isNaN(date.getTime())?'':date.toISOString().slice(0,10);}
 function validDateKey(value){return /^\d{4}-\d{2}-\d{2}$/.test(String(value||''))&&utcDateKey(`${value}T00:00:00.000Z`)===value;}
@@ -429,14 +480,54 @@ function buildFinanceReconciliation(transactions,{startDate,endDate,runId=null,c
 }
 function isProductionUser(user){return !user?.isSynthetic&&!user?.isTestAccount;}
 function isProductionTransaction(tx){return !tx?.isSynthetic;}
+let publicStatsCache={at:0,value:null};
+async function getPublicStats(){
+  const now=Date.now();
+  if(publicStatsCache.value&&now-publicStatsCache.at<30000)return publicStatsCache.value;
+  let stats;
+  if(pool){
+    const [members,transactions]=await Promise.all([
+      pool.query("SELECT COUNT(*)::int AS count FROM users WHERE role='member' AND is_synthetic=FALSE AND is_test_account=FALSE"),
+      pool.query("SELECT COUNT(*)::int AS total,COUNT(*) FILTER (WHERE status='approved')::int AS approved,COUNT(DISTINCT user_id) FILTER (WHERE created_at>=NOW()-INTERVAL '30 days')::int AS active_30_days FROM transactions WHERE is_synthetic=FALSE")
+    ]);
+    stats={members:members.rows[0].count,transactions:transactions.rows[0].total,approvedTransactions:transactions.rows[0].approved,activeUsers30Days:transactions.rows[0].active_30_days};
+  }else{
+    const [users,transactions]=await Promise.all([getUsers(),getTransactions()]);
+    const productionUsers=users.filter(user=>user.role==='member'&&isProductionUser(user));
+    const productionTransactions=transactions.filter(isProductionTransaction);
+    const cutoff=now-30*86400000;
+    stats={members:productionUsers.length,transactions:productionTransactions.length,approvedTransactions:productionTransactions.filter(tx=>tx.status==='approved').length,activeUsers30Days:new Set(productionTransactions.filter(tx=>new Date(tx.createdAt).getTime()>=cutoff).map(tx=>String(tx.userId))).size};
+  }
+  const result={...stats,updatedAt:new Date(now).toISOString()};
+  publicStatsCache={at:now,value:result};
+  return result;
+}
 async function getWalletAddresses({activeOnly=false}={}){
-  if(!pool){const rows=readDb().walletAddresses||[];return rows.filter(x=>!activeOnly||x.active);}
-  const r=await pool.query(`SELECT id,network,address,label,active,team_id AS "teamId",created_by AS "createdBy",created_at AS "createdAt",updated_at AS "updatedAt",use_count AS "useCount",last_used_at AS "lastUsedAt" FROM wallet_addresses ${activeOnly?'WHERE active=TRUE':''} ORDER BY created_at DESC`);
+  if(!pool){const db=readDb(),rows=db.walletAddresses||[],teams=new Map((db.teamAccounts||[]).map(account=>[account.id,account]));return rows.filter(wallet=>{if(!activeOnly)return true;if(!wallet.active)return false;if(!wallet.teamId)return true;const team=teams.get(wallet.teamId);return !!team&&team.active!==false&&!team.collateralPaused;});}
+  const r=await pool.query(`SELECT w.id,w.network,w.address,w.label,w.active,w.team_id AS "teamId",w.created_by AS "createdBy",w.created_at AS "createdAt",w.updated_at AS "updatedAt",w.use_count AS "useCount",w.last_used_at AS "lastUsedAt" FROM wallet_addresses w LEFT JOIN team_accounts t ON t.id=w.team_id ${activeOnly?'WHERE w.active=TRUE AND (w.team_id IS NULL OR (t.active=TRUE AND t.collateral_paused=FALSE))':''} ORDER BY w.created_at DESC`);
   return r.rows;
+}
+async function walletTeamAllowed(teamId,currentWalletId=null){
+  if(!teamId)return true;
+  const accounts=await getTeamAccounts(),team=accounts.find(account=>account.id===teamId);if(!team)return false;
+  const limit=Number(team.walletLimit||0);if(!limit)return true;
+  const wallets=await getWalletAddresses();return wallets.filter(wallet=>wallet.teamId===teamId&&wallet.id!==currentWalletId).length<limit;
+}
+function transactionTeamId(transaction,allTransactions,walletById){
+  if(transaction.type==='deposit'&&transaction.walletId)return walletById.get(transaction.walletId)?.teamId||null;
+  if(transaction.type!=='withdrawal')return null;
+  const timestamp=new Date(transaction.createdAt||0).getTime();
+  const latestDeposit=allTransactions.filter(item=>item.userId===transaction.userId&&item.type==='deposit'&&item.status==='approved'&&new Date(item.createdAt||0).getTime()<=timestamp).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))[0];
+  return latestDeposit?.walletId?walletById.get(latestDeposit.walletId)?.teamId||null:null;
+}
+async function teamOwnsTransaction(teamId,transaction,allTransactions){
+  if(!teamId||!transaction)return false;
+  const wallets=await getWalletAddresses();
+  return transactionTeamId(transaction,allTransactions,new Map(wallets.map(wallet=>[wallet.id,wallet])))===teamId;
 }
 async function saveWalletAddress(wallet){
   if(!pool){const db=readDb();db.walletAddresses=db.walletAddresses||[];const i=db.walletAddresses.findIndex(x=>x.id===wallet.id);if(i>=0)db.walletAddresses[i]={...db.walletAddresses[i],...wallet};else db.walletAddresses.unshift(wallet);writeDb(db);return wallet;}
-  await pool.query('INSERT INTO wallet_addresses (id,network,address,label,active,created_by,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (id) DO UPDATE SET network=EXCLUDED.network,address=EXCLUDED.address,label=EXCLUDED.label,active=EXCLUDED.active,updated_at=EXCLUDED.updated_at',[wallet.id,wallet.network,wallet.address,wallet.label,wallet.active,wallet.createdBy,wallet.createdAt,wallet.updatedAt]);
+  await pool.query('INSERT INTO wallet_addresses (id,network,address,label,active,team_id,created_by,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (id) DO UPDATE SET network=EXCLUDED.network,address=EXCLUDED.address,label=EXCLUDED.label,active=EXCLUDED.active,team_id=EXCLUDED.team_id,updated_at=EXCLUDED.updated_at',[wallet.id,wallet.network,wallet.address,wallet.label,wallet.active,wallet.teamId||null,wallet.createdBy,wallet.createdAt,wallet.updatedAt]);
   return wallet;
 }
 async function getDepositIntent(id,userId){
@@ -452,16 +543,18 @@ function isValidAddress(n,a){
 function makeUserId(existing=[]){ let id=''; do{id=String(crypto.randomInt(10000000,100000000));}while(existing.some(u=>String(u.id)===id)); return id; }
 function makeTxId(){ const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; return Array.from({length:10},()=>chars[crypto.randomInt(0,chars.length)]).join(''); }
 function currentBalance(u){return Number(u.balance||0);}
-async function requestCooldownRemaining(userId){
-  const mem=Number(requestCooldowns.get(String(userId))||0);
+async function requestCooldownRemaining(userId,type){
+  const limits=await getRequestLimits(),duration=Number(limits[type==='deposit'?'depositCooldownSeconds':'withdrawalCooldownSeconds']||0)*1000;
+  if(!duration)return 0;
+  const key=String(userId)+':'+type,mem=Number(requestCooldowns.get(key)||0);
   const now=Date.now();
   if(mem>now)return mem-now;
   const txs=await getTransactions();
-  const latest=txs.filter(x=>x.userId===userId && !x.isSynthetic && (x.type==='deposit'||x.type==='withdrawal') && x.createdAt).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))[0];
+  const latest=txs.filter(x=>x.userId===userId && !x.isSynthetic && x.type===type && x.createdAt).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))[0];
   if(!latest)return 0;
-  return Math.max(0,REQUEST_COOLDOWN_MS-(now-new Date(latest.createdAt).getTime()));
+  return Math.max(0,duration-(now-new Date(latest.createdAt).getTime()));
 }
-function startRequestCooldown(userId){requestCooldowns.set(String(userId),Date.now()+REQUEST_COOLDOWN_MS);}
+async function startRequestCooldown(userId,type){const limits=await getRequestLimits(),duration=Number(limits[type==='deposit'?'depositCooldownSeconds':'withdrawalCooldownSeconds']||0)*1000;if(duration)requestCooldowns.set(String(userId)+':'+type,Date.now()+duration);}
 
 async function refreshTransactionExpiry(){
   const now=Date.now();
@@ -486,6 +579,7 @@ function clearExpiredLock(tx){return tx.lockedBy && tx.lockedAt && (Date.now()-n
 async function route(req,res){
   if(req.method==='OPTIONS') return json(res,204,{});
   if(req.url==='/api/health' && req.method==='GET') return json(res,200,{ok:true,service:'safepays-api',version:'35.1.0'});
+  if(req.url==='/api/public/stats' && req.method==='GET')return json(res,200,await getPublicStats(),{'Cache-Control':'public, max-age=30'});
   await refreshTransactionExpiry();
   if(req.url==='/api/system/maintenance' && req.method==='GET') return json(res,200,{maintenance:await getMaintenance()});
   if(req.url==='/api/content' && req.method==='GET')return json(res,200,{items:(await getPublishedContent()).filter(x=>x.published)});
@@ -507,6 +601,7 @@ async function route(req,res){
     if(account.active===false||!verifyPassword(password,account.passwordHash)){addAudit('team_login_failed',email||'unknown',{...requestAuditMeta(req),reason:account.active===false?'inactive_account':'invalid_credentials'});return json(res,401,{error:'invalid_team_credentials'});}
     const credentialsOverlap=account.email.toLowerCase()===ADMIN_EMAIL.toLowerCase()||(ADMIN_PASSWORD&&verifyPassword(ADMIN_PASSWORD,account.passwordHash))||(account.totpSecret&&account.totpSecret===ADMIN_TOTP_SECRET);
     if(credentialsOverlap)return json(res,503,{error:'team_credentials_not_separate'});
+    if(account.totpSecret&&!account.twoFactorEnabled)return json(res,403,{error:'team_2fa_setup_pending',message:'Ekip hesabının 2FA kurulumu tamamlanmamış. Owner ile iletişime geçin.'});
     if(account.twoFactorEnabled&&(!/^\d{6}$/.test(code)||!account.totpSecret||!verifyTotp(account.totpSecret,code))){addAudit('team_login_failed',email,{...requestAuditMeta(req),reason:'invalid_2fa'});return json(res,401,{error:'invalid_2fa_code'});}
     await clearTeamSessions(account.id);
     const t=token(),session={adminId:account.id,email:account.email,role:'team_admin',active:account.active!==false,permissions:cleanTeamPermissions(account.permissions),expires:Date.now()+STAFF_TTL};await saveStaffSession(t,'admin',session);
@@ -559,8 +654,17 @@ async function route(req,res){
     const accounts=await getTeamAccounts();
     return json(res,200,{accounts:accounts.map(publicTeamAccount),configured:accounts.length>0});
   }
+  if(req.url==='/api/admin/team/self-disable'&&req.method==='POST'){
+    if(!teamAdmin)return json(res,owner?403:401,{error:owner?'team_admin_only':'unauthorized'});
+    const accounts=await getTeamAccounts(),account=accounts.find(item=>item.id===teamAdmin.adminId);
+    if(!account)return json(res,404,{error:'team_account_not_found'});
+    if(!account.allowSelfDisable)return json(res,403,{error:'self_disable_not_allowed'});
+    account.active=false;account.updatedAt=new Date().toISOString();await saveTeamAccount(account);await clearTeamSessions(account.id);
+    addAudit('team_account_self_disabled',account.email,{teamAccountId:account.id});
+    return json(res,200,{ok:true});
+  }
   if(req.url==='/api/admin/me' && req.method==='GET'){
-    if(!teamAdmin)return json(res,owner?403:401,{error:owner?'team_admin_only':'unauthorized'});return json(res,200,{admin:{id:teamAdmin.adminId,email:teamAdmin.email,role:teamAdmin.role,permissions:cleanTeamPermissions(teamAdmin.permissions)}},{'Set-Cookie':sessionCookie(ADMIN_COOKIE,parseCookies(req)[ADMIN_COOKIE],STAFF_TTL)});
+    if(!teamAdmin)return json(res,owner?403:401,{error:owner?'team_admin_only':'unauthorized'});const settings=(await getTeamAccounts()).find(account=>account.id===teamAdmin.adminId);return json(res,200,{admin:{id:teamAdmin.adminId,email:teamAdmin.email,role:teamAdmin.role,permissions:cleanTeamPermissions(teamAdmin.permissions),allowSelfDisable:!!settings?.allowSelfDisable,collateralBalance:Number(settings?.collateralBalance||0),collateralTotal:Number(settings?.collateralTotal||0),collateralAutoPause:!!settings?.collateralAutoPause,collateralPausePercent:Number(settings?.collateralPausePercent||80)}},{'Set-Cookie':sessionCookie(ADMIN_COOKIE,parseCookies(req)[ADMIN_COOKIE],STAFF_TTL)});
   }
   const requestedApiPath=new URL(req.url,'http://localhost').pathname;
   const ownerApiRequest=requestedApiPath==='/api/owner'||requestedApiPath.startsWith('/api/owner/');
@@ -575,7 +679,7 @@ async function route(req,res){
   if(requestedTestRunId&&!owner)return json(res,403,{error:'owner_only'});
   const requestedTestRun=requestedTestRunId?await getSyntheticFinanceRun(requestedTestRunId):null;
   if(requestedTestRunId&&!requestedTestRun)return json(res,404,{error:'synthetic_run_not_found'});
-  const ownerOnlyAdminRequest=adminPath==='/api/admin/content'||adminPath==='/api/admin/maintenance'||adminPath.startsWith('/api/admin/synthetic-finance')||adminPath.startsWith('/api/admin/team-accounts')||adminPath.startsWith('/api/admin/audit')||adminPath.startsWith('/api/admin/users')||adminPath.startsWith('/api/admin/user-center')||adminPath.startsWith('/api/admin/user/')||adminPath.startsWith('/api/admin/kyc')||(adminPath==='/api/admin/rates'&&req.method==='POST');
+  const ownerOnlyAdminRequest=adminPath==='/api/admin/content'||adminPath==='/api/admin/maintenance'||adminPath==='/api/admin/request-limits'||adminPath.startsWith('/api/admin/synthetic-finance')||adminPath.startsWith('/api/admin/team-accounts')||adminPath.startsWith('/api/admin/audit')||adminPath.startsWith('/api/admin/users')||adminPath.startsWith('/api/admin/user-center')||adminPath.startsWith('/api/admin/user/')||adminPath.startsWith('/api/admin/kyc')||(adminPath==='/api/admin/rates'&&req.method==='POST');
   if(teamAdmin&&!owner&&ownerOnlyAdminRequest)return json(res,403,{error:'owner_only'});
   if(teamAdmin&&!owner){const permission=teamPermissionForPath(adminPath);if(!teamAdmin.permissions?.[permission])return json(res,403,{error:'team_permission_denied',permission});}
   if(req.url==='/api/admin/verify-2fa' && req.method==='POST'){if(!admin)return json(res,401,{error:'unauthorized'});const b=await body(req),code=String(b.code||'').trim(),teamAccount=teamAdmin? (await getTeamAccounts()).find(account=>account.id===teamAdmin.adminId):null,secret=owner?ADMIN_TOTP_SECRET:teamAccount?.totpSecret,valid=!!secret&&verifyTotp(secret,code);if(!/^\d{6}$/.test(code)||!valid)return json(res,401,{error:'invalid_2fa_code'});addAudit('admin_sensitive_change_verified',admin.email,{role:admin.role});return json(res,200,{ok:true})}
@@ -594,16 +698,24 @@ async function route(req,res){
     await saveMaintenance(next); addAudit('maintenance_update',admin.email,{maintenance:next});
     return json(res,200,{ok:true,maintenance:next});
   }
+  if(req.url==='/api/admin/request-limits'&&req.method==='GET')return json(res,200,{limits:await getRequestLimits()});
+  if(req.url==='/api/admin/request-limits'&&req.method==='POST'){
+    if(!owner)return json(res,403,{error:'owner_only'});
+    try{const limits=await saveRequestLimits(await body(req));addAudit('request_limits_updated',admin.email,{limits});return json(res,200,{ok:true,limits});}
+    catch(error){return json(res,400,{error:'invalid_request_limits',message:error.message});}
+  }
   const adminUrl=new URL(req.url,'http://localhost');
   if(adminUrl.pathname==='/api/admin/team-accounts'&&req.method==='POST'){
     if(!owner)return json(res,403,{error:'owner_only'});
     const b=await body(req),email=String(b.email||'').trim().toLowerCase(),password=String(b.password||'');
     if(!/^\d{6}$/.test(String(b.ownerTotpCode||''))||!ADMIN_TOTP_SECRET||!verifyTotp(ADMIN_TOTP_SECRET,String(b.ownerTotpCode)))return json(res,401,{error:'invalid_2fa_code'});
     if(!validEmail(email)||email===ADMIN_EMAIL.toLowerCase()||password.length<12||password===ADMIN_PASSWORD)return json(res,400,{error:'invalid_team_account'});
+    const controls=readTeamControls(b,{},true);if(!controls)return json(res,400,{error:'invalid_team_settings',message:'Cüzdan sınırı, teminat ve otomatik duraklatma değerlerini kontrol edin.'});
     const accounts=await getTeamAccounts();if(accounts.some(account=>account.email.toLowerCase()===email))return json(res,409,{error:'team_email_in_use'});
-    const now=new Date().toISOString(),account={id:`TEAM-${crypto.randomBytes(5).toString('hex').toUpperCase()}`,email,passwordHash:hashPassword(password),totpSecret:null,twoFactorEnabled:false,active:true,permissions:cleanTeamPermissions(b.permissions||DEFAULT_TEAM_PERMISSIONS),createdAt:now,updatedAt:now};
+    const now=new Date().toISOString(),secret=base32Encode(crypto.randomBytes(20)),account={id:`TEAM-${crypto.randomBytes(5).toString('hex').toUpperCase()}`,email,passwordHash:hashPassword(password),totpSecret:secret,twoFactorEnabled:false,active:true,permissions:cleanTeamPermissions(b.permissions||DEFAULT_TEAM_PERMISSIONS),...controls,collateralPaused:false,createdAt:now,updatedAt:now};
     await saveTeamAccount(account);addAudit('team_account_created',admin.email,{teamAccountId:account.id,email:account.email});
-    return json(res,201,{ok:true,account:publicTeamAccount(account)});
+    const label=encodeURIComponent(`SafePays:${account.email}`),issuer=encodeURIComponent('SafePays');
+    return json(res,201,{ok:true,account:publicTeamAccount(account),twoFactorSetup:{secret,otpauthUrl:`otpauth://totp/${label}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`}});
   }
   const teamAccountMatch=adminUrl.pathname.match(/^\/api\/admin\/team-accounts\/([^/]+)$/);
   if(teamAccountMatch&&req.method==='POST'){
@@ -629,9 +741,12 @@ async function route(req,res){
     if(action!=='update')return json(res,400,{error:'unknown_team_account_action'});
     if(b.email!==undefined){const email=String(b.email||'').trim().toLowerCase();if(!validEmail(email)||email===ADMIN_EMAIL.toLowerCase())return json(res,400,{error:'invalid_team_email'});if(accounts.some(item=>item.id!==id&&item.email.toLowerCase()===email))return json(res,409,{error:'team_email_in_use'});account.email=email;}
     if(b.password!==undefined&&String(b.password)){const password=String(b.password);if(password.length<12||password===ADMIN_PASSWORD)return json(res,400,{error:'invalid_team_password'});account.passwordHash=hashPassword(password);}
+    const previousBalance=Number(account.collateralBalance||0),wasCollateralPaused=!!account.collateralPaused,controls=readTeamControls(b,account);if(!controls)return json(res,400,{error:'invalid_team_settings',message:'Cüzdan sınırı, teminat ve otomatik duraklatma değerlerini kontrol edin.'});Object.assign(account,controls);
+    if(wasCollateralPaused&&b.active===true&&account.collateralBalance<=previousBalance)return json(res,409,{error:'team_collateral_top_up_required',message:'Ekibi yeniden etkinleştirmek için teminat bakiyesini artırın.'});
+    if(wasCollateralPaused&&account.collateralBalance>previousBalance){account.collateralPaused=false;if(b.active!==false)account.active=true;}
     if(b.active!==undefined)account.active=!!b.active;
     if(b.permissions!==undefined)account.permissions=cleanTeamPermissions(b.permissions);
-    account.updatedAt=now;await saveTeamAccount(account);await clearTeamSessions(id);addAudit('team_account_updated',admin.email,{teamAccountId:id,emailChanged:b.email!==undefined,passwordChanged:!!b.password,active:account.active,permissions:account.permissions});
+    account.updatedAt=now;await saveTeamAccount(account);await clearTeamSessions(id);addAudit('team_account_updated',admin.email,{teamAccountId:id,emailChanged:b.email!==undefined,passwordChanged:!!b.password,active:account.active,permissions:account.permissions,walletLimit:account.walletLimit,collateralBalance:account.collateralBalance});
     return json(res,200,{ok:true,account:publicTeamAccount(account)});
   }
   if(adminUrl.pathname==='/api/admin/synthetic-finance/eligible-users' && req.method==='GET'){
@@ -797,12 +912,12 @@ async function route(req,res){
     addAudit('user_security_'+action,admin.email,{userId:id,reason}); return json(res,200,{ok:true,security:{status,withdrawalFrozen:wf,depositFrozen:df,reason:reason||null,updatedAt:now}});
   }
   if(adminQuery.pathname==='/api/admin/transactions' && req.method==='GET'){
-    if(!admin)return json(res,401,{error:'unauthorized'}); const transactions=(await getTransactions()).filter(item=>requestedTestRunId?item.testRunId===requestedTestRunId:isProductionTransaction(item)); return json(res,200,{transactions:transactions.map(item=>owner&&requestedTestRunId?item:safeTransaction(item))});
+    if(!admin)return json(res,401,{error:'unauthorized'}); const all=await getTransactions();let transactions=all.filter(item=>requestedTestRunId?item.testRunId===requestedTestRunId:isProductionTransaction(item));if(teamAdmin&&!owner){const wallets=await getWalletAddresses(),byId=new Map(wallets.map(wallet=>[wallet.id,wallet]));transactions=transactions.filter(item=>transactionTeamId(item,all,byId)===teamAdmin.adminId);}return json(res,200,{transactions:transactions.map(item=>owner&&requestedTestRunId?item:safeTransaction(item))});
   }
   if(req.url==='/api/admin/transactions/verify-chain' && req.method==='POST'){
     if(!admin)return json(res,401,{error:'unauthorized'});
     const b=await body(req),id=String(b.transactionId||''),transactions=await getTransactions(),tx=transactions.find(x=>x.id===id);
-    if(!tx)return json(res,404,{error:'transaction_not_found'});
+    if(!tx||teamAdmin&&!owner&&!(await teamOwnsTransaction(teamAdmin.adminId,tx,transactions)))return json(res,404,{error:'transaction_not_found'});
     if(tx.isSynthetic)return json(res,409,{error:'synthetic_transaction_has_no_chain_transfer'});
     if(!['deposit','withdrawal'].includes(tx.type))return json(res,400,{error:'unsupported_transaction_type'});
     const txHash=tx.type==='deposit'?String(tx.txHash||''):String(b.txHash||'').trim();
@@ -817,7 +932,7 @@ async function route(req,res){
     if(!admin)return json(res,401,{error:'unauthorized'}); const userId=adminQuery.searchParams.get('userId')||null; const ledger=await getLedger(userId); return json(res,200,{ledger:ledger.filter(item=>requestedTestRunId?item.testRunId===requestedTestRunId:!item.isSynthetic).map(safeLedgerEntry)});
   }
   if(req.url==='/api/admin/wallet-addresses' && req.method==='GET'){
-    if(!admin)return json(res,401,{error:'unauthorized'});return json(res,200,{wallets:await getWalletAddresses()});
+    if(!admin)return json(res,401,{error:'unauthorized'});const all=await getWalletAddresses();return json(res,200,{wallets:teamAdmin&&!owner?all.filter(wallet=>wallet.teamId===teamAdmin.adminId):all});
   }
   if(req.url==='/api/admin/wallet-addresses' && req.method==='POST'){
     if(!admin)return json(res,401,{error:'unauthorized'});
@@ -828,10 +943,14 @@ async function route(req,res){
       if(!isValidAddress(network,address))return json(res,400,{error:'invalid_address'});
       if(!label)return json(res,400,{error:'invalid_label'});
       if((await getWalletAddresses()).some(w=>w.network===network&&String(w.address).toLowerCase()===address.toLowerCase()))return json(res,409,{error:'wallet_exists'});
-      const now=new Date().toISOString(),wallet={id:`WLT-${crypto.randomBytes(6).toString('hex').toUpperCase()}`,network,address,label,active:b.active!==false,createdBy:admin.email,createdAt:now,updatedAt:now,useCount:0,lastUsedAt:null};
-      await saveWalletAddress(wallet);addAudit('wallet_address_created',admin.email,{walletId:wallet.id,network});return json(res,201,{ok:true,wallet});
+      const teamId=owner?(String(b.teamId||'').trim()||null):(teamAdmin?.adminId||null);
+      if(teamId&&!((await getTeamAccounts()).some(account=>account.id===teamId)))return json(res,400,{error:'invalid_team_account'});
+      if(teamId&&!(await walletTeamAllowed(teamId)))return json(res,409,{error:'team_wallet_limit_reached',message:'Bu ekibin kayıtlı cüzdan sınırına ulaşıldı.'});
+      const now=new Date().toISOString(),wallet={id:`WLT-${crypto.randomBytes(6).toString('hex').toUpperCase()}`,network,address,label,active:b.active!==false,teamId,createdBy:admin.email,createdAt:now,updatedAt:now,useCount:0,lastUsedAt:null};
+      await saveWalletAddress(wallet);addAudit('wallet_address_created',admin.email,{walletId:wallet.id,network,teamId});return json(res,201,{ok:true,wallet});
     }
     const id=String(b.id||''),wallets=await getWalletAddresses(),current=wallets.find(w=>w.id===id);if(!current)return json(res,404,{error:'wallet_not_found'});
+    if(teamAdmin&&!owner&&current.teamId!==teamAdmin.adminId)return json(res,404,{error:'wallet_not_found'});
     if(action==='delete'){
       if((await getTransactions()).some(x=>x.walletId===id)){
         if(pool)await pool.query('UPDATE wallet_addresses SET active=FALSE,updated_at=NOW() WHERE id=$1',[id]);else{const db=readDb();const w=(db.walletAddresses||[]).find(x=>x.id===id);w.active=false;w.updatedAt=new Date().toISOString();writeDb(db);}
@@ -844,7 +963,10 @@ async function route(req,res){
       const network=String(b.network||current.network).toUpperCase(),address=String(b.address||current.address).trim(),label=String(b.label||current.label).trim().slice(0,80);
       if(!isValidNetwork(network))return json(res,400,{error:'invalid_network'});if(!isValidAddress(network,address))return json(res,400,{error:'invalid_address'});if(!label)return json(res,400,{error:'invalid_label'});
       if(wallets.some(w=>w.id!==id&&w.network===network&&String(w.address).toLowerCase()===address.toLowerCase()))return json(res,409,{error:'wallet_exists'});
-      const next={...current,network,address,label,active:b.active===undefined?current.active:!!b.active,updatedAt:new Date().toISOString()};await saveWalletAddress(next);addAudit('wallet_address_updated',admin.email,{walletId:id,network,active:next.active});return json(res,200,{ok:true,wallet:next});
+      const teamId=owner&&b.teamId!==undefined?(String(b.teamId||'').trim()||null):current.teamId||null;
+      if(teamId&&!((await getTeamAccounts()).some(account=>account.id===teamId)))return json(res,400,{error:'invalid_team_account'});
+      if(teamId&&!(await walletTeamAllowed(teamId,id)))return json(res,409,{error:'team_wallet_limit_reached',message:'Bu ekibin kayıtlı cüzdan sınırına ulaşıldı.'});
+      const next={...current,network,address,label,teamId,active:b.active===undefined?current.active:!!b.active,updatedAt:new Date().toISOString()};await saveWalletAddress(next);addAudit('wallet_address_updated',admin.email,{walletId:id,network,active:next.active,teamId});return json(res,200,{ok:true,wallet:next});
     }
     return json(res,400,{error:'invalid_action'});
   }
@@ -867,25 +989,27 @@ async function route(req,res){
     if(pool)await pool.query('UPDATE users SET kyc_status=$1 WHERE id=$2',[decision,id]); else{const db=readDb();const u=db.users.find(x=>x.id===id);if(!u)return json(res,404,{error:'user_not_found'});u.kycStatus=decision;writeDb(db);} addAudit('kyc_decision',admin.email,{userId:id,decision}); return json(res,200,{ok:true,status:decision});
   }
   if(req.url==='/api/admin/transactions/lock' && req.method==='POST'){
-    if(!admin)return json(res,401,{error:'unauthorized'}); const b=await body(req); const id=String(b.transactionId||''); const all=await getTransactions(); const tx=all.find(x=>x.id===id); if(!tx)return json(res,404,{error:'transaction_not_found'}); if(tx.isSynthetic&&!owner)return json(res,404,{error:'transaction_not_found'}); if(tx.status!=='pending')return json(res,409,{error:'not_pending',status:tx.status});
+    if(!admin)return json(res,401,{error:'unauthorized'}); const b=await body(req); const id=String(b.transactionId||''); const all=await getTransactions(); const tx=all.find(x=>x.id===id); if(!tx||teamAdmin&&!owner&&!(await teamOwnsTransaction(teamAdmin.adminId,tx,all)))return json(res,404,{error:'transaction_not_found'}); if(tx.isSynthetic&&!owner)return json(res,404,{error:'transaction_not_found'}); if(tx.status!=='pending')return json(res,409,{error:'not_pending',status:tx.status});
     if(isLocked(tx) && tx.lockedBy!==admin.email)return json(res,409,{error:'transaction_locked',lockedBy:tx.lockedBy});
     const now=new Date().toISOString(); if(pool) await pool.query('UPDATE transactions SET locked_by=$1, locked_at=$2 WHERE id=$3',[admin.email,now,id]); else {const db=readDb();const row=db.transactions.find(x=>x.id===id);row.lockedBy=admin.email;row.lockedAt=now;writeDb(db);} txLocks.set(lockKey(id),admin.email); addAudit('transaction_lock',admin.email,{transactionId:id,lockMinutes:TX_CONTROL.lockMinutes}); return json(res,200,{ok:true,lockedBy:admin.email,lockedAt:now,lockMinutes:TX_CONTROL.lockMinutes});
   }
     if(req.url==='/api/admin/transactions/reopen' && req.method==='POST'){
-    if(!admin)return json(res,401,{error:'unauthorized'}); const b=await body(req); const id=String(b.transactionId||''); const all=await getTransactions(); const tx=all.find(x=>x.id===id); if(!tx)return json(res,404,{error:'transaction_not_found'}); if(tx.isSynthetic&&!owner)return json(res,404,{error:'transaction_not_found'}); if(!['auto-rejected','rejected'].includes(tx.status))return json(res,409,{error:'not_reopenable',status:tx.status});
+    if(!admin)return json(res,401,{error:'unauthorized'}); const b=await body(req); const id=String(b.transactionId||''); const all=await getTransactions(); const tx=all.find(x=>x.id===id); if(!tx||teamAdmin&&!owner&&!(await teamOwnsTransaction(teamAdmin.adminId,tx,all)))return json(res,404,{error:'transaction_not_found'}); if(tx.isSynthetic&&!owner)return json(res,404,{error:'transaction_not_found'}); if(!['auto-rejected','rejected'].includes(tx.status))return json(res,409,{error:'not_reopenable',status:tx.status});
     const expiresAt=new Date(Date.now()+TX_CONTROL.autoRejectMinutes*60000).toISOString(); if(pool) await pool.query("UPDATE transactions SET status='pending', decision_by=NULL, decision_at=NULL, locked_by=NULL, locked_at=NULL, expires_at=$1 WHERE id=$2",[expiresAt,id]); else {const db=readDb();const row=db.transactions.find(x=>x.id===id);row.status='pending';row.decisionBy=null;row.decisionAt=null;row.lockedBy=null;row.lockedAt=null;row.expiresAt=expiresAt;writeDb(db);} addAudit('transaction_reopen',admin.email,{transactionId:id,expiresAt}); return json(res,200,{ok:true,status:'pending',expiresAt});
   }
   if(adminQuery.pathname==='/api/admin/transactions/decision' && req.method==='POST'){
     if(!admin)return json(res,401,{error:'unauthorized'}); const b=await body(req); const id=String(b.transactionId||''); const decision=['approved','rejected'].includes(b.decision)?b.decision:null; if(!decision)return json(res,400,{error:'invalid_decision'});
-    const all=await getTransactions(); const tx=all.find(x=>x.id===id); if(!tx)return json(res,404,{error:'transaction_not_found'}); if(tx.isSynthetic&&(!owner||!requestedTestRunId||tx.testRunId!==requestedTestRunId))return json(res,404,{error:'transaction_not_found'}); if(tx.status!=='pending')return json(res,409,{error:'already_processed',status:tx.status});
+    const all=await getTransactions(); const tx=all.find(x=>x.id===id); if(!tx||teamAdmin&&!owner&&!(await teamOwnsTransaction(teamAdmin.adminId,tx,all)))return json(res,404,{error:'transaction_not_found'}); if(tx.isSynthetic&&(!owner||!requestedTestRunId||tx.testRunId!==requestedTestRunId))return json(res,404,{error:'transaction_not_found'}); if(tx.status!=='pending')return json(res,409,{error:'already_processed',status:tx.status});
     if(isLocked(tx) && tx.lockedBy!==admin.email)return json(res,409,{error:'transaction_locked',lockedBy:tx.lockedBy});
     const requestedAmount=Number(tx.requestedAmount??tx.requested_amount??tx.amount); const rawApproved=b.approvedAmount; const approvedAmount=decision==='approved' && rawApproved!==undefined && rawApproved!==null && rawApproved!==''?Number(rawApproved):Number(tx.amount); if(decision==='approved'&&(!Number.isFinite(approvedAmount)||approvedAmount<=0))return json(res,400,{error:'invalid_approved_amount'});
     const payoutTxHash=tx.type==='withdrawal'&&decision==='approved'&&!tx.isSynthetic?String(b.payoutTxHash||'').trim():null;
     if(payoutTxHash!==null&&payoutTxHash.length<16)return json(res,400,{error:'payout_tx_hash_required',message:'Çekimi onaylamadan önce gönderdiğiniz transferin işlem kimliğini girin.'});
     if(decision==='approved' && tx.type==='withdrawal'){const u=await findUserById(tx.userId);if(approvedAmount>Number(u.balance||0))return json(res,409,{error:'insufficient_balance_at_approval'});}
     const decisionAt=new Date().toISOString(); const amountChanged=Math.abs(approvedAmount-requestedAmount)>1e-8;
-    if(pool){const client=await pool.connect(); try {await client.query('BEGIN'); const lock=await client.query("SELECT status, locked_by FROM transactions WHERE id=$1 FOR UPDATE",[id]); if(!lock.rows[0]||lock.rows[0].status!=='pending'){await client.query('ROLLBACK');return json(res,409,{error:'already_processed'});} if(lock.rows[0].locked_by&&lock.rows[0].locked_by!==admin.email){await client.query('ROLLBACK');return json(res,409,{error:'transaction_locked',lockedBy:lock.rows[0].locked_by});} if(decision==='approved'&&tx.type==='withdrawal'){const lockedUser=await client.query('SELECT balance FROM users WHERE id=$1 FOR UPDATE',[tx.userId]);if(!lockedUser.rows[0]||approvedAmount>Number(lockedUser.rows[0].balance||0)){await client.query('ROLLBACK');return json(res,409,{error:'insufficient_balance_at_approval'});}} await applyTransactionDecision({tx,decision,approvedAmount,actor:admin.email,decisionAt,payoutTxHash,client}); await client.query('COMMIT');} catch(e){await client.query('ROLLBACK');throw e;} finally{client.release();}}
-    else{const db=readDb();const row=db.transactions.find(x=>x.id===id);if(!row||row.status!=='pending')return json(res,409,{error:'already_processed'});if(row.lockedBy&&row.lockedBy!==admin.email&&isLocked(row))return json(res,409,{error:'transaction_locked',lockedBy:row.lockedBy});try{await applyTransactionDecision({tx,decision,approvedAmount,actor:admin.email,decisionAt,payoutTxHash,dbState:db});}catch(e){if(e.message==='negative_balance')return json(res,409,{error:'negative_balance_at_approval'});throw e;}writeDb(db);}
+    let decisionResult;
+    if(pool){const client=await pool.connect(); try {await client.query('BEGIN'); const lock=await client.query("SELECT status, locked_by FROM transactions WHERE id=$1 FOR UPDATE",[id]); if(!lock.rows[0]||lock.rows[0].status!=='pending'){await client.query('ROLLBACK');return json(res,409,{error:'already_processed'});} if(lock.rows[0].locked_by&&lock.rows[0].locked_by!==admin.email){await client.query('ROLLBACK');return json(res,409,{error:'transaction_locked',lockedBy:lock.rows[0].locked_by});} if(decision==='approved'&&tx.type==='withdrawal'){const lockedUser=await client.query('SELECT balance FROM users WHERE id=$1 FOR UPDATE',[tx.userId]);if(!lockedUser.rows[0]||approvedAmount>Number(lockedUser.rows[0].balance||0)){await client.query('ROLLBACK');return json(res,409,{error:'insufficient_balance_at_approval'});}} decisionResult=await applyTransactionDecision({tx,decision,approvedAmount,actor:admin.email,decisionAt,payoutTxHash,client,teamAccountId:teamAdmin&&!owner?teamAdmin.adminId:null}); await client.query('COMMIT');} catch(e){await client.query('ROLLBACK');if(e.message==='insufficient_team_collateral')return json(res,409,{error:'insufficient_team_collateral',message:'Ekip teminat bakiyesi bu çekimi karşılamıyor.'});throw e;} finally{client.release();}}
+    else{const db=readDb();const row=db.transactions.find(x=>x.id===id);if(!row||row.status!=='pending')return json(res,409,{error:'already_processed'});if(row.lockedBy&&row.lockedBy!==admin.email&&isLocked(row))return json(res,409,{error:'transaction_locked',lockedBy:row.lockedBy});try{decisionResult=await applyTransactionDecision({tx,decision,approvedAmount,actor:admin.email,decisionAt,payoutTxHash,dbState:db,teamAccountId:teamAdmin&&!owner?teamAdmin.adminId:null});}catch(e){if(e.message==='negative_balance')return json(res,409,{error:'negative_balance_at_approval'});if(e.message==='insufficient_team_collateral')return json(res,409,{error:'insufficient_team_collateral',message:'Ekip teminat bakiyesi bu çekimi karşılamıyor.'});throw e;}writeDb(db);}
+    if(decisionResult?.autoPausedTeamAccountId){await clearTeamSessions(decisionResult.autoPausedTeamAccountId);addAudit('team_account_collateral_auto_paused',decisionResult.autoPausedTeamAccountId,{teamAccountId:decisionResult.autoPausedTeamAccountId,transactionId:id,approvedAmount});}
     addAudit('transaction_decision',admin.email,{transactionId:id,userId:tx.userId,type:tx.type,decision,requestedAmount,approvedAmount,amountChanged,payoutTxHash}); return json(res,200,{ok:true,status:decision,decisionBy:admin.email,decisionAt,requestedAmount,approvedAmount,amountChanged,payoutTxHash});
   }
   if(req.url==='/api/admin/audit' && req.method==='GET'){
@@ -1077,7 +1201,7 @@ async function route(req,res){
       const client=await pool.connect();
       try{
         await client.query('BEGIN');
-        const picked=await client.query('SELECT id,network,address,label FROM wallet_addresses WHERE network=$1 AND active=TRUE ORDER BY last_used_at NULLS FIRST,use_count,created_at FOR UPDATE SKIP LOCKED LIMIT 1',[network]);
+        const picked=await client.query('SELECT w.id,w.network,w.address,w.label FROM wallet_addresses w LEFT JOIN team_accounts t ON t.id=w.team_id WHERE w.network=$1 AND w.active=TRUE AND (w.team_id IS NULL OR (t.active=TRUE AND t.collateral_paused=FALSE)) ORDER BY w.last_used_at NULLS FIRST,w.use_count,w.created_at LIMIT 1 FOR UPDATE OF w SKIP LOCKED',[network]);
         if(!picked.rows[0]){await client.query('ROLLBACK');return json(res,409,{error:'wallet_unavailable'});}
         wallet=picked.rows[0];await client.query('UPDATE wallet_addresses SET use_count=use_count+1,last_used_at=$1,updated_at=$1 WHERE id=$2',[now.toISOString(),wallet.id]);
         intent={id:`DPI-${crypto.randomBytes(12).toString('hex').toUpperCase()}`,userId:uid,walletId:wallet.id,amount,network,createdAt:now.toISOString(),expiresAt};
@@ -1102,8 +1226,8 @@ async function route(req,res){
     const wallet=(await getWalletAddresses()).find(w=>w.id===intent.walletId);if(!wallet)return json(res,400,{error:'wallet_unavailable'});
     const existing=(await getTransactions()).find(x=>x.txHash&&x.txHash.toLowerCase()===txHash.toLowerCase());
     if(existing)return json(res,409,{error:'duplicate_tx_hash',transactionId:existing.id});
-    const cooldown=await requestCooldownRemaining(uid);
-    if(cooldown>0)return json(res,429,{error:'request_cooldown',cooldownSeconds:Math.ceil(cooldown/1000),message:'Yeni yatırım veya çekim talebi için '+Math.ceil(cooldown/1000)+' saniye beklemelisiniz.'});
+    const cooldown=await requestCooldownRemaining(uid,'deposit');
+    if(cooldown>0)return json(res,429,{error:'request_cooldown',cooldownSeconds:Math.ceil(cooldown/1000),message:'Yeni yatırım talebi için '+Math.ceil(cooldown/1000)+' saniye beklemelisiniz.'});
     const createdAt=new Date(); const tx={id:makeTxId(),userId:uid,type:'deposit',amount,requestedAmount:amount,receivedAmount:null,currency:'USDT',network,status:'pending',createdAt:createdAt.toISOString(),txHash,address:wallet.address,walletId:wallet.id,requestKey,expiresAt:new Date(createdAt.getTime()+TX_CONTROL.autoRejectMinutes*60000).toISOString()};
     if(pool){
       const client=await pool.connect();
@@ -1119,7 +1243,7 @@ async function route(req,res){
       if(!row||row.usedAt||new Date(row.expiresAt).getTime()<=Date.now())return json(res,400,{error:'invalid_deposit_intent'});
       row.usedAt=new Date().toISOString();db.transactions.unshift(tx);writeDb(db);
     }
-    startRequestCooldown(uid); addAudit('deposit_request',uid,{transactionId:tx.id,amount,network});
+    await startRequestCooldown(uid,'deposit'); addAudit('deposit_request',uid,{transactionId:tx.id,amount,network});
     return json(res,201,{ok:true,transaction:tx,requestKey,message:'Yatırım talebi alındı. Yeni talep oluşturabilirsiniz; her talep ayrı işlem ID ile kaydedilir.'});
   }
   if(req.url==='/api/withdrawals' && req.method==='POST'){
@@ -1132,9 +1256,9 @@ async function route(req,res){
     if(amount>currentBalance(u))return json(res,400,{error:'insufficient_balance'});
     const pending=(await getTransactions()).filter(x=>x.userId===uid&&x.type==='withdrawal'&&x.status==='pending').reduce((a,x)=>a+Number(x.amount||0),0);
     if(amount+pending>currentBalance(u))return json(res,400,{error:'insufficient_available_balance'});
-    const cooldown=await requestCooldownRemaining(uid);
-    if(cooldown>0)return json(res,429,{error:'request_cooldown',cooldownSeconds:Math.ceil(cooldown/1000),message:'Yeni yatırım veya çekim talebi için '+Math.ceil(cooldown/1000)+' saniye beklemelisiniz.'});
-    startRequestCooldown(uid);
+    const cooldown=await requestCooldownRemaining(uid,'withdrawal');
+    if(cooldown>0)return json(res,429,{error:'request_cooldown',cooldownSeconds:Math.ceil(cooldown/1000),message:'Yeni çekim talebi için '+Math.ceil(cooldown/1000)+' saniye beklemelisiniz.'});
+    await startRequestCooldown(uid,'withdrawal');
     const createdAt=new Date(); const tx={id:makeTxId(),userId:uid,type:'withdrawal',amount,requestedAmount:amount,receivedAmount:null,currency:'USDT',network,status:'pending',createdAt:createdAt.toISOString(),txHash:null,address,requestKey,expiresAt:new Date(createdAt.getTime()+TX_CONTROL.autoRejectMinutes*60000).toISOString()};
     await insertTransaction(tx); addAudit('withdrawal_request',uid,{transactionId:tx.id,amount,network});
     return json(res,201,{ok:true,transaction:tx,requestKey,message:'Çekim talebi alındı. Yeni talep oluşturabilirsiniz; her talep ayrı işlem ID ile kaydedilir.'});
