@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS team_accounts (
   commission_percent NUMERIC(5,2) NOT NULL DEFAULT 3,
   collateral_auto_pause BOOLEAN NOT NULL DEFAULT FALSE, collateral_pause_percent NUMERIC(5,2) NOT NULL DEFAULT 80,
   collateral_paused BOOLEAN NOT NULL DEFAULT FALSE,
+  deposits_paused BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE TABLE IF NOT EXISTS staff_sessions (

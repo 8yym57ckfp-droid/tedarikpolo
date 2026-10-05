@@ -4,13 +4,25 @@
   const number=value=>Number(value||0).toLocaleString('tr-TR');
   const amount=value=>Number(value||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:4})+' USDT';
   const cashUpdateTime=()=>new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  function updateTeamDepositState(admin={}){
+    const status=byId('teamDepositStatus'),statusText=byId('teamDepositStatusText');
+    if(!status||!statusText)return;
+    const manuallyPaused=!!admin.depositsPaused,collateralPaused=!!admin.collateralPaused,accountActive=admin.active!==false;
+    const accepting=admin.acceptingDeposits===undefined?accountActive&&!manuallyPaused&&!collateralPaused:!!admin.acceptingDeposits;
+    status.dataset.state=accepting?'active':accountActive?'paused':'inactive';
+    statusText.textContent=accepting?'Yatırım alımı aktif':!accountActive?'Hesap pasif':collateralPaused&&!manuallyPaused?'Yatırım pasif · teminat sınırı':'Yatırım alımı pasif';
+    const total=Number(admin.collateralTotal||0),note=byId('teamCashNote');
+    if(note)note.textContent=total>0?`Toplam teminat ${amount(total)}${accepting?' · çekim ödemeleriyle güncellenir':' · yeni yatırımlar duraklatıldı'}`:accepting?'Teminat sınırı tanımlanmamış':'Yeni yatırım yönlendirmesi duraklatıldı';
+    const toggle=byId('selfDisableTeam'),label=byId('teamActiveLabel');
+    if(toggle){toggle.setAttribute('aria-checked',manuallyPaused?'false':'true');toggle.setAttribute('aria-label',manuallyPaused?'Yeni yatırım yönlendirmesini yeniden aç':'Yeni yatırım yönlendirmesini durdur');}
+    if(label)label.textContent='Yatırım alımı';
+  }
   function updateTeamCash(admin){
     const indicator=byId('teamCashIndicator');if(!indicator)return;
+    updateTeamDepositState(admin);
     const total=Number(admin.collateralTotal||0);
     byId('teamCashUsed').textContent=amount(admin.collateralExposure);
     byId('teamCashAvailable').textContent=total>0?amount(admin.collateralAvailable):'Sınırsız';
-    const note=indicator.querySelector('.team-live-cash-note');
-    if(note)note.textContent=total>0?`Toplam teminat ${amount(total)}${admin.collateralPaused?' · yatırımlar duraklatıldı':' · çekim ödemeleriyle güncellenir'}`:'Teminat sınırı tanımlanmamış';
     byId('teamCashUpdated').textContent='Güncel · '+cashUpdateTime();
     indicator.dataset.state='live';indicator.setAttribute('aria-busy','false');
   }
@@ -18,6 +30,9 @@
     const indicator=byId('teamCashIndicator');if(!indicator)return;
     indicator.dataset.state='stale';indicator.setAttribute('aria-busy','false');
     byId('teamCashUpdated').textContent='Bağlantı yok · '+cashUpdateTime();
+    const status=byId('teamDepositStatus'),statusText=byId('teamDepositStatusText');
+    if(status)status.dataset.state='stale';
+    if(statusText)statusText.textContent='Durum güncellenemedi';
   }
   let cashRefreshInFlight=false;
   async function refreshTeamCash(){
@@ -43,14 +58,21 @@
       updateTeamCash(admin);
       if(selfDisable&&selfDisableControl){
         selfDisableControl.hidden=!admin.allowSelfDisable;
-        const setSwitch=enabled=>{selfDisable.setAttribute('aria-checked',enabled?'true':'false');byId('teamActiveLabel').textContent=enabled?'Hesabım aktif':'Hesabım pasif';};
-        setSwitch(true);
+        let manuallyPaused=!!admin.depositsPaused;
         selfDisable.onclick=async()=>{
-          const accepted=await showTeamDialog({title:'Hesap pasife alınsın mı?',message:'Oturumunuz kapatılacak. Bu ekip hesabına bağlı cüzdanlara yeni yatırım yönlendirilmesi durdurulacak.',confirmText:'Evet, pasife al',cancelText:'Vazgeç',danger:true});
+          const nextPaused=!manuallyPaused;
+          const accepted=await showTeamDialog({title:nextPaused?'Yeni yatırım alımı durdurulsun mu?':'Yeni yatırım alımı yeniden açılsın mı?',message:nextPaused?'Bu ekibe bağlı cüzdanlara yeni yatırım yönlendirmesi durur. Paneliniz açık kalır; çekim taleplerini inceleyip ödemeye devam edebilirsiniz.':'Bu ekibe bağlı cüzdanlar yeni yatırım yönlendirmesine yeniden katılır. Teminat sınırları sistem tarafından uygulanmaya devam eder.',confirmText:nextPaused?'Yatırımı durdur':'Yatırımı yeniden aç',cancelText:'Vazgeç',danger:nextPaused,icon:nextPaused?'Ⅱ':'✓'});
           if(!accepted)return;
-          selfDisable.disabled=true;setSwitch(false);
-          try{await adminFetch('/team/self-disable',{method:'POST',body:JSON.stringify({})});location.replace('login.html?disabled=1');}
-          catch(error){setSwitch(true);selfDisable.disabled=false;await showTeamDialog({title:'Hesap pasife alınamadı',message:error.message||'İşlem sırasında bir hata oluştu. Tekrar deneyin veya yöneticinizle iletişime geçin.',kicker:'İŞLEM TAMAMLANAMADI',confirmText:'Anladım',icon:'×'});}
+          selfDisable.disabled=true;selfDisable.setAttribute('aria-checked',nextPaused?'false':'true');
+          try{
+            const result=await adminFetch('/team/self-disable',{method:'POST',body:JSON.stringify({depositsPaused:nextPaused})});
+            manuallyPaused=!!result.depositsPaused;
+            updateTeamDepositState({...admin,...result,acceptingDeposits:result.acceptingDeposits??(admin.active!==false&&!manuallyPaused&&!admin.collateralPaused)});
+            await refreshTeamCash();
+          }catch(error){
+            selfDisable.setAttribute('aria-checked',manuallyPaused?'false':'true');
+            await showTeamDialog({title:'Yatırım durumu değiştirilemedi',message:error.message||'İşlem sırasında bir hata oluştu. Tekrar deneyin.',kicker:'İŞLEM TAMAMLANAMADI',confirmText:'Anladım',icon:'×'});
+          }finally{selfDisable.disabled=false;}
         };
       }
       byId('teamLifetimeCommission').textContent=amount(admin.commissionEarned);
