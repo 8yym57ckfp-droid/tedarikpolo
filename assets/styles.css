@@ -1621,7 +1621,7 @@ body.auth-public .auth-submit{
 }
 body.auth-public .auth-submit:hover{filter:brightness(1.06)}
 body.auth-public .auth-switch{
-  margin-top:18px;
+  margin-top:30px;
   font-size:14px;
 }
 body.auth-public .auth-switch a{

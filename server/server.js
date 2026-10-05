@@ -78,6 +78,67 @@ function safeContentLink(value){const raw=String(value||'events.html').trim().sl
 function cleanPublishedContent(items){return (Array.isArray(items)?items:[]).filter(x=>x&&['news','event'].includes(x.kind)).slice(0,100).map(x=>({id:String(x.id||`content-${crypto.randomUUID()}`).slice(0,80),kind:x.kind,title:String(x.title||'').trim().slice(0,140),excerpt:String(x.excerpt||'').trim().slice(0,700),image:/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(String(x.image||''))&&String(x.image).length<=1500000?String(x.image):'',cta:String(x.cta||'').trim().slice(0,80),link:safeContentLink(x.link),published:x.published!==false,reward:String(x.reward||'').trim().slice(0,100),deadline:String(x.deadline||'').trim().slice(0,100),createdAt:x.createdAt||new Date().toISOString()})).filter(x=>x.title.length>=3&&x.excerpt.length>=3);}
 async function getPublishedContent(){if(pool){const r=await pool.query('SELECT content FROM site_content WHERE id=$1',['published-content']);return cleanPublishedContent(r.rows[0]?.content||[]);}const db=readDb();return cleanPublishedContent(db.publishedContent||[]);}
 async function savePublishedContent(items){const clean=cleanPublishedContent(items);if(pool)await pool.query('INSERT INTO site_content (id,content,updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (id) DO UPDATE SET content=EXCLUDED.content,updated_at=NOW()',['published-content',JSON.stringify(clean)]);else{const db=readDb();db.publishedContent=clean;writeDb(db);}return clean;}
+const DEFAULT_PUBLIC_STATS_DISPLAY={enabled:false,intervalSeconds:90,membersMin:0,membersMax:0,activeUsersMin:0,activeUsersMax:0,transactionsMin:0,transactionsMax:0,approvedMin:0,approvedMax:0};
+async function getPublicStatsDisplay(){
+  if(pool){const result=await pool.query('SELECT content FROM site_content WHERE id=$1',['public-stats-display']);return {...DEFAULT_PUBLIC_STATS_DISPLAY,...(result.rows[0]?.content||{})};}
+  return {...DEFAULT_PUBLIC_STATS_DISPLAY,...(readDb().publicStatsDisplay||{})};
+}
+async function savePublicStatsDisplay(input){
+  const next={...DEFAULT_PUBLIC_STATS_DISPLAY,enabled:!!input.enabled};
+  for(const [minKey,maxKey] of [['membersMin','membersMax'],['activeUsersMin','activeUsersMax'],['transactionsMin','transactionsMax'],['approvedMin','approvedMax']]){
+    const min=Number(input[minKey]),max=Number(input[maxKey]);if(!Number.isInteger(min)||!Number.isInteger(max)||min<0||max<min||max>1e9)throw new Error('Her sayaç için 0–1.000.000.000 aralığında tam sayı girin; üst sınır alt sınırdan küçük olamaz.');
+    next[minKey]=min;next[maxKey]=max;
+  }
+  const interval=Number(input.intervalSeconds);if(!Number.isInteger(interval)||interval<30||interval>3600)throw new Error('Güncelleme süresi 30–3600 saniye olmalı.');next.intervalSeconds=interval;next.updatedAt=new Date().toISOString();
+  if(pool)await pool.query('INSERT INTO site_content (id,content,updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (id) DO UPDATE SET content=EXCLUDED.content,updated_at=NOW()',['public-stats-display',JSON.stringify(next)]);
+  else{const db=readDb();db.publicStatsDisplay=next;writeDb(db);}
+  publicStatsCache={at:0,value:null,expiresAt:0};return next;
+}
+function cleanSupportAttachments(input){
+  if(input===undefined||input===null)return [];
+  if(!Array.isArray(input)||input.length>4)throw new Error('support_attachment_invalid');
+  let total=0;
+  const files=input.map(file=>{
+    const name=String(file?.name||'attachment').replace(/[\\/\r\n\0]/g,'_').slice(0,120),type=String(file?.type||''),data=String(file?.data||'');
+    if(!['application/pdf','image/png','image/jpeg'].includes(type))throw new Error('support_attachment_invalid');
+    const match=data.match(/^data:(application\/pdf|image\/png|image\/jpeg);base64,([A-Za-z0-9+/]+={0,2})$/);
+    if(!match||match[1]!==type)throw new Error('support_attachment_invalid');
+    const bytes=Buffer.from(match[2],'base64');total+=bytes.length;
+    if(bytes.length<1||bytes.length>4*1024*1024||total>4*1024*1024)throw new Error('support_attachment_invalid');
+    return {name,type,data:`data:${type};base64,${bytes.toString('base64')}`};
+  });
+  return files;
+}
+async function getSupportTelegramConfig(){
+  if(pool){const r=await pool.query('SELECT content FROM site_content WHERE id=$1',['support-telegram']);return r.rows[0]?.content||{};}
+  return readDb().supportTelegramConfig||{};
+}
+async function saveSupportTelegramConfig(config){
+  if(pool)await pool.query('INSERT INTO site_content (id,content,updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (id) DO UPDATE SET content=EXCLUDED.content,updated_at=NOW()',['support-telegram',JSON.stringify(config)]);
+  else{const db=readDb();db.supportTelegramConfig=config;writeDb(db);}
+  return config;
+}
+function publicSupportTelegramConfig(config){return {configured:!!config.botToken,tokenHint:config.botToken?`••••${config.botToken.slice(-5)}`:'',chatIds:Array.isArray(config.chatIds)?config.chatIds:[],webhookReady:!!config.webhookSecret};}
+async function telegramCall(tokenValue,method,payload){
+  const response=await fetch(`https://api.telegram.org/bot${tokenValue}/${method}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok||!result.ok)throw new Error(`telegram_${method}_failed`);
+  return result.result;
+}
+async function forwardSupportMessageToTelegram(ticket,message){
+  try{
+    const config=await getSupportTelegramConfig();if(!config.botToken||!config.chatIds?.length)return;
+    const summary=`SafePays destek · ${ticket.id}\nKonu: ${ticket.subject}\nÜye: ${ticket.userName||ticket.userId}\n\n${message.message||'(Ek dosya gönderildi)'}\n\nYanıt: /reply ${ticket.id} mesajınız`;
+    for(const chatId of config.chatIds){
+      await telegramCall(config.botToken,'sendMessage',{chat_id:chatId,text:summary});
+      for(const file of message.attachments||[]){
+        const match=file.data.match(/^data:[^;]+;base64,(.+)$/);if(!match)continue;
+        const form=new FormData();form.append('chat_id',String(chatId));form.append('caption',`${ticket.id} · ${file.name}`);form.append('document',new Blob([Buffer.from(match[1],'base64')],{type:file.type}),file.name);
+        const response=await fetch(`https://api.telegram.org/bot${config.botToken}/sendDocument`,{method:'POST',body:form});const result=await response.json().catch(()=>({}));if(!response.ok||!result.ok)throw new Error('telegram_send_document_failed');
+      }
+    }
+  }catch(error){console.error('Support Telegram delivery failed:',error.message);}
+}
 
 function cleanTeamPermissions(value={}){
   return Object.fromEntries(Object.keys(DEFAULT_TEAM_PERMISSIONS).map(key=>[key,value?.[key]===true]));
@@ -221,6 +282,10 @@ async function pgInit(){
   await pool.query('ALTER TABLE wallet_addresses ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()');
   await pool.query('ALTER TABLE wallet_addresses ADD COLUMN IF NOT EXISTS use_count INTEGER NOT NULL DEFAULT 0');
   await pool.query('ALTER TABLE wallet_addresses ADD COLUMN IF NOT EXISTS last_used_at TIMESTAMPTZ');
+  await pool.query('ALTER TABLE wallet_addresses ADD COLUMN IF NOT EXISTS min_deposit_amount NUMERIC(20,8)');
+  await pool.query('ALTER TABLE wallet_addresses ADD COLUMN IF NOT EXISTS max_deposit_amount NUMERIC(20,8)');
+  await pool.query('ALTER TABLE wallet_addresses ADD COLUMN IF NOT EXISTS min_deposit_owner_set BOOLEAN NOT NULL DEFAULT FALSE');
+  await pool.query('ALTER TABLE wallet_addresses ADD COLUMN IF NOT EXISTS max_deposit_owner_set BOOLEAN NOT NULL DEFAULT FALSE');
   await pool.query(`CREATE TABLE IF NOT EXISTS deposit_intents (
     id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), wallet_id TEXT NOT NULL REFERENCES wallet_addresses(id),
     amount NUMERIC(20,8) NOT NULL, network TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -235,6 +300,7 @@ async function pgInit(){
     sender_role TEXT NOT NULL CHECK (sender_role IN ('user','admin')), sender_id TEXT NOT NULL,
     message TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`);
+  await pool.query("ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS attachments JSONB NOT NULL DEFAULT '[]'::jsonb");
   await pool.query('CREATE INDEX IF NOT EXISTS idx_support_ticket_user_updated ON support_tickets(user_id,updated_at DESC)');
   await pool.query('CREATE INDEX IF NOT EXISTS idx_support_messages_ticket_created ON support_messages(ticket_id,created_at)');
   await pool.query(`CREATE TABLE IF NOT EXISTS audit_logs (
@@ -315,7 +381,7 @@ function json(res,status,payload,extraHeaders={}){
   res.writeHead(status,headers);
   res.end(body);
 }
-function body(req){ return new Promise((resolve,reject)=>{let s='';req.on('data',c=>{s+=c;if(s.length>2e6) req.destroy();});req.on('end',()=>{try{resolve(s?JSON.parse(s):{})}catch(e){reject(e)}});req.on('error',reject)}); }
+function body(req,maxBytes=2e6){ return new Promise((resolve,reject)=>{let s='',tooLarge=false;req.on('data',c=>{if(tooLarge)return;s+=c;if(s.length>maxBytes){tooLarge=true;s='';}});req.on('end',()=>{if(tooLarge){const e=new Error('payload_too_large');e.statusCode=413;reject(e);return;}try{resolve(s?JSON.parse(s):{})}catch(e){reject(e)}});req.on('error',reject)}); }
 function token(){return crypto.randomBytes(32).toString('hex');}
 function hashPassword(password, salt=crypto.randomBytes(16).toString('hex')){
   const hash=crypto.scryptSync(password,salt,64).toString('hex');
@@ -476,7 +542,21 @@ async function getSyntheticFinanceRun(runId){
   if(pool){const result=await pool.query('SELECT id,target_user_id AS "targetUserId",created_at AS "createdAt",start_date AS "startDate",end_date AS "endDate",member_count AS "memberCount",transaction_count AS "transactionCount",commission_rate AS "commissionRate" FROM synthetic_finance_runs WHERE id=$1',[runId]);return result.rows[0]||null;}
   return (readDb().syntheticFinanceRuns||[]).find(run=>run.id===runId)||null;
 }
-function buildFinanceReconciliation(transactions,{startDate,endDate,runId=null,commissionRate=0,commissionEnabled=!!runId,commissionPercent=Number(commissionRate||0)*100}){
+function calculateSettlement(transactions,{commissionRate=0,commissionByTeam=null,teamForTransaction=()=>null}={}){
+  let deposit=0,withdrawal=0,commission=0;
+  for(const tx of transactions){
+    if(tx.isSynthetic||tx.status!=='approved')continue;
+    const amount=Number(tx.amount||0);
+    if(tx.type==='deposit'){
+      deposit+=amount;
+      const rate=commissionByTeam?Number(commissionByTeam.get(teamForTransaction(tx))||0)/100:commissionRate;
+      commission+=amount*rate;
+    }else if(tx.type==='withdrawal')withdrawal+=amount;
+  }
+  const cash=deposit-withdrawal,receivable=cash-commission;
+  return {deposit,withdrawal,commission,cash,receivable,commissionPercent:deposit?commission/deposit*100:0};
+}
+function buildFinanceReconciliation(transactions,{startDate,endDate,runId=null,commissionRate=0,commissionEnabled=!!runId,commissionPercent=Number(commissionRate||0)*100,commissionByTeam=null,teamForTransaction=()=>null}){
   const start=new Date(`${startDate}T00:00:00.000Z`).getTime();
   const end=new Date(`${endDate}T00:00:00.000Z`).getTime();
   const dayCount=Math.round((end-start)/86400000)+1;
@@ -492,10 +572,10 @@ function buildFinanceReconciliation(transactions,{startDate,endDate,runId=null,c
     if(tx.status!=='approved')continue;
     day.approvedCount++;
     const amount=Number(tx.amount||0);
-    if(tx.type==='deposit'){day.deposit+=amount;day.depositCount++;}
+    if(tx.type==='deposit'){day.deposit+=amount;day.depositCount++;if(commissionByTeam)day.commission+=amount*Number(commissionByTeam.get(teamForTransaction(tx))||0)/100;}
     else if(tx.type==='withdrawal')day.withdrawal+=amount;
   }
-  for(const day of days){day.commission=day.deposit*commissionRate;day.cash=day.deposit-day.withdrawal;day.receivable=day.cash-day.commission;}
+  for(const day of days){if(!commissionByTeam)day.commission=day.deposit*commissionRate;day.cash=day.deposit-day.withdrawal;day.receivable=day.cash-day.commission;}
   const totals=days.reduce((sum,day)=>({
     deposit:sum.deposit+day.deposit,withdrawal:sum.withdrawal+day.withdrawal,commission:sum.commission+day.commission,
     cash:sum.cash+day.cash,receivable:sum.receivable+day.receivable,count:sum.count+day.count,
@@ -507,10 +587,10 @@ function buildFinanceReconciliation(transactions,{startDate,endDate,runId=null,c
 }
 function isProductionUser(user){return !user?.isSynthetic&&!user?.isTestAccount;}
 function isProductionTransaction(tx){return !tx?.isSynthetic;}
-let publicStatsCache={at:0,value:null};
+let publicStatsCache={at:0,value:null,expiresAt:0};
 async function getPublicStats(){
   const now=Date.now();
-  if(publicStatsCache.value&&now-publicStatsCache.at<30000)return publicStatsCache.value;
+  if(publicStatsCache.value&&now<publicStatsCache.expiresAt)return publicStatsCache.value;
   let stats;
   if(pool){
     const [members,transactions]=await Promise.all([
@@ -525,13 +605,20 @@ async function getPublicStats(){
     const cutoff=now-30*86400000;
     stats={members:productionUsers.length,transactions:productionTransactions.length,approvedTransactions:productionTransactions.filter(tx=>tx.status==='approved').length,activeUsers30Days:new Set(productionTransactions.filter(tx=>new Date(tx.createdAt).getTime()>=cutoff).map(tx=>String(tx.userId))).size};
   }
-  const result={...stats,updatedAt:new Date(now).toISOString()};
-  publicStatsCache={at:now,value:result};
+  const display=await getPublicStatsDisplay();
+  const result=display.enabled?{
+    members:display.membersMin+Math.floor(Math.random()*(display.membersMax-display.membersMin+1)),
+    activeUsers30Days:display.activeUsersMin+Math.floor(Math.random()*(display.activeUsersMax-display.activeUsersMin+1)),
+    transactions:display.transactionsMin+Math.floor(Math.random()*(display.transactionsMax-display.transactionsMin+1)),
+    approvedTransactions:display.approvedMin+Math.floor(Math.random()*(display.approvedMax-display.approvedMin+1)),
+    simulation:true,nextRefreshSeconds:display.intervalSeconds,updatedAt:new Date(now).toISOString()
+  }:{...stats,simulation:false,nextRefreshSeconds:30,updatedAt:new Date(now).toISOString()};
+  publicStatsCache={at:now,value:result,expiresAt:now+(display.enabled?display.intervalSeconds:30)*1000};
   return result;
 }
 async function getWalletAddresses({activeOnly=false}={}){
   if(!pool){const db=readDb(),rows=db.walletAddresses||[],teams=new Map((db.teamAccounts||[]).map(account=>[account.id,account]));return rows.filter(wallet=>{if(!activeOnly)return true;if(!wallet.active)return false;if(!wallet.teamId)return true;const team=teams.get(wallet.teamId);return !!team&&team.active!==false&&!team.depositsPaused&&!team.collateralPaused;});}
-  const r=await pool.query(`SELECT w.id,w.network,w.address,w.label,w.active,w.team_id AS "teamId",w.created_by AS "createdBy",w.created_at AS "createdAt",w.updated_at AS "updatedAt",w.use_count AS "useCount",w.last_used_at AS "lastUsedAt" FROM wallet_addresses w LEFT JOIN team_accounts t ON t.id=w.team_id ${activeOnly?'WHERE w.active=TRUE AND (w.team_id IS NULL OR (t.active=TRUE AND t.deposits_paused=FALSE AND t.collateral_paused=FALSE))':''} ORDER BY w.created_at DESC`);
+  const r=await pool.query(`SELECT w.id,w.network,w.address,w.label,w.active,w.team_id AS "teamId",w.created_by AS "createdBy",w.created_at AS "createdAt",w.updated_at AS "updatedAt",w.use_count AS "useCount",w.last_used_at AS "lastUsedAt",w.min_deposit_amount AS "minDepositAmount",w.max_deposit_amount AS "maxDepositAmount",w.min_deposit_owner_set AS "minDepositOwnerSet",w.max_deposit_owner_set AS "maxDepositOwnerSet" FROM wallet_addresses w LEFT JOIN team_accounts t ON t.id=w.team_id ${activeOnly?'WHERE w.active=TRUE AND (w.team_id IS NULL OR (t.active=TRUE AND t.deposits_paused=FALSE AND t.collateral_paused=FALSE))':''} ORDER BY w.created_at DESC`);
   return r.rows;
 }
 async function walletTeamAllowed(teamId,currentWalletId=null){
@@ -555,7 +642,7 @@ async function teamOwnsTransaction(teamId,transaction,allTransactions){
 }
 async function saveWalletAddress(wallet){
   if(!pool){const db=readDb();db.walletAddresses=db.walletAddresses||[];const i=db.walletAddresses.findIndex(x=>x.id===wallet.id);if(i>=0)db.walletAddresses[i]={...db.walletAddresses[i],...wallet};else db.walletAddresses.unshift(wallet);writeDb(db);return wallet;}
-  await pool.query('INSERT INTO wallet_addresses (id,network,address,label,active,team_id,created_by,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (id) DO UPDATE SET network=EXCLUDED.network,address=EXCLUDED.address,label=EXCLUDED.label,active=EXCLUDED.active,team_id=EXCLUDED.team_id,updated_at=EXCLUDED.updated_at',[wallet.id,wallet.network,wallet.address,wallet.label,wallet.active,wallet.teamId||null,wallet.createdBy,wallet.createdAt,wallet.updatedAt]);
+  await pool.query('INSERT INTO wallet_addresses (id,network,address,label,active,team_id,created_by,created_at,updated_at,min_deposit_amount,max_deposit_amount,min_deposit_owner_set,max_deposit_owner_set) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) ON CONFLICT (id) DO UPDATE SET network=EXCLUDED.network,address=EXCLUDED.address,label=EXCLUDED.label,active=EXCLUDED.active,team_id=EXCLUDED.team_id,updated_at=EXCLUDED.updated_at,min_deposit_amount=EXCLUDED.min_deposit_amount,max_deposit_amount=EXCLUDED.max_deposit_amount,min_deposit_owner_set=EXCLUDED.min_deposit_owner_set,max_deposit_owner_set=EXCLUDED.max_deposit_owner_set',[wallet.id,wallet.network,wallet.address,wallet.label,wallet.active,wallet.teamId||null,wallet.createdBy,wallet.createdAt,wallet.updatedAt,wallet.minDepositAmount??null,wallet.maxDepositAmount??null,!!wallet.minDepositOwnerSet,!!wallet.maxDepositOwnerSet]);
   return wallet;
 }
 async function getDepositIntent(id,userId){
@@ -644,6 +731,27 @@ async function route(req,res){
   if(req.method==='OPTIONS') return json(res,204,{});
   if(req.url==='/api/health' && req.method==='GET') return json(res,200,{ok:true,service:'safepays-api',version:'35.1.0'});
   if(req.url==='/api/public/stats' && req.method==='GET')return json(res,200,await getPublicStats(),{'Cache-Control':'public, max-age=30'});
+  if(new URL(req.url,'http://localhost').pathname==='/api/telegram/webhook'&&req.method==='POST'){
+    const config=await getSupportTelegramConfig();
+    if(!config.botToken||!config.webhookSecret||req.headers['x-telegram-bot-api-secret-token']!==config.webhookSecret)return json(res,404,{ok:false});
+    const update=await body(req,1e6),message=update.message||update.edited_message;
+    const allowedChatIds=(config.chatIds||[]).map(String);
+    if(!message?.chat?.id||!allowedChatIds.includes(String(message.chat.id)))return json(res,404,{ok:false});
+    const text=String(message.text||'').trim();
+    const reply=text.match(/^\/reply(?:@\w+)?\s+(SUP-[A-Z0-9]+)\s+([\s\S]{1,4000})$/i);
+    if(reply){
+      const ticketId=reply[1].toUpperCase(),answer=reply[2].trim();let ticket=null;
+      if(pool){const t=await pool.query("SELECT id,user_id AS \"userId\",subject,status FROM support_tickets WHERE id=$1 AND status<>'closed'",[ticketId]);ticket=t.rows[0]||null;}
+      else ticket=(readDb().supportTickets||[]).find(item=>item.id===ticketId&&item.status!=='closed')||null;
+      if(!ticket){await telegramCall(config.botToken,'sendMessage',{chat_id:message.chat.id,text:`${ticketId} bulunamadı veya kapatılmış.`});return json(res,200,{ok:true});}
+      const sender=message.from?.username?`Telegram · @${message.from.username}`:`Telegram · ${message.from?.first_name||'Destek ekibi'}`;
+      const item={id:`MSG-${crypto.randomBytes(8).toString('hex').toUpperCase()}`,ticketId,senderRole:'admin',senderId:sender,message:answer,attachments:[],createdAt:new Date().toISOString()};
+      if(pool){await pool.query('INSERT INTO support_messages (id,ticket_id,sender_role,sender_id,message,attachments,created_at) VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7)',[item.id,ticketId,item.senderRole,item.senderId,item.message,'[]',item.createdAt]);await pool.query("UPDATE support_tickets SET status='open',updated_at=$1 WHERE id=$2",[item.createdAt,ticketId]);}
+      else{const db=readDb();db.supportMessages=db.supportMessages||[];db.supportMessages.push(item);const row=(db.supportTickets||[]).find(x=>x.id===ticketId);if(row){row.status='open';row.updatedAt=item.createdAt;}writeDb(db);}
+      await telegramCall(config.botToken,'sendMessage',{chat_id:message.chat.id,text:`Yanıt ${ticketId} konuşmasına eklendi.`});
+    }
+    return json(res,200,{ok:true});
+  }
   await refreshTransactionExpiry();
   if(req.url==='/api/system/maintenance' && req.method==='GET') return json(res,200,{maintenance:await getMaintenance()});
   if(req.url==='/api/content' && req.method==='GET')return json(res,200,{items:(await getPublishedContent()).filter(x=>x.published)});
@@ -679,6 +787,23 @@ async function route(req,res){
     const c=parseCookies(req)[OWNER_COOKIE]||'';if(c)await deleteStaffSession(c,'owner');return json(res,200,{ok:true},{'Set-Cookie':clearCookie(OWNER_COOKIE)});
   }
   const owner=await ownerAuth(req),teamAdmin=await adminAuth(req);
+  const telegramUrl=new URL(req.url,'http://localhost');
+  if(telegramUrl.pathname==='/api/owner/support/telegram'&&['GET','POST'].includes(req.method)){
+    if(!owner)return json(res,teamAdmin?403:401,{error:teamAdmin?'owner_only':'unauthorized'});
+    if(req.method==='GET'){const config=await getSupportTelegramConfig();return json(res,200,{telegram:publicSupportTelegramConfig(config)});}
+    const b=await body(req),current=await getSupportTelegramConfig(),candidate=String(b.botToken||'').trim()||current.botToken||'';
+    const chatIds=[...new Set(String(b.chatIds||'').split(/[\\s,;]+/).map(x=>x.trim()).filter(x=>/^-?\d{4,20}$/.test(x)))];
+    if(candidate&&!/^\d{5,15}:[A-Za-z0-9_-]{20,}$/.test(candidate))return json(res,400,{error:'invalid_telegram_bot_token',message:'Telegram bot token biçimi geçersiz.'});
+    if(candidate&&chatIds.length===0)return json(res,400,{error:'telegram_chat_id_required',message:'En az bir Telegram grup veya hesap Chat ID’si girin.'});
+    const config={botToken:candidate,chatIds,webhookSecret:candidate?(current.webhookSecret||crypto.randomBytes(24).toString('hex')):'',updatedAt:new Date().toISOString()};
+    await saveSupportTelegramConfig(config);let webhook={configured:false};
+    if(candidate){
+      try{const origin=process.env.PUBLIC_BASE_URL||`${req.headers['x-forwarded-proto']||'https'}://${req.headers['x-forwarded-host']||req.headers.host}`;await telegramCall(candidate,'setWebhook',{url:`${origin.replace(/\/$/,'')}/api/telegram/webhook`,secret_token:config.webhookSecret,allowed_updates:['message']});webhook={configured:true};}
+      catch(error){console.error('Telegram webhook setup failed:',error.message);webhook={configured:false,error:'Telegram webhook kurulamadı. PUBLIC_BASE_URL ve bot erişimini kontrol edin.'};}
+    }
+    addAudit('support_telegram_updated',owner.email,{configured:!!candidate,chatCount:chatIds.length,webhookConfigured:webhook.configured});
+    return json(res,200,{ok:true,telegram:publicSupportTelegramConfig(config),webhook});
+  }
   const staticPath=new URL(req.url,'http://localhost').pathname;
   if(req.method==='GET'&&staticPath.endsWith('.html')){
     if(staticPath.startsWith('/owner/')){
@@ -697,6 +822,7 @@ async function route(req,res){
       if(!teamAdmin&&staticPath!=='/admin/login.html')return redirect(res,'/admin/login.html?session=team');
       if(teamAdmin&&/^\/admin\/(?:users?|members?|user-center|user-detail|audit)\.html$/.test(staticPath))return redirect(res,'/admin/team-dashboard.html?access=denied');
       if(teamAdmin){
+        if(staticPath==='/admin/support.html')return redirect(res,'/admin/team-dashboard.html?access=denied');
         const pagePermission={
           '/admin/requests.html':'transactions','/admin/withdrawal-pool.html':'transactions','/admin/history.html':'transactions',
           '/admin/reports.html':'reports','/admin/reconciliation.html':'reports','/admin/wallet-addresses.html':'wallets','/admin/support.html':'support'
@@ -725,8 +851,20 @@ async function route(req,res){
     if(!account)return json(res,404,{error:'team_account_not_found'});
     if(!account.allowSelfDisable)return json(res,403,{error:'self_disable_not_allowed'});
     const b=await body(req),requestedPause=typeof b.depositsPaused==='boolean'?b.depositsPaused:!account.depositsPaused;
-    if(!requestedPause&&account.active===false)return json(res,403,{error:'team_deposit_activation_owner_required',message:'Yeni yatırım alımını yeniden açmak için lütfen yöneticinizle iletişime geçin.'});
-    account.depositsPaused=requestedPause;account.updatedAt=new Date().toISOString();await saveTeamAccount(account);
+    const now=new Date().toISOString();
+    if(pool){
+      const updated=await pool.query('UPDATE team_accounts SET deposits_paused=$1,updated_at=$2 WHERE id=$3 AND allow_self_disable=TRUE AND ($1=TRUE OR active=TRUE) RETURNING active,deposits_paused AS "depositsPaused"',[requestedPause,now,account.id]);
+      if(!updated.rows[0]){
+        const current=await pool.query('SELECT active,allow_self_disable AS "allowSelfDisable" FROM team_accounts WHERE id=$1',[account.id]);
+        if(!current.rows[0])return json(res,404,{error:'team_account_not_found'});
+        if(!current.rows[0].allowSelfDisable)return json(res,403,{error:'self_disable_not_allowed',message:'Yatırım alımını değiştirme izniniz kapalı. Lütfen yöneticinizle iletişime geçin.'});
+        return json(res,403,{error:'team_deposit_activation_owner_required',message:'Owner hesabı pasife aldı. Yatırım alımını yeniden açmak için lütfen yöneticinizle iletişime geçin.'});
+      }
+      account.active=updated.rows[0].active;account.depositsPaused=updated.rows[0].depositsPaused;account.updatedAt=now;
+    }else{
+      if(!requestedPause&&account.active===false)return json(res,403,{error:'team_deposit_activation_owner_required',message:'Owner hesabı pasife aldı. Yatırım alımını yeniden açmak için lütfen yöneticinizle iletişime geçin.'});
+      account.depositsPaused=requestedPause;account.updatedAt=now;await saveTeamAccount(account);
+    }
     addAudit(account.depositsPaused?'team_deposit_routing_paused':'team_deposit_routing_resumed',account.email,{teamAccountId:account.id});
     return json(res,200,{ok:true,depositsPaused:!!account.depositsPaused,active:account.active!==false});
   }
@@ -740,6 +878,12 @@ async function route(req,res){
   if(teamApiRequest&&!teamAdmin)return json(res,owner?403:401,{error:owner?'team_admin_only':'team_admin_unauthorized'});
   if(ownerApiRequest)req.url=req.url.replace(/^\/api\/owner(?=\/|$)/,'/api/admin');
   const admin=ownerApiRequest?owner:teamAdmin;
+  if(new URL(req.url,'http://localhost').pathname==='/api/admin/public-stats-display'&&['GET','POST'].includes(req.method)){
+    if(!owner)return json(res,teamAdmin?403:401,{error:teamAdmin?'owner_only':'unauthorized'});
+    if(req.method==='GET')return json(res,200,{settings:await getPublicStatsDisplay()});
+    try{const settings=await savePublicStatsDisplay(await body(req));addAudit('public_stats_display_updated',owner.email,{enabled:settings.enabled,intervalSeconds:settings.intervalSeconds});return json(res,200,{ok:true,settings});}
+    catch(error){return json(res,400,{error:'invalid_public_stats_display',message:error.message});}
+  }
   const adminPath=new URL(req.url,'http://localhost').pathname;
   const adminQuery=new URL(req.url,'http://localhost');
   const requestedTestRunId=String(adminQuery.searchParams.get('testRunId')||'').trim()||null;
@@ -933,14 +1077,24 @@ async function route(req,res){
     if(span>366)return json(res,400,{error:'date_range_too_large'});
     const run=testRunId?await getSyntheticFinanceRun(testRunId):null;
     if(testRunId&&!run)return json(res,404,{error:'synthetic_run_not_found'});
-    let financeTransactions=await getTransactions(),commissionRate=run?Number(run.commissionRate):0,commissionEnabled=!!run,commissionPercent=commissionRate*100;
+    let financeTransactions=await getTransactions(),commissionRate=run?Number(run.commissionRate):0,commissionEnabled=!!run,commissionPercent=commissionRate*100,lifetimeSettlement=null;
     if(teamAdmin&&!owner&&!testRunId){
       const accounts=await getTeamAccounts(),account=accounts.find(item=>item.id===teamAdmin.adminId),wallets=await getWalletAddresses(),walletById=new Map(wallets.map(wallet=>[wallet.id,wallet]));
       financeTransactions=financeTransactions.filter(tx=>transactionTeamId(tx,financeTransactions,walletById)===teamAdmin.adminId);
-      commissionPercent=Number(account?.commissionPercent??3);commissionRate=commissionPercent/100;commissionEnabled=true;
+      commissionPercent=Number(account?.commissionPercent??3);commissionRate=commissionPercent/100;commissionEnabled=!!account;
+      lifetimeSettlement=calculateSettlement(financeTransactions,{commissionRate});
+    }else if(owner&&!testRunId){
+      const accounts=await getTeamAccounts(),wallets=await getWalletAddresses(),walletById=new Map(wallets.map(wallet=>[wallet.id,wallet]));
+      const teamByTransaction=new Map(financeTransactions.map(tx=>[tx.id,transactionTeamId(tx,financeTransactions,walletById)]));
+      const commissionByTeam=new Map(accounts.map(account=>[account.id,Number(account.commissionPercent??3)]));
+      const teamTransactions=financeTransactions.filter(tx=>teamByTransaction.get(tx.id));
+      const teamForTransaction=tx=>teamByTransaction.get(tx.id)||null;
+      lifetimeSettlement=calculateSettlement(teamTransactions,{commissionByTeam,teamForTransaction});
+      commissionEnabled=accounts.length>0;
     }
     const finance=buildFinanceReconciliation(financeTransactions,{startDate,endDate,runId:testRunId,commissionRate,commissionEnabled,commissionPercent});
-    return json(res,200,{...finance,run:run?{id:run.id,targetUserId:run.targetUserId,createdAt:run.createdAt,memberCount:Number(run.memberCount),transactionCount:Number(run.transactionCount)}:null});
+    if(commissionEnabled&&finance.totals.deposit)finance.commissionPercent=finance.totals.commission/finance.totals.deposit*100;
+    return json(res,200,{...finance,lifetimeSettlement:lifetimeSettlement?{...lifetimeSettlement,scope:owner?'teams':'team'}:null,run:run?{id:run.id,targetUserId:run.targetUserId,createdAt:run.createdAt,memberCount:Number(run.memberCount),transactionCount:Number(run.transactionCount)}:null});
   }
   if(adminQuery.pathname==='/api/admin/stats' && req.method==='GET'){
     if(!admin)return json(res,401,{error:'unauthorized'}); const allUsers=await getUsers(),allTx=await getTransactions();
@@ -1031,7 +1185,9 @@ async function route(req,res){
       const teamId=owner?(String(b.teamId||'').trim()||null):(teamAdmin?.adminId||null);
       if(teamId&&!((await getTeamAccounts()).some(account=>account.id===teamId)))return json(res,400,{error:'invalid_team_account'});
       if(teamId&&!(await walletTeamAllowed(teamId)))return json(res,409,{error:'team_wallet_limit_reached',message:'Bu ekibin kayıtlı cüzdan sınırına ulaşıldı.'});
-      const now=new Date().toISOString(),wallet={id:`WLT-${crypto.randomBytes(6).toString('hex').toUpperCase()}`,network,address,label,active:b.active!==false,teamId,createdBy:admin.email,createdAt:now,updatedAt:now,useCount:0,lastUsedAt:null};
+      const minDepositAmount=b.minDepositAmount===''||b.minDepositAmount==null?null:Number(b.minDepositAmount),maxDepositAmount=b.maxDepositAmount===''||b.maxDepositAmount==null?null:Number(b.maxDepositAmount);
+      if((minDepositAmount!==null&&(!Number.isFinite(minDepositAmount)||minDepositAmount<0))||(maxDepositAmount!==null&&(!Number.isFinite(maxDepositAmount)||maxDepositAmount<=0))||(minDepositAmount!==null&&maxDepositAmount!==null&&minDepositAmount>maxDepositAmount))return json(res,400,{error:'invalid_deposit_limits',message:'Alt ve üst yatırım sınırlarını kontrol edin; alt sınır üst sınırı geçemez.'});
+      const now=new Date().toISOString(),wallet={id:`WLT-${crypto.randomBytes(6).toString('hex').toUpperCase()}`,network,address,label,active:b.active!==false,teamId,createdBy:admin.email,createdAt:now,updatedAt:now,useCount:0,lastUsedAt:null,minDepositAmount,maxDepositAmount,minDepositOwnerSet:!!owner&&minDepositAmount!==null,maxDepositOwnerSet:!!owner&&maxDepositAmount!==null};
       await saveWalletAddress(wallet);addAudit('wallet_address_created',admin.email,{walletId:wallet.id,network,teamId});return json(res,201,{ok:true,wallet});
     }
     const id=String(b.id||''),wallets=await getWalletAddresses(),current=wallets.find(w=>w.id===id);if(!current)return json(res,404,{error:'wallet_not_found'});
@@ -1051,20 +1207,26 @@ async function route(req,res){
       const teamId=owner&&b.teamId!==undefined?(String(b.teamId||'').trim()||null):current.teamId||null;
       if(teamId&&!((await getTeamAccounts()).some(account=>account.id===teamId)))return json(res,400,{error:'invalid_team_account'});
       if(teamId&&!(await walletTeamAllowed(teamId,id)))return json(res,409,{error:'team_wallet_limit_reached',message:'Bu ekibin kayıtlı cüzdan sınırına ulaşıldı.'});
-      const next={...current,network,address,label,teamId,active:b.active===undefined?current.active:!!b.active,updatedAt:new Date().toISOString()};await saveWalletAddress(next);addAudit('wallet_address_updated',admin.email,{walletId:id,network,active:next.active,teamId});return json(res,200,{ok:true,wallet:next});
+      const parseLimit=(key,value)=>b[key]===undefined?value:(b[key]===''||b[key]===null?null:Number(b[key]));
+      const minDepositAmount=parseLimit('minDepositAmount',current.minDepositAmount??null),maxDepositAmount=parseLimit('maxDepositAmount',current.maxDepositAmount??null);
+      if((minDepositAmount!==null&&(!Number.isFinite(minDepositAmount)||minDepositAmount<0))||(maxDepositAmount!==null&&(!Number.isFinite(maxDepositAmount)||maxDepositAmount<=0))||(minDepositAmount!==null&&maxDepositAmount!==null&&minDepositAmount>maxDepositAmount))return json(res,400,{error:'invalid_deposit_limits',message:'Alt ve üst yatırım sınırlarını kontrol edin; alt sınır üst sınırı geçemez.'});
+      if(teamAdmin&&!owner&&((current.minDepositOwnerSet&&b.minDepositAmount!==undefined&&minDepositAmount!==(current.minDepositAmount??null))||(current.maxDepositOwnerSet&&b.maxDepositAmount!==undefined&&maxDepositAmount!==(current.maxDepositAmount??null))))return json(res,403,{error:'wallet_deposit_limits_owner_managed',message:'Bu cüzdanın yatırım alt/üst sınırlarını Owner belirlemiştir. Lütfen limitlerinizi değiştirmek için yöneticinizle iletişime geçin.'});
+      const next={...current,network,address,label,teamId,active:b.active===undefined?current.active:!!b.active,minDepositAmount,maxDepositAmount,minDepositOwnerSet:owner?(b.minDepositAmount===undefined?!!current.minDepositOwnerSet:minDepositAmount!==null):!!current.minDepositOwnerSet,maxDepositOwnerSet:owner?(b.maxDepositAmount===undefined?!!current.maxDepositOwnerSet:maxDepositAmount!==null):!!current.maxDepositOwnerSet,updatedAt:new Date().toISOString()};await saveWalletAddress(next);addAudit('wallet_address_updated',admin.email,{walletId:id,network,active:next.active,teamId,minDepositAmount,maxDepositAmount,minDepositOwnerSet:next.minDepositOwnerSet,maxDepositOwnerSet:next.maxDepositOwnerSet});return json(res,200,{ok:true,wallet:next});
     }
     return json(res,400,{error:'invalid_action'});
   }
   if(new URL(req.url,'http://localhost').pathname==='/api/admin/support/tickets' && req.method==='GET'){
     if(!admin)return json(res,401,{error:'unauthorized'});
-    if(pool){const r=await pool.query('SELECT t.id,t.user_id AS "userId",t.subject,t.status,t.created_at AS "createdAt",t.updated_at AS "updatedAt",u.email,u.first_name AS "firstName",u.last_name AS "lastName" FROM support_tickets t JOIN users u ON u.id=t.user_id ORDER BY t.updated_at DESC');const ids=r.rows.map(x=>x.id);const m=ids.length?await pool.query('SELECT id,ticket_id AS "ticketId",sender_role AS "senderRole",sender_id AS "senderId",message,created_at AS "createdAt" FROM support_messages WHERE ticket_id=ANY($1::text[]) ORDER BY created_at',[ids]):{rows:[]};const byId=new Map();for(const msg of m.rows){if(!byId.has(msg.ticketId))byId.set(msg.ticketId,[]);byId.get(msg.ticketId).push(msg);}return json(res,200,{tickets:r.rows.map(({email,...ticket})=>({...ticket,...(owner?{email}:{}),messages:byId.get(ticket.id)||[]}))});}
+    if(teamAdmin&&!owner)return json(res,403,{error:'owner_only',message:'Destek talepleri yalnızca Owner panelinden yönetilir.'});
+    if(pool){const r=await pool.query('SELECT t.id,t.user_id AS "userId",t.subject,t.status,t.created_at AS "createdAt",t.updated_at AS "updatedAt",u.email,u.first_name AS "firstName",u.last_name AS "lastName" FROM support_tickets t JOIN users u ON u.id=t.user_id ORDER BY t.updated_at DESC');const ids=r.rows.map(x=>x.id);const m=ids.length?await pool.query('SELECT id,ticket_id AS "ticketId",sender_role AS "senderRole",sender_id AS "senderId",message,attachments,created_at AS "createdAt" FROM support_messages WHERE ticket_id=ANY($1::text[]) ORDER BY created_at',[ids]):{rows:[]};const byId=new Map();for(const msg of m.rows){if(!byId.has(msg.ticketId))byId.set(msg.ticketId,[]);byId.get(msg.ticketId).push(msg);}return json(res,200,{tickets:r.rows.map(({email,...ticket})=>({...ticket,...(owner?{email}:{}),messages:byId.get(ticket.id)||[]}))});}
     const db=readDb(),users=db.users||[],messages=db.supportMessages||[];return json(res,200,{tickets:(db.supportTickets||[]).map(t=>{const user=users.find(u=>u.id===t.userId);return {...t,...(user?{user:owner?safeUser(user):safeTeamMember(user)}:{}),messages:messages.filter(m=>m.ticketId===t.id)}}).sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt))});
   }
   const adminSupportMatch=new URL(req.url,'http://localhost').pathname.match(/^\/api\/admin\/support\/tickets\/([^/]+)\/messages$/);
   if(adminSupportMatch&&req.method==='POST'){
+    if(teamAdmin&&!owner)return json(res,403,{error:'owner_only',message:'Destek talepleri yalnızca Owner panelinden yönetilir.'});
     if(!admin)return json(res,401,{error:'unauthorized'});const ticketId=decodeURIComponent(adminSupportMatch[1]),b=await body(req),message=String(b.message||'').trim().slice(0,4000);if(!message)return json(res,400,{error:'empty_message'});
-    if(pool){const client=await pool.connect();try{await client.query('BEGIN');const ticket=await client.query("SELECT id FROM support_tickets WHERE id=$1 AND status<>'closed' FOR UPDATE",[ticketId]);if(!ticket.rows[0]){await client.query('ROLLBACK');return json(res,404,{error:'ticket_not_found'});}const item={id:`MSG-${crypto.randomBytes(8).toString('hex').toUpperCase()}`,ticketId,senderRole:'admin',senderId:admin.email,message,createdAt:new Date().toISOString()};await client.query('INSERT INTO support_messages (id,ticket_id,sender_role,sender_id,message,created_at) VALUES ($1,$2,$3,$4,$5,$6)',[item.id,ticketId,item.senderRole,item.senderId,item.message,item.createdAt]);await client.query("UPDATE support_tickets SET status='open',updated_at=$1 WHERE id=$2",[item.createdAt,ticketId]);await client.query('COMMIT');addAudit('support_reply',admin.email,{ticketId});return json(res,201,{ok:true,message:item});}catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}}
-    const db=readDb(),ticket=(db.supportTickets||[]).find(x=>x.id===ticketId&&x.status!=='closed');if(!ticket)return json(res,404,{error:'ticket_not_found'});const item={id:`MSG-${crypto.randomBytes(8).toString('hex').toUpperCase()}`,ticketId,senderRole:'admin',senderId:admin.email,message,createdAt:new Date().toISOString()};db.supportMessages=db.supportMessages||[];db.supportMessages.push(item);ticket.status='open';ticket.updatedAt=item.createdAt;writeDb(db);addAudit('support_reply',admin.email,{ticketId});return json(res,201,{ok:true,message:item});
+    if(pool){const client=await pool.connect();try{await client.query('BEGIN');const ticket=await client.query("SELECT id,subject,user_id AS \"userId\" FROM support_tickets WHERE id=$1 AND status<>'closed' FOR UPDATE",[ticketId]);if(!ticket.rows[0]){await client.query('ROLLBACK');return json(res,404,{error:'ticket_not_found'});}const item={id:`MSG-${crypto.randomBytes(8).toString('hex').toUpperCase()}`,ticketId,senderRole:'admin',senderId:admin.email,message,attachments:[],createdAt:new Date().toISOString()};await client.query('INSERT INTO support_messages (id,ticket_id,sender_role,sender_id,message,attachments,created_at) VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7)',[item.id,ticketId,item.senderRole,item.senderId,item.message,'[]',item.createdAt]);await client.query("UPDATE support_tickets SET status='open',updated_at=$1 WHERE id=$2",[item.createdAt,ticketId]);await client.query('COMMIT');addAudit('support_reply',admin.email,{ticketId});await forwardSupportMessageToTelegram({id:ticketId,subject:ticket.rows[0].subject,userId:ticket.rows[0].userId,userName:'Owner'},item);return json(res,201,{ok:true,message:item});}catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}}
+    const db=readDb(),ticket=(db.supportTickets||[]).find(x=>x.id===ticketId&&x.status!=='closed');if(!ticket)return json(res,404,{error:'ticket_not_found'});const item={id:`MSG-${crypto.randomBytes(8).toString('hex').toUpperCase()}`,ticketId,senderRole:'admin',senderId:admin.email,message,attachments:[],createdAt:new Date().toISOString()};db.supportMessages=db.supportMessages||[];db.supportMessages.push(item);ticket.status='open';ticket.updatedAt=item.createdAt;writeDb(db);addAudit('support_reply',admin.email,{ticketId});await forwardSupportMessageToTelegram({...ticket,userName:'Owner'},item);return json(res,201,{ok:true,message:item});
   }
   if(req.url==='/api/admin/kyc' && req.method==='GET'){
     if(!admin)return json(res,401,{error:'unauthorized'}); const users=await getUsers(); return json(res,200,{requests:users.filter(u=>isProductionUser(u)&&u.kycStatus==='pending').map(u=>({userId:u.id,name:u.kycName,email:u.email,submittedAt:u.kycSubmittedAt,status:u.kycStatus}))});
@@ -1116,6 +1278,14 @@ async function route(req,res){
     const requestedAmount=Number(tx.requestedAmount??tx.requested_amount??tx.amount); const rawApproved=b.approvedAmount; const approvedAmount=decision==='approved' && rawApproved!==undefined && rawApproved!==null && rawApproved!==''?Number(rawApproved):Number(tx.amount); if(decision==='approved'&&(!Number.isFinite(approvedAmount)||approvedAmount<=0))return json(res,400,{error:'invalid_approved_amount'});
     const payoutTxHash=tx.type==='withdrawal'&&decision==='approved'&&!tx.isSynthetic?String(b.payoutTxHash||'').trim():null;
     if(payoutTxHash!==null&&payoutTxHash.length<16)return json(res,400,{error:'payout_tx_hash_required',message:'Çekimi onaylamadan önce gönderdiğiniz transferin işlem kimliğini girin.'});
+    if(decision==='approved'&&!tx.isSynthetic&&['deposit','withdrawal'].includes(tx.type)){
+      const transferHash=tx.type==='withdrawal'?payoutTxHash:String(tx.txHash||'').trim();
+      if(!transferHash)return json(res,400,{error:'chain_transfer_required',message:tx.type==='withdrawal'?'Ödemeyi zincirde doğrulamak için çekim işlem kimliğini girin.':'Yatırımın zincir işlem kimliği bulunamadı.'});
+      if(all.some(item=>item.id!==tx.id&&item.txHash&&item.txHash.toLowerCase()===transferHash.toLowerCase()))return json(res,409,{error:'chain_transfer_already_used',message:'Bu zincir işlem kimliği başka bir işlemde kullanılmış.'});
+      const verification=await verifyUsdtTransfer({network:tx.network,txHash:transferHash,recipient:tx.address,amount:approvedAmount});
+      addAudit('chain_transfer_check',admin.email,{transactionId:id,network:tx.network,type:tx.type,txHash:transferHash,status:verification.status,reason:verification.reason,blockNumber:verification.blockNumber||null});
+      if(verification.status!=='verified')return json(res,409,{error:'chain_transfer_unverified',message:`Zincir transferi doğrulanamadı (${verification.reason}). Transfer kesinleşmeden işlem onaylanamaz.`});
+    }
     if(decision==='approved' && tx.type==='withdrawal'){const u=await findUserById(tx.userId);if(approvedAmount>Number(u.balance||0))return json(res,409,{error:'insufficient_balance_at_approval'});}
     const decisionAt=new Date().toISOString(); const amountChanged=Math.abs(approvedAmount-requestedAmount)>1e-8;
     let decisionTeamAccountId=teamAdmin&&!owner?teamAdmin.adminId:null;
@@ -1217,28 +1387,30 @@ async function route(req,res){
   const uid=auth(req);
   if(req.url==='/api/support/tickets' && req.method==='GET'){
     if(!uid)return json(res,401,{error:'unauthorized'});
-    if(pool){const r=await pool.query('SELECT id,user_id AS "userId",subject,status,created_at AS "createdAt",updated_at AS "updatedAt" FROM support_tickets WHERE user_id=$1 ORDER BY updated_at DESC',[uid]);const ids=r.rows.map(x=>x.id);const m=ids.length?await pool.query('SELECT id,ticket_id AS "ticketId",sender_role AS "senderRole",sender_id AS "senderId",message,created_at AS "createdAt" FROM support_messages WHERE ticket_id=ANY($1::text[]) ORDER BY created_at',[ids]):{rows:[]};const byId=new Map();for(const msg of m.rows){if(!byId.has(msg.ticketId))byId.set(msg.ticketId,[]);byId.get(msg.ticketId).push(msg);}return json(res,200,{tickets:r.rows.map(x=>({...x,messages:byId.get(x.id)||[]}))});}
+    if(pool){const r=await pool.query('SELECT id,user_id AS "userId",subject,status,created_at AS "createdAt",updated_at AS "updatedAt" FROM support_tickets WHERE user_id=$1 ORDER BY updated_at DESC',[uid]);const ids=r.rows.map(x=>x.id);const m=ids.length?await pool.query('SELECT id,ticket_id AS "ticketId",sender_role AS "senderRole",sender_id AS "senderId",message,attachments,created_at AS "createdAt" FROM support_messages WHERE ticket_id=ANY($1::text[]) ORDER BY created_at',[ids]):{rows:[]};const byId=new Map();for(const msg of m.rows){if(!byId.has(msg.ticketId))byId.set(msg.ticketId,[]);byId.get(msg.ticketId).push(msg);}return json(res,200,{tickets:r.rows.map(x=>({...x,messages:byId.get(x.id)||[]}))});}
     const db=readDb();return json(res,200,{tickets:(db.supportTickets||[]).filter(x=>x.userId===uid).map(t=>({...t,messages:(db.supportMessages||[]).filter(m=>m.ticketId===t.id)})).sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt))});
   }
   if(req.url==='/api/support/tickets' && req.method==='POST'){
-    if(!uid)return json(res,401,{error:'unauthorized'});const b=await body(req),subject=String(b.subject||'').trim().slice(0,160),message=String(b.message||'').trim().slice(0,4000);if(subject.length<3||!message)return json(res,400,{error:'invalid_ticket'});
-    const now=new Date().toISOString(),ticket={id:`SUP-${crypto.randomBytes(7).toString('hex').toUpperCase()}`,userId:uid,subject,status:'open',createdAt:now,updatedAt:now},item={id:`MSG-${crypto.randomBytes(8).toString('hex').toUpperCase()}`,ticketId:ticket.id,senderRole:'user',senderId:uid,message,createdAt:now};
-    if(pool){const client=await pool.connect();try{await client.query('BEGIN');await client.query('INSERT INTO support_tickets (id,user_id,subject,status,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6)',[ticket.id,uid,ticket.subject,ticket.status,now,now]);await client.query('INSERT INTO support_messages (id,ticket_id,sender_role,sender_id,message,created_at) VALUES ($1,$2,$3,$4,$5,$6)',[item.id,ticket.id,item.senderRole,item.senderId,item.message,now]);await client.query('COMMIT');}catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}}
+    if(!uid)return json(res,401,{error:'unauthorized'});const b=await body(req,6e6),subject=String(b.subject||'').trim().slice(0,160),message=String(b.message||'').trim().slice(0,4000),attachments=cleanSupportAttachments(b.attachments);if(subject.length<3||(!message&&!attachments.length))return json(res,400,{error:'invalid_ticket'});
+    const user=await findUserById(uid),now=new Date().toISOString(),ticket={id:`SUP-${crypto.randomBytes(7).toString('hex').toUpperCase()}`,userId:uid,userName:[user?.firstName,user?.lastName].filter(Boolean).join(' ')||uid,subject,status:'open',createdAt:now,updatedAt:now},item={id:`MSG-${crypto.randomBytes(8).toString('hex').toUpperCase()}`,ticketId:ticket.id,senderRole:'user',senderId:uid,message,attachments,createdAt:now};
+    if(pool){const client=await pool.connect();try{await client.query('BEGIN');await client.query('INSERT INTO support_tickets (id,user_id,subject,status,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6)',[ticket.id,uid,ticket.subject,ticket.status,now,now]);await client.query('INSERT INTO support_messages (id,ticket_id,sender_role,sender_id,message,attachments,created_at) VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7)',[item.id,ticket.id,item.senderRole,item.senderId,item.message,JSON.stringify(attachments),now]);await client.query('COMMIT');}catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}}
     else{const db=readDb();db.supportTickets=db.supportTickets||[];db.supportMessages=db.supportMessages||[];db.supportTickets.unshift(ticket);db.supportMessages.push(item);writeDb(db);}
+    await forwardSupportMessageToTelegram(ticket,item);
     return json(res,201,{ok:true,ticket:{...ticket,messages:[item]}});
   }
   const memberSupportMatch=new URL(req.url,'http://localhost').pathname.match(/^\/api\/support\/tickets\/([^/]+)(?:\/(messages|close))?$/);
   if(memberSupportMatch){
     if(!uid)return json(res,401,{error:'unauthorized'});const ticketId=decodeURIComponent(memberSupportMatch[1]),sub=memberSupportMatch[2]||'';
     if(!sub&&req.method==='GET'){
-      if(pool){const r=await pool.query('SELECT id,user_id AS "userId",subject,status,created_at AS "createdAt",updated_at AS "updatedAt" FROM support_tickets WHERE id=$1 AND user_id=$2',[ticketId,uid]);if(!r.rows[0])return json(res,404,{error:'ticket_not_found'});const m=await pool.query('SELECT id,ticket_id AS "ticketId",sender_role AS "senderRole",sender_id AS "senderId",message,created_at AS "createdAt" FROM support_messages WHERE ticket_id=$1 ORDER BY created_at',[ticketId]);return json(res,200,{ticket:{...r.rows[0],messages:m.rows}});}
+      if(pool){const r=await pool.query('SELECT id,user_id AS "userId",subject,status,created_at AS "createdAt",updated_at AS "updatedAt" FROM support_tickets WHERE id=$1 AND user_id=$2',[ticketId,uid]);if(!r.rows[0])return json(res,404,{error:'ticket_not_found'});const m=await pool.query('SELECT id,ticket_id AS "ticketId",sender_role AS "senderRole",sender_id AS "senderId",message,attachments,created_at AS "createdAt" FROM support_messages WHERE ticket_id=$1 ORDER BY created_at',[ticketId]);return json(res,200,{ticket:{...r.rows[0],messages:m.rows}});}
       const db=readDb(),ticket=(db.supportTickets||[]).find(x=>x.id===ticketId&&x.userId===uid);if(!ticket)return json(res,404,{error:'ticket_not_found'});return json(res,200,{ticket:{...ticket,messages:(db.supportMessages||[]).filter(m=>m.ticketId===ticketId)}});
     }
     if(sub==='messages'&&req.method==='POST'){
-      const b=await body(req),message=String(b.message||'').trim().slice(0,4000);if(!message)return json(res,400,{error:'empty_message'});
-      const item={id:`MSG-${crypto.randomBytes(8).toString('hex').toUpperCase()}`,ticketId,senderRole:'user',senderId:uid,message,createdAt:new Date().toISOString()};
-      if(pool){const client=await pool.connect();try{await client.query('BEGIN');const t=await client.query("SELECT id FROM support_tickets WHERE id=$1 AND user_id=$2 AND status<>'closed' FOR UPDATE",[ticketId,uid]);if(!t.rows[0]){await client.query('ROLLBACK');return json(res,404,{error:'ticket_not_found'});}await client.query('INSERT INTO support_messages (id,ticket_id,sender_role,sender_id,message,created_at) VALUES ($1,$2,$3,$4,$5,$6)',[item.id,ticketId,item.senderRole,item.senderId,item.message,item.createdAt]);await client.query('UPDATE support_tickets SET updated_at=$1 WHERE id=$2',[item.createdAt,ticketId]);await client.query('COMMIT');}catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}}
+      const b=await body(req,6e6),message=String(b.message||'').trim().slice(0,4000),attachments=cleanSupportAttachments(b.attachments);if(!message&&!attachments.length)return json(res,400,{error:'empty_message'});
+      const user=await findUserById(uid),item={id:`MSG-${crypto.randomBytes(8).toString('hex').toUpperCase()}`,ticketId,senderRole:'user',senderId:uid,message,attachments,createdAt:new Date().toISOString()};
+      if(pool){const client=await pool.connect();try{await client.query('BEGIN');const t=await client.query("SELECT id,subject FROM support_tickets WHERE id=$1 AND user_id=$2 AND status<>'closed' FOR UPDATE",[ticketId,uid]);if(!t.rows[0]){await client.query('ROLLBACK');return json(res,404,{error:'ticket_not_found'});}await client.query('INSERT INTO support_messages (id,ticket_id,sender_role,sender_id,message,attachments,created_at) VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7)',[item.id,ticketId,item.senderRole,item.senderId,item.message,JSON.stringify(attachments),item.createdAt]);await client.query('UPDATE support_tickets SET updated_at=$1 WHERE id=$2',[item.createdAt,ticketId]);await client.query('COMMIT');item.ticketSubject=t.rows[0].subject;}catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}}
       else{const db=readDb(),t=(db.supportTickets||[]).find(x=>x.id===ticketId&&x.userId===uid&&x.status!=='closed');if(!t)return json(res,404,{error:'ticket_not_found'});db.supportMessages=db.supportMessages||[];db.supportMessages.push(item);t.updatedAt=item.createdAt;writeDb(db);}
+      await forwardSupportMessageToTelegram({id:ticketId,subject:item.ticketSubject||supportSubject,userId:uid,userName:[user?.firstName,user?.lastName].filter(Boolean).join(' ')||uid},item);
       return json(res,201,{ok:true,message:item});
     }
     if(sub==='close'&&req.method==='POST'){
@@ -1316,9 +1488,10 @@ async function route(req,res){
       const client=await pool.connect();
       try{
         await client.query('BEGIN');
-        const candidates=await client.query('SELECT w.id,w.network,w.address,w.label,w.team_id AS "teamId" FROM wallet_addresses w LEFT JOIN team_accounts t ON t.id=w.team_id WHERE w.network=$1 AND w.active=TRUE AND (w.team_id IS NULL OR (t.active=TRUE AND t.deposits_paused=FALSE)) ORDER BY w.last_used_at NULLS FIRST,w.use_count,w.created_at FOR UPDATE OF w SKIP LOCKED',[network]);
-        let capacityBlocked=false;
+        const candidates=await client.query('SELECT w.id,w.network,w.address,w.label,w.team_id AS "teamId",w.min_deposit_amount AS "minDepositAmount",w.max_deposit_amount AS "maxDepositAmount" FROM wallet_addresses w LEFT JOIN team_accounts t ON t.id=w.team_id WHERE w.network=$1 AND w.active=TRUE AND (w.team_id IS NULL OR (t.active=TRUE AND t.deposits_paused=FALSE)) ORDER BY w.last_used_at NULLS FIRST,w.use_count,w.created_at FOR UPDATE OF w SKIP LOCKED',[network]);
+        let capacityBlocked=false,amountLimitBlocked=false;
         for(const candidate of candidates.rows){
+          if((candidate.minDepositAmount!==null&&candidate.minDepositAmount!==undefined&&amount<Number(candidate.minDepositAmount))||(candidate.maxDepositAmount!==null&&candidate.maxDepositAmount!==undefined&&amount>Number(candidate.maxDepositAmount))){amountLimitBlocked=true;continue;}
           if(candidate.teamId){
             const lockedTeam=await client.query('SELECT id,collateral_total AS "collateralTotal",collateral_auto_pause AS "collateralAutoPause",collateral_pause_percent AS "collateralPausePercent",collateral_paused AS "collateralPaused",deposits_paused AS "depositsPaused",active FROM team_accounts WHERE id=$1 FOR UPDATE',[candidate.teamId]);
             const team=lockedTeam.rows[0];if(!team)continue;
@@ -1332,7 +1505,7 @@ async function route(req,res){
           }
           wallet=candidate;break;
         }
-        if(!wallet){await client.query('COMMIT');return json(res,409,capacityBlocked?{error:'team_collateral_limit_exceeded',message:'Ekip teminat kapasitesi dolu; ekip çekimleri ödedikten sonra yeniden yatırım kabul edebilir.'}:{error:'wallet_unavailable'});}
+        if(!wallet){await client.query('COMMIT');return json(res,409,capacityBlocked?{error:'team_collateral_limit_exceeded',message:'Ekip teminat kapasitesi dolu; ekip çekimleri ödedikten sonra yeniden yatırım kabul edebilir.'}:amountLimitBlocked?{error:'deposit_amount_limits',message:'Girdiğiniz tutar bu ağdaki yatırım cüzdanlarının alt/üst limitlerine uymuyor.'}:{error:'wallet_unavailable'});}
         await client.query('UPDATE wallet_addresses SET use_count=use_count+1,last_used_at=$1,updated_at=$1 WHERE id=$2',[now.toISOString(),wallet.id]);
         intent={id:`DPI-${crypto.randomBytes(12).toString('hex').toUpperCase()}`,userId:uid,walletId:wallet.id,amount,network,createdAt:now.toISOString(),expiresAt};
         await client.query('INSERT INTO deposit_intents (id,user_id,wallet_id,amount,network,created_at,expires_at) VALUES ($1,$2,$3,$4,$5,$6,$7)',[intent.id,uid,wallet.id,amount,network,intent.createdAt,intent.expiresAt]);
@@ -1341,8 +1514,9 @@ async function route(req,res){
       }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
     }else{
       const db=readDb(),walletById=new Map((db.walletAddresses||[]).map(item=>[item.id,item]));let capacityBlocked=false;
-      const candidates=available.sort((a,b)=>Number(a.useCount||0)-Number(b.useCount||0)||new Date(a.lastUsedAt||0)-new Date(b.lastUsedAt||0));
+      const candidates=available.sort((a,b)=>Number(a.useCount||0)-Number(b.useCount||0)||new Date(a.lastUsedAt||0)-new Date(b.lastUsedAt||0));let amountLimitBlocked=false;
       for(const candidate of candidates){
+        if((candidate.minDepositAmount!==null&&candidate.minDepositAmount!==undefined&&amount<Number(candidate.minDepositAmount))||(candidate.maxDepositAmount!==null&&candidate.maxDepositAmount!==undefined&&amount>Number(candidate.maxDepositAmount))){amountLimitBlocked=true;continue;}
         if(candidate.teamId){
           const team=(db.teamAccounts||[]).find(item=>item.id===candidate.teamId);if(!team)continue;
           const exposure=teamCollateralMetrics(candidate.teamId,db.transactions||[],db.walletAddresses||[],db.depositIntents||[]).collateralExposure,total=Number(team.collateralTotal||0),threshold=total*Number(team.collateralPausePercent||80)/100,pauseLimit=total>0?(team.collateralAutoPause?threshold:total):Infinity;
@@ -1357,7 +1531,7 @@ async function route(req,res){
         }
         wallet=candidate;break;
       }
-      if(!wallet){if(capacityBlocked)writeDb(db);return json(res,409,capacityBlocked?{error:'team_collateral_limit_exceeded',message:'Ekip teminat kapasitesi dolu; ekip çekimleri ödedikten sonra yeniden yatırım kabul edebilir.'}:{error:'wallet_unavailable'});}
+      if(!wallet){if(capacityBlocked)writeDb(db);return json(res,409,capacityBlocked?{error:'team_collateral_limit_exceeded',message:'Ekip teminat kapasitesi dolu; ekip çekimleri ödedikten sonra yeniden yatırım kabul edebilir.'}:amountLimitBlocked?{error:'deposit_amount_limits',message:'Girdiğiniz tutar bu ağdaki yatırım cüzdanlarının alt/üst limitlerine uymuyor.'}:{error:'wallet_unavailable'});}
       const saved=walletById.get(wallet.id);saved.useCount=Number(saved.useCount||0)+1;saved.lastUsedAt=now.toISOString();saved.updatedAt=now.toISOString();
       intent={id:`DPI-${crypto.randomBytes(12).toString('hex').toUpperCase()}`,userId:uid,walletId:wallet.id,amount,network,createdAt:now.toISOString(),expiresAt,usedAt:null};db.depositIntents=db.depositIntents||[];db.depositIntents.unshift(intent);
       if(wallet.teamId){const team=(db.teamAccounts||[]).find(item=>item.id===wallet.teamId);if(team){const exposure=teamCollateralMetrics(wallet.teamId,db.transactions||[],db.walletAddresses||[],db.depositIntents).collateralExposure;await syncTeamCollateral({teamId:wallet.teamId,exposure,dbState:db,at:now.toISOString()});}}
@@ -1446,4 +1620,4 @@ async function route(req,res){
   }
   return sendFile(req,res);
 }
-pgInit().then(()=>http.createServer((req,res)=>route(req,res).catch(e=>{console.error(e);json(res,500,{error:'server_error'})})).listen(PORT,'0.0.0.0',()=>console.log(`Safepays v29 running: http://localhost:${PORT}`))).catch(e=>{console.error('DB init failed',e);process.exit(1)});
+pgInit().then(()=>http.createServer((req,res)=>route(req,res).catch(e=>{console.error(e);if(e?.message==='support_attachment_invalid')return json(res,400,{error:'support_attachment_invalid',message:'Ek dosya PDF, PNG veya JPG olmalı; toplam boyut en fazla 4 MB olabilir.'});if(e?.statusCode===413)return json(res,413,{error:'payload_too_large',message:'Gönderilen veri boyutu sınırı aşıyor.'});const path=String(req.url||'');if(path.startsWith('/api/support/tickets'))return json(res,500,{error:'support_persistence_failed',message:'Destek mesajı kaydedilemedi. Sunucu bağlantısını kontrol edip tekrar deneyin.'});json(res,500,{error:'server_error'})})).listen(PORT,'0.0.0.0',()=>console.log(`Safepays v29 running: http://localhost:${PORT}`))).catch(e=>{console.error('DB init failed',e);process.exit(1)});

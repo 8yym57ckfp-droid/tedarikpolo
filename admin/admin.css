@@ -2,6 +2,8 @@
 .admin-body{background:#07182d;color:#0c1a2e;font-family:Inter,system-ui,sans-serif;margin:0}
 .admin-layout{display:flex;min-height:100vh}.admin-side{width:235px;position:fixed;inset:0 auto 0 0;background:#07182d;border-right:1px solid rgba(255,255,255,.08);padding:21px 13px}.admin-main{margin-left:235px;width:calc(100% - 235px);padding:25px;background:#f5f8fc;min-height:100vh}
 .admin-nav{margin-top:28px;display:grid;gap:4px}.admin-nav a{padding:10px 12px;border-radius:9px;color:#9dafc4;font-size:12px}.admin-nav a:hover,.admin-nav a.active{background:#112945;color:#fff}
+.admin-nav-group-title{margin-top:9px;padding:10px 12px 4px;color:#7891ac;font-size:9px;font-weight:900;letter-spacing:.14em;line-height:1.2;text-transform:uppercase}.admin-nav-group-title:first-child{margin-top:0}
+.admin-side .logo{display:flex!important;align-items:center;gap:9px;min-height:54px;padding:4px 9px 15px!important;border-bottom:1px solid #15283f;text-decoration:none}.admin-brand-mark{display:block;width:34px;height:34px;object-fit:contain;flex:0 0 34px}.admin-side .logo .admin-brand-wordmark{font-size:20px;font-weight:950;letter-spacing:-1.1px;line-height:1;color:#f4f7fb}.admin-side .logo .admin-brand-wordmark>span{color:#4f8cff}
 /* V245: prevent global nav styles from collapsing the Owner/Admin sidebar into a horizontal row */
 .admin-side nav.admin-nav{height:auto!important;display:grid!important;grid-auto-flow:row!important;grid-template-columns:1fr!important;align-items:stretch!important;justify-content:normal!important;justify-items:stretch!important;flex-direction:column!important;flex-wrap:nowrap!important;overflow:visible!important}.admin-side nav.admin-nav a{display:flex!important;width:100%!important;box-sizing:border-box!important;flex:0 0 auto!important;white-space:normal!important}
 .admin-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}.admin-head h1{font-size:28px;letter-spacing:-1px;margin:0;color:#0c1a2e}.admin-user{border:1px solid #dfe7f1;padding:8px 12px;border-radius:9px;color:#65758b;background:#fff;font-size:12px}
@@ -274,3 +276,17 @@ html.dark-theme .team-profile-menu{background:#09192b;border-color:#294867}
 html.dark-theme .admin-login{background:#06111f!important;color:#e8eef7!important}
 html.dark-theme .admin-login .admin-card{background:#0b1b30!important;color:#e8eef7!important;border-color:#1d3550!important}
 html.dark-theme .admin-login .admin-card h1{color:#f4f7fb!important}
+/* Shared team header: same compact live cash, status and profile layout on every staff page. */
+.admin-shared-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.admin-tools{position:relative;display:flex;align-items:center;gap:10px;margin-left:auto}
+.team-cash-shared{display:flex;align-items:center;gap:13px;padding:8px 11px;border:1px solid rgba(45,155,221,.28);border-radius:13px;background:linear-gradient(120deg,#0d263f,#0a1b2e);color:#eef7ff}
+.team-cash-shared>span:not(.team-cash-shared-status){display:grid;gap:3px;min-width:82px}
+.team-cash-shared small{color:#92abc4;font-size:8px;font-weight:750}.team-cash-shared b{font-size:10px;font-variant-numeric:tabular-nums}
+.team-cash-shared-status{display:flex;align-items:center;gap:5px;color:#71ddb2;font-size:8px;font-weight:900;white-space:nowrap}
+.team-cash-shared-status i{width:6px;height:6px;border-radius:50%;background:#37d89e;box-shadow:0 0 8px rgba(55,216,158,.7)}
+.team-cash-shared-status[data-state="paused"]{color:#ffc36e}.team-cash-shared-status[data-state="paused"] i{background:#f0b850;box-shadow:0 0 8px rgba(240,184,80,.55)}
+.team-cash-shared-status[data-state="stale"]{color:#ff8c9a}.team-cash-shared-status[data-state="stale"] i{background:#f05d72;box-shadow:0 0 8px rgba(240,93,114,.55)}
+.team-profile-menu .team-menu-icon svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.team-cash-shared~#adminToolsShared{margin-left:0}
+.wallet-limit-note{display:block;margin-top:4px;max-width:250px;color:#8da4bf;font-size:9px;line-height:1.35}
+@media(max-width:760px){.admin-shared-head{align-items:stretch}.admin-shared-head>div:first-child{flex:1 1 100%}.admin-tools{margin-left:auto}.team-cash-shared{flex:1 1 auto;justify-content:space-between;gap:7px;padding:7px 8px}.team-cash-shared>span:not(.team-cash-shared-status){min-width:62px}.team-cash-shared small{font-size:7px}.team-cash-shared b{font-size:9px}}

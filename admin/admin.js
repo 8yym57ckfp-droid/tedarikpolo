@@ -48,7 +48,8 @@ function filterTable(){let q=(document.getElementById('search')?.value||'').toLo
 function setupSharedProfile(){
   const a=window.SafeAdmin?.current?.();
   if(!a) return;
-  const head=document.querySelector('.admin-head') || document.querySelector('.team-head');
+  let head=document.querySelector('.admin-head') || document.querySelector('.team-head');
+  if(!head){head=document.createElement('div');head.className='admin-head admin-shared-head';document.querySelector('.admin-main')?.prepend(head);}
   if(!head) return;
   const isOwner=a.role==='Super Admin';
 
@@ -66,6 +67,14 @@ function setupSharedProfile(){
     const host = head.classList.contains('team-head') ? (head.querySelector('.team-head > div:last-child') || head) : head;
     const dateCard = host.querySelector('.date-card');
     if(dateCard) host.insertBefore(box,dateCard); else host.appendChild(box);
+  }
+
+  if(!isOwner&&!document.getElementById('teamCashIndicator')&&!document.getElementById('teamCashShared')){
+    const cash=document.createElement('section');cash.id='teamCashShared';cash.className='team-cash-shared';cash.setAttribute('aria-label','Ekip kasası canlı durumu');
+    cash.innerHTML='<span class="team-cash-shared-status" id="teamCashSharedStatus"><i></i> Yatırım durumu alınıyor</span><span><small>Kasa kullanımı</small><b id="teamCashSharedUsed">—</b></span><span><small>Kullanılabilir</small><b id="teamCashSharedAvailable">—</b></span>';
+    const tools=document.getElementById('adminToolsShared');if(tools)head.insertBefore(cash,tools);else head.appendChild(cash);
+    const refresh=async()=>{try{const r=await fetch('/api/admin/me',{credentials:'include',cache:'no-store'}),d=await r.json();if(!r.ok)throw new Error('unavailable');const x=d.admin||{},money=n=>Number(n||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+' USDT',active=x.acceptingDeposits===undefined?x.active!==false&&!x.depositsPaused&&!x.collateralPaused:!!x.acceptingDeposits,status=document.getElementById('teamCashSharedStatus');document.getElementById('teamCashSharedUsed').textContent=money(x.collateralExposure);document.getElementById('teamCashSharedAvailable').textContent=Number(x.collateralTotal||0)>0?money(x.collateralAvailable):'Sınırsız';status.dataset.state=active?'active':'paused';status.innerHTML='<i></i> Yatırım alımı '+(active?'aktif':'pasif');}catch(_){const status=document.getElementById('teamCashSharedStatus');if(status){status.dataset.state='stale';status.innerHTML='<i></i> Durum güncellenemedi';}}};
+    refresh();if(!window.__teamCashSharedTimer)window.__teamCashSharedTimer=setInterval(refresh,15000);
   }
 
   const u=document.getElementById('adminCurrentUser');
@@ -86,10 +95,10 @@ function setupSharedProfile(){
       const profileHref=isOwner?'../owner/profile.html':'profile.html';
       const securityHref=isOwner?'../owner/profile.html#security':'profile.html#security';
       menu.innerHTML=
-        '<a href="'+profileHref+'" role="menuitem" class="team-menu-item"><span class="team-menu-icon" aria-hidden="true">◉</span><span>Profilim</span></a>'+
-        '<a href="'+securityHref+'" role="menuitem" class="team-menu-item"><span class="team-menu-icon" aria-hidden="true">◇</span><span>Güvenlik</span></a>'+
+        '<a href="'+profileHref+'" role="menuitem" class="team-menu-item"><span class="team-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"></circle><path d="M5 20c.7-4 3-6 7-6s6.3 2 7 6"></path></svg></span><span>Profilim</span></a>'+
+        '<a href="'+securityHref+'" role="menuitem" class="team-menu-item"><span class="team-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 19 6v5c0 4.5-2.8 7.5-7 10-4.2-2.5-7-5.5-7-10V6l7-3Z"></path><path d="m9 12 2 2 4-4"></path></svg></span><span>Güvenlik</span></a>'+
         '<div class="team-menu-divider"></div>'+
-        '<button type="button" role="menuitem" class="team-menu-item team-menu-logout"><span class="team-menu-icon" aria-hidden="true">↪</span><span>Çıkış Yap</span></button>';
+        '<button type="button" role="menuitem" class="team-menu-item team-menu-logout"><span class="team-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9"></path></svg></span><span>Çıkış Yap</span></button>';
       u.parentElement.style.position='relative';
       u.parentElement.appendChild(menu);
       const close=()=>{menu.classList.remove('open');u.setAttribute('aria-expanded','false')};
@@ -141,8 +150,11 @@ window.addEventListener('safepays:portal-ready',setupSharedProfile);
     return true;
   }
   async function setupNav(){
-    if(!(await guard())) return;
-    const a=current();
+    let a=current();
+    if(!ownerPortal){
+      const brand=document.querySelector('.admin-side .logo');
+      if(brand){brand.href='team-dashboard.html';brand.innerHTML='<img class="admin-brand-mark" src="../assets/safepays-mark.png?v=2" alt=""><span class="admin-brand-wordmark">Safe<span>Pays</span></span>';}
+    }
     const icon=(name)=>{const paths={
       home:'<path d="M3 10.8 12 3l9 7.8"/><path d="M5.5 10v10h13V10"/><path d="M9.5 20v-6h5v6"/>',
       clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.2 2"/>',
@@ -162,33 +174,47 @@ window.addEventListener('safepays:portal-ready',setupSharedProfile);
       back:'<path d="M10 6 4 12l6 6"/><path d="M4 12h16"/>'
     };return `<span class="nav-icon nav-icon-${name}" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths[name]}</svg></span>`};
     const staffItems=[
-      ['team-dashboard.html','home','Genel Bakış'],['requests.html','clock','Bekleyen İşlemler'],['requests.html?type=withdrawal','wallet','Çekim Havuzu'],['history.html?status=approved','check','Onaylanan İşlemler'],['history.html?status=rejected','x','Reddedilen İşlemler'],['reconciliation.html','handshake','Mutabakat'],['reports.html','chart','Raporlar'],['wallet-addresses.html','wallet','Cüzdan Hesapları'],['support.html','news','Destek Talepleri'],['profile.html','user','Profilim']
+      ['team-dashboard.html','home','Genel Bakış'],['requests.html','clock','Bekleyen İşlemler'],['requests.html?type=withdrawal','wallet','Çekim Havuzu'],['history.html?status=approved','check','Onaylanan İşlemler'],['history.html?status=rejected','x','Reddedilen İşlemler'],['reconciliation.html','handshake','Mutabakat'],['reports.html','chart','Raporlar'],['wallet-addresses.html','wallet','Cüzdan Hesapları'],['profile.html','user','Profilim'],['settings.html','settings','Ayarlar']
     ];
     const ownerItems=[
       ['member-operations.html','user','Kullanıcılar'],
-      ['dashboard.html','home','Genel Bakış'],['requests.html','clock','Bekleyen İşlemler'],['withdrawal-pool.html','clock','Çekim Talepleri'],['history.html?status=approved','check','Onaylanan İşlemler'],['history.html?status=rejected','x','Reddedilen İşlemler'],['reconciliation.html','handshake','Mutabakat'],['reports.html','chart','Raporlar'],['wallet-addresses.html','wallet','Cüzdan Hesapları'],['support.html','news','Destek Talepleri'],['content.html','news','Site İçeriği'],['audit.html','shield','Audit Logları'],['settings.html','settings','Ayarlar'],['profile.html','user','Profilim'],['../index.html','back','Siteye Dön']
+      ['dashboard.html','home','Genel Bakış'],['requests.html','clock','Bekleyen İşlemler'],['withdrawal-pool.html','clock','Çekim Talepleri'],['history.html?status=approved','check','Onaylanan İşlemler'],['history.html?status=rejected','x','Reddedilen İşlemler'],['reconciliation.html','handshake','Mutabakat'],['reports.html','chart','Raporlar'],['wallet-addresses.html','wallet','Cüzdan Hesapları'],['support.html','news','Destek Talepleri'],['content.html','news','Site İçeriği'],['audit.html','shield','Audit Logları'],['settings.html','settings','Ayarlar'],['profile.html','user','Profilim']
     ];
-    const isOwner=ownerPortal&&a?.role==='Super Admin';
-    localStorage.setItem('safepays_portal',isOwner?'owner':'admin');
-    const items=isOwner?ownerItems:staffItems.filter(([href])=>{
-      const file=href.split('?')[0];
-      if(['requests.html','withdrawal-pool.html','history.html'].includes(file))return a?.permissions?.transactions!==false;
-      if(['reconciliation.html','reports.html'].includes(file))return a?.permissions?.reports!==false;
-      if(file==='wallet-addresses.html')return a?.permissions?.wallets!==false;
-      if(file==='support.html')return a?.permissions?.support!==false;
+    const staffGroups=[
+      ['GENEL',[staffItems[0]]],['İŞLEMLER',staffItems.slice(1,5)],['FİNANS',staffItems.slice(5,8)],['HESAP',staffItems.slice(8)]
+    ];
+    let isOwner=ownerPortal&&a?.role==='Super Admin';
+    const getItems=profile=>isOwner?ownerItems:staffItems.filter(([href])=>{
+      const file=href.split('?')[0],permissions=profile?.permissions||{};
+      if(['requests.html','withdrawal-pool.html','history.html'].includes(file))return permissions.transactions!==false;
+      if(['reconciliation.html','reports.html'].includes(file))return permissions.reports!==false;
+      if(file==='wallet-addresses.html')return permissions.wallets!==false;
       return true;
     });
-    if(!ownerPortal) document.querySelectorAll('.admin-nav').forEach(nav=>{
-      nav.replaceChildren(...items.map(([href,ico,label])=>{const el=document.createElement('a');el.href=href;el.innerHTML=icon(ico)+'<span>'+label+'</span>';return el;}));
+    const renderStaffNav=profile=>{if(ownerPortal)return;document.querySelectorAll('.admin-nav').forEach(nav=>{
+      const items=getItems(profile);
+      const children=[];
+      staffGroups.forEach(([title,groupItems])=>{
+        const visible=groupItems.filter(item=>items.includes(item));if(!visible.length)return;
+        const heading=document.createElement('div');heading.className='admin-nav-group-title';heading.textContent=title;children.push(heading);
+        visible.forEach(([href,ico,label])=>{const el=document.createElement('a');el.href=href;el.innerHTML=icon(ico)+'<span>'+label+'</span>';children.push(el);});
+      });
+      nav.replaceChildren(...children);
       const path=location.pathname.split('/').pop()||'dashboard.html';
       nav.querySelectorAll('a').forEach(el=>{const u=new URL(el.href,location.href),wantedParams=new URLSearchParams(u.search),currentParams=new URLSearchParams(location.search);const samePath=u.pathname.split('/').pop()===path;const wantedStatus=wantedParams.get('status');const currentStatus=currentParams.get('status');const sameStatus=(wantedStatus===null&&currentStatus===null)||(wantedStatus!==null&&wantedStatus===currentStatus);const wantedType=wantedParams.get('type');const currentType=currentParams.get('type');const sameType=(wantedType===null&&currentType===null)||(wantedType!==null&&wantedType===currentType);el.classList.toggle('active',samePath&&sameStatus&&sameType)});
-    });
+    });};
+    renderStaffNav(a);
     const side=document.querySelector('.admin-side');
     if(side && !document.getElementById('adminMenuToggle')){
       const b=document.createElement('button');b.id='adminMenuToggle';b.className='admin-menu-toggle';b.setAttribute('aria-label','Menüyü aç/kapat');b.innerHTML='☰';document.body.appendChild(b);
       b.onclick=()=>{side.classList.toggle('open');document.body.classList.toggle('admin-nav-open')};
       document.addEventListener('click',e=>{if(document.body.classList.contains('admin-nav-open')&&!side.contains(e.target)&&e.target!==b){side.classList.remove('open');document.body.classList.remove('admin-nav-open')}});
     }
+    if(!(await guard())) return;
+    a=current();
+    isOwner=ownerPortal&&a?.role==='Super Admin';
+    try{localStorage.setItem('safepays_portal',isOwner?'owner':'admin')}catch(_){}
+    renderStaffNav(a);
     if(location.search.includes('access=denied')){
       const note=document.createElement('div');note.className='owner-access-note';note.textContent='Bu bölüm yalnızca Site Sahibi hesabına açıktır.';document.body.appendChild(note);
     }

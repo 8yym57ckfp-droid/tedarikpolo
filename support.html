@@ -1348,7 +1348,7 @@
     }
 
   </style>
-<link rel="stylesheet" href="assets/member-premium.css?v=17"><link rel="stylesheet" href="assets/member-obsidian.css?v=5">
+<link rel="stylesheet" href="assets/member-premium.css?v=19"><link rel="stylesheet" href="assets/member-obsidian.css?v=5">
 </head>
 
 
@@ -1475,7 +1475,7 @@
           class="btn secondary"
           onclick="requestHuman()"
         >
-          İnsan Desteğine Aktar
+          Temsilciye bağlan
         </button>
 
       </div>
@@ -1738,10 +1738,9 @@
 
 
           <div class="support-compose">
-
-
-
-
+            <label class="support-attachment-pick" for="supportFiles"><span aria-hidden="true">＋</span> Dekont ekle
+              <input id="supportFiles" type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" multiple>
+            </label>
             <input
               id="chatInput"
               placeholder="Mesajınızı yazın..."
@@ -1758,6 +1757,8 @@
             >
               Gönder
             </button>
+            <span id="supportFileNames" aria-live="polite">PDF veya JPG/PNG · en fazla 4 MB</span>
+            <span id="supportSendError" role="status" aria-live="polite"></span>
 
           </div>
 
@@ -2021,4 +2022,4 @@
   </nav>
 
 
-  <script src="assets/support-client.js"></script></div><script src="assets/member-premium.js?v=14" defer></script></body></html>
+  <script src="assets/support-client.js?v=20261005.3"></script></div><script src="assets/member-premium.js?v=16" defer></script></body></html>

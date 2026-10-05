@@ -1,0 +1,226 @@
+/* Shared member workspace: one clear header, saturated status colors, crisp cards. */
+html body.member-premium:not(.public-landing):not(.auth-public){--member-blue:#278cff;--member-green:#2dcc91;--member-red:#f05d72;--member-yellow:#f0bd4e;color:#eaf2fb!important}
+html body.member-premium:not(.auth-public){background-color:#050b15!important;background-image:radial-gradient(ellipse at 8% 12%,rgba(16,101,196,.28),transparent 34%),radial-gradient(ellipse at 92% 34%,rgba(7,137,150,.2),transparent 32%),radial-gradient(ellipse at 70% 92%,rgba(83,49,178,.15),transparent 36%),linear-gradient(148deg,#050b15 0%,#071423 52%,#050a14 100%)!important;color:#edf5ff!important}
+html body.member-premium:not(.auth-public) .member-depth-ambient .member-depth-orb.one{background:radial-gradient(circle at 36% 34%,rgba(51,154,255,.46),rgba(19,102,181,.13) 56%,transparent 74%)!important;opacity:.54!important}
+html body.member-premium:not(.auth-public) .member-depth-ambient .member-depth-orb.two{background:radial-gradient(circle at 40% 38%,rgba(34,211,194,.32),rgba(12,117,138,.09) 58%,transparent 75%)!important;opacity:.44!important}
+html body.member-premium:not(.auth-public) .member-depth-ambient .member-depth-orb.three{background:radial-gradient(circle at 40% 38%,rgba(140,91,255,.27),rgba(85,65,178,.08) 60%,transparent 76%)!important;opacity:.38!important}
+html body.member-premium:not(.auth-public) .member-depth-ambient .member-depth-ring,html body.member-premium:not(.auth-public) .member-depth-ambient .member-depth-ring.ring-two{border-color:rgba(83,165,255,.19)!important;box-shadow:0 0 64px rgba(35,142,243,.09),inset 0 0 44px rgba(24,151,211,.06)!important}
+html body.public-landing{background-color:#040b16!important;background-image:radial-gradient(ellipse at 13% 8%,rgba(12,94,184,.27),transparent 37%),radial-gradient(ellipse at 88% 38%,rgba(0,138,153,.2),transparent 34%),radial-gradient(ellipse at 55% 100%,rgba(77,50,155,.15),transparent 44%),linear-gradient(155deg,#040b16 0%,#061321 55%,#030811 100%)!important}
+html body.public-landing .member-depth-ambient .member-depth-orb.one{background:radial-gradient(circle at 36% 34%,rgba(47,152,255,.48),rgba(11,82,156,.14) 58%,transparent 75%)!important;opacity:.55!important}
+html body.public-landing .member-depth-ambient .member-depth-orb.two{background:radial-gradient(circle at 40% 38%,rgba(33,220,197,.32),rgba(8,106,129,.09) 60%,transparent 76%)!important;opacity:.46!important}
+html body.public-landing .member-depth-ambient .member-depth-orb.three{background:radial-gradient(circle at 40% 38%,rgba(146,93,255,.3),rgba(86,61,176,.08) 60%,transparent 76%)!important;opacity:.36!important}
+html body.public-landing .member-depth-ambient .member-depth-ring{border-color:rgba(77,166,255,.2)!important;box-shadow:0 0 65px rgba(31,146,245,.1),inset 0 0 40px rgba(28,145,215,.07)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-standard-header{
+  position:relative!important;z-index:10!important;box-sizing:border-box!important;width:100%!important;min-height:68px!important;
+  display:flex!important;align-items:center!important;gap:18px!important;margin:0 0 20px!important;padding:10px 20px!important;
+  border:1px solid rgba(84,158,223,.28)!important;border-radius:18px!important;
+  background:linear-gradient(105deg,#0c2137 0%,#0a1a2c 65%,#0b2231 100%)!important;
+  box-shadow:0 12px 28px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.04)!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;filter:none!important;transform:none!important;opacity:1!important
+}
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.account-card,.finance-card,.dash-card,.tx-card,.network-live-panel,.network-live-card,.support-panel,.security-hero,.event-card,.ref-card,.wallet-activity-panel){border-color:rgba(74,153,222,.28)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-flow-deposit:hover{box-shadow:0 9px 25px rgba(45,204,145,.17)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-flow-withdraw:hover{box-shadow:0 9px 25px rgba(240,93,114,.17)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-standard-header .member-glass-brand,
+html body.member-premium:not(.public-landing):not(.auth-public) .member-standard-header .dash-brand-mobile{
+  order:-2!important;display:flex!important;flex:0 0 auto!important;align-items:center!important;gap:9px!important;
+  min-width:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important
+}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-standard-header .member-glass-brand>img,
+html body.member-premium:not(.public-landing):not(.auth-public) .member-standard-header .mobile-inline-logo>img{
+  display:block!important;width:42px!important;height:42px!important;object-fit:contain!important;opacity:1!important;filter:none!important
+}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-standard-header .inline-brand{display:flex!important;gap:3px!important;color:#f2f7ff!important;font-size:16px!important;font-weight:850!important;letter-spacing:-.035em!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-standard-header .inline-brand b{color:#f2f7ff!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-standard-header .desktop-label,
+html body.member-premium:not(.public-landing):not(.auth-public) .member-standard-header>.finance-title{flex:1 1 auto!important;min-width:0!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-standard-header .profile,
+html body.member-premium:not(.public-landing):not(.auth-public) .member-standard-header .user-pill,
+html body.member-premium:not(.public-landing):not(.auth-public) .member-standard-header .member-header-profile{
+  margin-left:auto!important;flex:0 0 44px!important;width:44px!important;height:44px!important;min-width:44px!important;
+  display:grid!important;place-items:center!important;overflow:hidden!important;border:1px solid rgba(92,172,239,.4)!important;
+  border-radius:50%!important;background:linear-gradient(145deg,#123657,#0d2740)!important;color:#f3f8ff!important;box-shadow:none!important;text-decoration:none!important
+}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-header-profile svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-rate-indicator{box-sizing:border-box;flex:0 1 365px;min-width:285px;margin-left:auto;padding:8px 11px;border:1px solid rgba(50,202,145,.24);border-radius:13px;background:linear-gradient(110deg,rgba(15,59,61,.78),rgba(14,37,56,.88));color:#eaf5ff}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-rate-caption{display:flex;align-items:center;gap:6px;margin-bottom:5px;color:#85dabc;font-size:8px;font-weight:900;letter-spacing:.11em}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-rate-caption i{width:6px;height:6px;border-radius:50%;background:#37d99b;box-shadow:0 0 8px #37d99b}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-rate-indicator[data-stale="true"] .member-rate-caption i{background:#efbd55;box-shadow:0 0 8px #efbd55}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-rate-networks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-rate-network{display:grid;grid-template-columns:auto 1fr;align-items:baseline;column-gap:8px;min-width:0}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-rate-network>b{font-size:9px;font-weight:900;color:#6eb8ff}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-rate-network.erc>b{color:#b7a1ff}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-rate-network>strong{font-size:12px;font-variant-numeric:tabular-nums;color:#f3f7fc;white-space:nowrap}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-rate-network>small{grid-column:2;color:#a7bed3;font-size:8px;white-space:nowrap}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-standard-header .wallet-balance-pill{display:none!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .dash-content .welcome>.wallet-balance-card{display:none!important}
+
+/* Wider workspace and consistent spacing on the member transaction hub. */
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page{
+  box-sizing:border-box!important;width:min(100%,1040px)!important;max-width:1040px!important;margin:0 auto!important;padding:8px clamp(16px,2.4vw,28px) 120px!important
+}
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page .finance-title{margin:0 0 16px!important;padding:0 0 14px!important;border-bottom:1px solid rgba(107,156,204,.2)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page .finance-title h1{font-size:clamp(29px,3vw,38px)!important;line-height:1.12!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page .finance-switch{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important;padding:7px!important;border:1px solid rgba(83,145,199,.27)!important;border-radius:16px!important;background:#0a1b2d!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page .finance-switch button{min-height:48px!important;border-radius:12px!important;font-weight:800!important;transition:background .18s,border-color .18s,box-shadow .18s!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page #tabDeposit{color:#c4ffe7!important;border-color:rgba(45,204,145,.4)!important;background:linear-gradient(120deg,rgba(20,126,86,.24),rgba(12,69,56,.34))!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page #tabDeposit.active{background:linear-gradient(120deg,#17875f,#12694f)!important;box-shadow:0 8px 22px rgba(27,188,125,.2)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page #tabWithdraw{color:#ffd5dc!important;border-color:rgba(240,93,114,.38)!important;background:linear-gradient(120deg,rgba(140,43,61,.23),rgba(79,27,39,.35))!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page #tabWithdraw.active{background:linear-gradient(120deg,#b83b52,#84283e)!important;box-shadow:0 8px 22px rgba(220,70,95,.18)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page .overview-hero{margin-top:16px!important;border-color:rgba(89,162,224,.28)!important;border-radius:20px!important;background:linear-gradient(140deg,#102b47,#0b1d31 75%)!important;box-shadow:0 14px 38px rgba(0,0,0,.2)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page .quick-actions{gap:12px!important;margin:12px 0 20px!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page .quick-action{min-height:94px!important;box-sizing:border-box!important;border-radius:16px!important;background:linear-gradient(145deg,#102740,#0b1b2c)!important;border-color:rgba(83,151,207,.3)!important;color:#edf5ff!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:0 9px 24px rgba(0,0,0,.16)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page #depositQuick .quick-action{border-color:rgba(45,204,145,.42)!important;background:linear-gradient(130deg,rgba(17,100,76,.62),#0d2633)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page #withdrawQuick .quick-action{border-color:rgba(240,93,114,.42)!important;background:linear-gradient(130deg,rgba(119,40,57,.6),#251b2a)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page #depositQuick .quick-icon{background:#126548!important;color:#66f0bd!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page #withdrawQuick .quick-icon{background:#782b40!important;color:#ff9cac!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page .campaign{border:1px solid rgba(240,189,78,.32)!important;border-radius:17px!important;background:linear-gradient(115deg,rgba(105,78,24,.26),rgba(14,33,50,.95))!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page .recent-row{border-color:rgba(104,154,199,.22)!important;background:#0c2034!important;border-radius:13px!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page .recent-icon.deposit{background:rgba(45,204,145,.17)!important;color:#42dfa8!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page .recent-icon.withdraw{background:rgba(240,93,114,.17)!important;color:#ff7184!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page .recent-amount.deposit{color:#43dfa8!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .finance-page .recent-amount.withdraw{color:#ff7184!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .wallet-page.finance-page{width:min(100%,1180px)!important;max-width:1180px!important;margin:0 auto!important;padding:22px clamp(18px,2.5vw,32px) 128px!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .wallet-page .wallet-page-title{margin:0 0 18px!important;padding:0 0 14px!important;border-bottom:1px solid rgba(103,158,205,.2)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .wallet-page .wallet-page-title h1{font-size:clamp(28px,3vw,36px)!important;line-height:1.12!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .wallet-page .wallet-layout-grid{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,.82fr)!important;gap:16px!important;align-items:stretch!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .wallet-page .wallet-summary-card,html body.member-premium:not(.public-landing):not(.auth-public) .wallet-page .wallet-secure-panel{box-sizing:border-box!important;min-height:220px!important;margin:0!important;padding:21px!important;border-radius:19px!important;background:linear-gradient(145deg,#102944,#0b1a2b)!important;border:1px solid rgba(78,150,213,.27)!important;box-shadow:0 14px 32px rgba(0,0,0,.19)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .wallet-page .wallet-activity-panel{grid-column:1/-1!important;margin:0!important;padding:21px!important;border:1px solid rgba(82,151,211,.28)!important;border-radius:19px!important;background:linear-gradient(145deg,#0e263e,#0a1929)!important;box-shadow:0 14px 32px rgba(0,0,0,.18)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .wallet-page .wallet-action-row{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;margin:13px 0!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .wallet-page .wallet-action-row a:first-child{border:1px solid rgba(45,204,145,.48)!important;background:linear-gradient(120deg,#176b51,#104534)!important;color:#d6ffed!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .wallet-page .wallet-action-row a:last-child{border:1px solid rgba(240,93,114,.48)!important;background:linear-gradient(120deg,#803044,#572238)!important;color:#ffe0e4!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .wallet-page .wallet-totals-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .wallet-page .wallet-totals-grid>div{padding:13px!important;border:1px solid rgba(100,151,195,.2)!important;border-radius:13px!important;background:#0b1b2b!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .wallet-page #walletTotalDeposits{color:#37d99b!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .wallet-page #walletTotalWithdrawals{color:#ff667c!important}
+
+/* Transaction colors stay consistent across summaries, histories, charts and wallet quick actions. */
+html body.member-premium:not(.public-landing):not(.auth-public) .member-flow-deposit{--flow:#2dcc91}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-flow-withdraw{--flow:#f05d72}
+html body.member-premium:not(.public-landing):not(.auth-public) .wallet-activity-panel .member-flow-deposit{border-color:rgba(45,204,145,.52)!important;background:linear-gradient(120deg,rgba(17,113,79,.55),rgba(11,40,43,.84))!important;color:#c8ffe8!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .wallet-activity-panel .member-flow-withdraw{border-color:rgba(240,93,114,.52)!important;background:linear-gradient(120deg,rgba(136,42,59,.55),rgba(54,28,41,.86))!important;color:#ffdae0!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .amount-deposit,html body.member-premium:not(.public-landing):not(.auth-public) .text-deposit{color:#36d89d!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .amount-withdrawal,html body.member-premium:not(.public-landing):not(.auth-public) .text-withdrawal{color:#ff667c!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .amount-commission,html body.member-premium:not(.public-landing):not(.auth-public) .text-commission{color:#f0bd4e!important}
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.network-icon,.network-chip,.status,.network-inline,.asset-token-icon,.asset-dot,.campaign-icon,.quick-icon,.wallet-mini-icon,.wallet-card-icon){filter:none!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .network-live-panel,html body.member-premium:not(.public-landing):not(.auth-public) .network-live-card,
+html body.member-premium:not(.public-landing):not(.auth-public) :is(.support-panel,.support-category,.support-messages,.support-compose,.context-card,.chat-panel){filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .support-panel{background:linear-gradient(145deg,#0d2742,#091a2d)!important;border-color:rgba(77,154,224,.32)!important;color:#eef6ff!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .support-messages{background:#071728!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .support-category{background:#102b46!important;border:1px solid rgba(77,154,224,.26)!important;border-radius:15px!important;color:#eff7ff!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .support-category:hover{background:#163756!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .support-compose{background:#0c2035!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .support-compose input{background:#071728!important;color:#f2f8ff!important}
+@media(max-width:760px){
+  html body.member-premium:not(.public-landing):not(.auth-public) .member-standard-header{min-height:58px!important;margin-bottom:14px!important;padding:8px 11px!important;border-radius:15px!important}
+  html body.member-premium:not(.public-landing):not(.auth-public) .member-standard-header .member-glass-brand>img,html body.member-premium:not(.public-landing):not(.auth-public) .member-standard-header .mobile-inline-logo>img{width:36px!important;height:36px!important}
+  html body.member-premium:not(.public-landing):not(.auth-public) .member-standard-header .inline-brand{font-size:14px!important}
+  html body.member-premium:not(.public-landing):not(.auth-public) .finance-page{width:100%!important;padding:8px 0 112px!important}
+  html body.member-premium:not(.public-landing):not(.auth-public) .finance-page .quick-action{min-height:78px!important;padding:13px!important}
+  html body.member-premium:not(.public-landing):not(.auth-public) .member-rate-indicator{flex:1 1 100%;min-width:0;order:3;margin:0}
+  html body.member-premium:not(.public-landing):not(.auth-public) .wallet-page .wallet-layout-grid{grid-template-columns:1fr!important;gap:12px!important}
+  html body.member-premium:not(.public-landing):not(.auth-public) .wallet-page .wallet-summary-card,html body.member-premium:not(.public-landing):not(.auth-public) .wallet-page .wallet-secure-panel{min-height:0!important}
+  html body.member-premium:not(.public-landing):not(.auth-public) .wallet-page .wallet-activity-panel{grid-column:auto!important}
+}
+
+/* Final clarity pass: depth effects were shrinking, tilting and dimming text on scroll. */
+html body.member-premium:not(.auth-public) .member-depth-card,
+html body.member-premium:not(.auth-public) .member-depth-card.member-depth-visible,
+html body.member-premium:not(.auth-public) .member-depth-card.member-depth-visible:hover{
+  opacity:1!important;transform:none!important;transform-style:flat!important;backface-visibility:visible!important;
+  filter:none!important;transition:box-shadow .18s ease,border-color .18s ease!important;will-change:auto!important
+}
+html body.member-premium:not(.auth-public) :is(.member-depth-card,.pl-faq-item,.pl-feature-card,.pl-news-card,.pl-how-card,.pl-live-card,.support-panel,.finance-card,.wallet-activity-panel){
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;backdrop-filter:none!important;-webkit-backdrop-filter:none!important
+}
+html body.member-premium.public-landing .pl-logo-ticker{overflow:hidden!important;clip-path:inset(0)!important}
+html body.member-premium.public-landing .pl-logo-ticker-viewport{overflow:hidden!important;width:100%!important;gap:7px!important;mask-image:linear-gradient(90deg,transparent 0%,#000 7%,#000 93%,transparent 100%)!important}
+html body.member-premium.public-landing .pl-logo-ticker-track-a{animation-duration:110s!important}
+html body.member-premium.public-landing .pl-logo-ticker-track-b{animation-duration:124s!important}
+html body.member-premium.public-landing .pl-logo-ticker-row{gap:12px!important;padding-inline:10px!important}
+html body.member-premium.public-landing .pl-ticker-item{padding:6px 11px!important;box-shadow:none!important;opacity:.95!important}
+html body.member-premium.public-landing .pl-faq-section{overflow:hidden!important;isolation:isolate}
+html body.member-premium.public-landing .pl-faq-section .pl-faq-item{position:relative!important;overflow:hidden!important;isolation:isolate;transform:none!important;box-shadow:0 7px 20px rgba(0,0,0,.18)!important}
+html body.member-premium.public-landing .pl-faq-section .pl-faq-item::before,
+html body.member-premium.public-landing .pl-faq-section .pl-faq-item::after{content:none!important;display:none!important}
+html body.member-premium.public-landing .pl-faq-section .pl-faq-item:hover{transform:none!important;box-shadow:0 9px 24px rgba(0,0,0,.24)!important}
+html body.member-premium.public-landing .pl-hero :is(.hero-copy,.pl-hero-copy) *::before,
+html body.member-premium.public-landing .pl-hero :is(.hero-copy,.pl-hero-copy) *::after{pointer-events:none}
+html body.member-premium.public-landing .pl-hero :is(.hero-copy,.pl-hero-copy) :is(h1,p,.pl-hero-kicker,.pl-eyebrow)::after{display:none!important;content:none!important}
+html body.member-premium.public-landing{background-color:#071423!important}
+html body.member-premium.public-landing .member-depth-ring{display:none!important}
+html body.member-premium.public-landing .pl-hero{grid-template-columns:minmax(0,1fr) minmax(390px,1fr)!important;gap:clamp(28px,4vw,58px)!important;overflow:visible!important;transform:none!important;transform-style:flat!important}
+html body.member-premium.public-landing .pl-hero .hero-copy{width:100%!important;max-width:650px!important;min-width:0!important;overflow:visible!important}
+html body.member-premium.public-landing .pl-hero h1{width:100%!important;max-width:none!important;overflow:visible!important;font-size:clamp(44px,5.45vw,76px)!important;letter-spacing:-.068em!important}
+html body.member-premium.public-landing .pl-hero h1 .gradient{display:inline-block!important;max-width:100%!important;padding-right:.12em!important;margin-right:-.12em!important;overflow:visible!important;white-space:nowrap!important}
+html body.member-premium.public-landing .pl-globe-stage{min-height:400px!important;transform:none!important;transform-style:flat!important;overflow:hidden!important;background:radial-gradient(ellipse at 52% 48%,rgba(23,132,255,.42),transparent 53%),radial-gradient(ellipse at 75% 80%,rgba(36,222,196,.22),transparent 44%),linear-gradient(145deg,#0e2b4a,#09182a 78%)!important;border-color:rgba(87,183,255,.45)!important;box-shadow:0 25px 65px rgba(0,0,0,.35),0 0 40px rgba(20,134,255,.13)!important}
+html body.member-premium.public-landing .pl-globe{width:min(286px,58vw)!important;height:min(286px,58vw)!important;transform:none!important;animation:none!important;background:radial-gradient(circle at 32% 24%,#e2ffff 0%,#7ce4ff 11%,#35a7ff 29%,#1766ec 55%,#10265f 100%)!important;box-shadow:inset -25px -28px 48px rgba(3,10,45,.46),inset 12px 9px 25px rgba(255,255,255,.48),0 0 76px rgba(34,142,255,.5)!important}
+html body.member-premium.public-landing .pl-globe-glow{filter:none!important;opacity:.85!important;background:radial-gradient(circle,rgba(31,153,255,.45),rgba(28,125,255,.12) 52%,transparent 72%)!important}
+html body.member-premium.public-landing .pl-globe-stage:before{transform:none!important;border-color:rgba(136,202,255,.2)!important}
+html body.member-premium.public-landing .pl-float-coin{transform:none!important;box-shadow:0 0 28px rgba(28,213,173,.36),inset 0 1px 8px rgba(255,255,255,.55)!important}
+html body.member-premium.public-landing .pl-logo-ticker{margin:10px 0!important;padding:10px 0!important;transform:none!important;min-height:72px!important}
+html body.member-premium.public-landing .pl-logo-ticker-viewport{grid-auto-rows:27px!important;gap:4px!important}
+html body.member-premium.public-landing .pl-features:before,html body.member-premium.public-landing .pl-how-section:before,html body.member-premium.public-landing .pl-faq-section:before{display:none!important;content:none!important}
+html body.member-premium.public-landing :is(.pl-features,.pl-how-section,.pl-faq-section){transform:none!important;transform-style:flat!important;overflow:hidden!important}
+html body.member-premium.public-landing :is(.pl-faq-item,.pl-feature-card,.pl-news-card,.pl-how-card,.pl-live-card)::before,
+html body.member-premium.public-landing :is(.pl-faq-item,.pl-feature-card,.pl-news-card,.pl-how-card,.pl-live-card)::after{box-shadow:none!important}
+html body.member-premium.public-landing .pl-faq-section .pl-faq-item::before,html body.member-premium.public-landing .pl-faq-section .pl-faq-item::after{display:none!important;content:none!important}
+html body.member-premium.public-landing :is(.pl-faq-item,.pl-feature-card,.pl-news-card,.pl-how-card,.pl-live-card){box-shadow:0 9px 23px rgba(0,0,0,.2)!important}
+
+/* The support page has one brand in its shared header and a compact, purposeful topic panel. */
+html body.member-premium:not(.auth-public) .member-standard-header .member-brand{display:flex!important;align-items:center!important;text-decoration:none!important}
+html body.member-premium:not(.auth-public) .support-topbar{width:min(100%,1120px)!important;margin:18px auto 14px!important;padding:16px 18px!important;border:1px solid rgba(71,147,216,.27)!important;border-radius:18px!important;background:linear-gradient(110deg,#0c2138,#0a1a2d)!important;box-shadow:0 10px 26px rgba(0,0,0,.2)!important}
+html body.member-premium:not(.auth-public) .support-topbar h1{font-size:clamp(26px,3vw,36px)!important;line-height:1.12!important}
+html body.member-premium:not(.auth-public) .support-topbar .btn{border-color:rgba(67,158,242,.42)!important;background:#102e4d!important;color:#d8ecff!important}
+html body.member-premium:not(.auth-public) .support-shell{width:min(100%,1120px)!important;margin:0 auto!important;grid-template-columns:minmax(0,1fr) 290px!important;gap:14px!important;align-items:start!important}
+html body.member-premium:not(.auth-public) .support-shell:not(.chat-open) .support-list{min-height:0!important;height:auto!important}
+html body.member-premium:not(.auth-public) .support-shell:not(.chat-open) #supportContext{min-height:0!important;height:auto!important;align-self:start!important}
+html body.member-premium:not(.auth-public) .support-list-head{padding:20px 20px 16px!important;background:linear-gradient(110deg,#102a45,#0d2034)!important}
+html body.member-premium:not(.auth-public) .support-categories{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;padding:14px!important;background:#0a1928!important}
+html body.member-premium:not(.auth-public) .support-category{min-height:112px!important;padding:15px!important;gap:11px!important;box-shadow:none!important}
+html body.member-premium:not(.auth-public) .support-category .category-icon{flex:0 0 38px!important;width:38px!important;height:38px!important;background:linear-gradient(140deg,#167ad8,#17a7be)!important;color:#fff!important}
+html body.member-premium:not(.auth-public) .support-list-footer{display:flex!important;flex-wrap:wrap;justify-content:center;gap:6px!important;padding:12px!important;color:#8fa9c3!important;background:#0a1928!important;font-size:10px!important}
+html body.member-premium:not(.auth-public) #supportChatPanel{min-height:560px!important}
+html body.member-premium:not(.auth-public) .support-compose{display:flex!important;align-items:center!important;gap:8px!important;flex-wrap:wrap!important}
+html body.member-premium:not(.auth-public) .support-compose #chatInput{flex:1 1 260px!important;min-width:0!important}
+html body.member-premium:not(.auth-public) .support-attachment-pick{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;min-height:42px!important;padding:0 12px!important;border:1px solid rgba(85,158,218,.34)!important;border-radius:11px!important;background:#102943!important;color:#dceeff!important;font-size:11px!important;font-weight:800!important;cursor:pointer}
+html body.member-premium:not(.auth-public) .support-attachment-pick input{display:none!important}
+html body.member-premium:not(.auth-public) #supportFileNames{flex:1 1 100%;color:#8fb2d1;font-size:10px}
+html body.member-premium:not(.auth-public) .support-attachment-link{display:inline-flex;margin:6px 5px 0 0;padding:5px 8px;border:1px solid rgba(85,158,218,.32);border-radius:8px;background:#0b2941;color:#a9dcff;font-size:10px;text-decoration:none}
+@media(max-width:760px){
+  html body.member-premium:not(.auth-public) .support-shell{grid-template-columns:1fr!important}
+  html body.member-premium:not(.auth-public) .support-categories{grid-template-columns:1fr!important}
+  html body.member-premium:not(.auth-public) .support-category{min-height:82px!important}
+  html body.member-premium:not(.auth-public) .support-topbar{align-items:flex-start!important;gap:12px!important;padding:14px!important}
+}
+
+/* Match the document canvas to the public page so no black strip shows around the body. */
+html:has(body.public-landing),html:has(body.public-landing.dark-theme){background:#061321!important}
+html body.public-landing{background-color:#061321!important}
+
+/* Keep the public canvas deep navy instead of falling back to flat black. */
+html:has(body.public-landing),html:has(body.public-landing.dark-theme){background:#0a1829!important}
+html body.member-premium.public-landing{
+  background-color:#0a1829!important;
+  background-image:radial-gradient(ellipse at 12% 10%,rgba(21,100,190,.27),transparent 36%),radial-gradient(ellipse at 88% 42%,rgba(5,117,127,.2),transparent 34%),radial-gradient(ellipse at 48% 96%,rgba(74,45,155,.13),transparent 40%),linear-gradient(155deg,#081729 0%,#0a1b2e 56%,#081525 100%)!important
+}
+html body.member-premium.public-landing .pl-hero :is(.eyebrow,.pl-eyebrow,.pl-hero-kicker)::before,
+html body.member-premium.public-landing .pl-hero :is(.eyebrow,.pl-eyebrow,.pl-hero-kicker)::after{content:none!important;display:none!important}
+html body.member-premium.public-landing :is(.pl-features,.pl-how-section,.pl-faq-section){overflow:clip!important;isolation:isolate!important;transform:none!important;filter:none!important}
+html body.member-premium.public-landing :is(.pl-faq-item,.pl-feature-card,.pl-news-card,.pl-how-card,.pl-live-card)::before,
+html body.member-premium.public-landing :is(.pl-faq-item,.pl-feature-card,.pl-news-card,.pl-how-card,.pl-live-card)::after{content:none!important;display:none!important;box-shadow:none!important;filter:none!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-profile-menu{position:relative!important;display:flex!important;flex:0 0 auto!important;align-items:center!important;z-index:125!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-profile-dropdown{position:absolute!important;z-index:130!important;top:calc(100% + 10px)!important;right:0!important;display:grid!important;gap:4px!important;width:190px!important;padding:7px!important;border:1px solid rgba(83,157,220,.34)!important;border-radius:14px!important;background:linear-gradient(150deg,#102a44,#091a2d)!important;box-shadow:0 18px 44px rgba(0,0,0,.42)!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-profile-dropdown[hidden]{display:none!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-profile-dropdown a,
+html body.member-premium:not(.public-landing):not(.auth-public) .member-profile-dropdown button{display:flex!important;align-items:center!important;gap:10px!important;min-height:40px!important;padding:0 10px!important;border:0!important;border-radius:9px!important;background:transparent!important;color:#eaf4ff!important;font-size:12px!important;font-weight:750!important;text-align:left!important;text-decoration:none!important;box-shadow:none!important;cursor:pointer}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-profile-dropdown a:hover,
+html body.member-premium:not(.public-landing):not(.auth-public) .member-profile-dropdown button:hover{background:rgba(57,144,218,.16)!important;color:#fff!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-profile-dropdown svg{width:17px!important;height:17px!important;flex:0 0 17px!important;fill:none!important;stroke:#87caff!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-profile-dropdown button{border-top:1px solid rgba(109,156,193,.15)!important;border-radius:0 0 8px 8px!important;color:#ffadb8!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-profile-dropdown button svg{stroke:#ff7a8e!important}
+/* Keep auth forms crisp; the legacy depth animation can soften its text on hover. */
+html body.member-premium.auth-public .auth-wrap>.auth,
+html body.member-premium.auth-public .auth-wrap>.auth.member-depth-visible,
+html body.member-premium.auth-public .auth-wrap>.auth.member-depth-visible:hover{opacity:1!important;transform:none!important;filter:none!important;transform-style:flat!important;backface-visibility:visible!important;will-change:auto!important}
+html body.member-premium.auth-public .auth-wrap>.auth :is(h1,p,label,a,button){-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}

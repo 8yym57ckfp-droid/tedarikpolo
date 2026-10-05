@@ -198,7 +198,7 @@ body.admin-body.owner-page .admin-side .logo{
   color:#fff!important;
 }
 body.admin-body.owner-page .admin-side .logo{display:grid!important;grid-template-columns:42px minmax(0,1fr);grid-template-rows:auto auto;column-gap:8px;align-items:center;min-height:54px}
-body.admin-body.owner-page .admin-side .logo:before{grid-column:1;grid-row:1/span 2;align-self:center}
+body.admin-body.owner-page .admin-side .logo .owner-brand-mark{grid-column:1;grid-row:1/span 2;align-self:center;width:38px;height:38px;object-fit:contain;display:block}
 body.admin-body.owner-page .admin-side .logo .owner-brand-wordmark{grid-column:2;grid-row:1;font-size:20px;font-weight:900;letter-spacing:-1px;line-height:1}
 body.admin-body.owner-page .admin-side .logo .owner-brand-wordmark{color:#fff!important}
 body.admin-body.owner-page .admin-side .logo .owner-brand-wordmark>span{color:#a43cff!important}
@@ -451,3 +451,35 @@ body.admin-body.owner-dashboard .admin-side .owner-nav-icon{
 }
 body.admin-body.owner-page .admin-side .owner-nav-icon svg,
 body.admin-body.owner-dashboard .admin-side .owner-nav-icon svg{width:18px!important;height:18px!important;display:block!important}
+/* Owner skin: violet is the main data color across cards, charts, and tables. */
+body.admin-body.owner-page .admin-card,
+body.admin-body.owner-page .owner-summary-card,
+body.admin-body.owner-page .owner-shortcut,
+body.admin-body.owner-page .finance-kpi,
+body.admin-body.owner-page .finance-card,
+body.admin-body.owner-page .ticket-list,
+body.admin-body.owner-page .ticket-thread{
+  color:#f7f0ff!important;border-color:#4b2868!important;background:linear-gradient(145deg,#1b0d2b,#10071b 78%)!important;box-shadow:0 10px 26px rgba(83,35,119,.16),inset 0 1px rgba(255,255,255,.035)!important
+}
+body.admin-body.owner-page .admin-head h1,body.admin-body.owner-page .admin-card h2,body.admin-body.owner-page .admin-card h3,
+body.admin-body.owner-page .owner-summary-card strong,body.admin-body.owner-page .owner-shortcut b,body.admin-body.owner-page .finance-card h3{color:#faf5ff!important}
+body.admin-body.owner-page .owner-summary-card small,body.admin-body.owner-page .owner-shortcut span,body.admin-body.owner-page .finance-kpi small,
+body.admin-body.owner-page .finance-card-subtitle{color:#b9a4cb!important}
+body.admin-body.owner-page .owner-summary-card strong,body.admin-body.owner-page .finance-kpi strong{color:#cf9aff!important}
+body.admin-body.owner-page .owner-summary-card.users strong,body.admin-body.owner-page .owner-summary-card.pending strong,
+body.admin-body.owner-page .owner-summary-card.deposits strong,body.admin-body.owner-page .owner-summary-card.withdrawals strong{color:#d6a6ff!important}
+body.admin-body.owner-page .finance-kpi{--accent:#cd93ff!important;--glow:#9138d1!important}
+body.admin-body.owner-page .finance-dot,body.admin-body.owner-page .finance-dot.withdraw,body.admin-body.owner-page .finance-dot.commission{background:#bb78f0!important}
+body.admin-body.owner-page .finance-line-chart .deposit-line,body.admin-body.owner-page .finance-line-chart .withdraw-line,
+body.admin-body.owner-page .finance-line-chart .commission-line{stroke:#b66bea!important}
+body.admin-body.owner-page .finance-line-chart .deposit-point,body.admin-body.owner-page .finance-line-chart .withdraw-point,
+body.admin-body.owner-page .finance-line-chart .commission-point{fill:#c47df2!important;stroke:#160a20!important}
+body.admin-body.owner-page .finance-donut{background:conic-gradient(#9d4bd0 0deg 260deg,#6c3795 260deg 360deg)!important}
+body.admin-body.owner-page .finance-donut:after{border-color:#4b2868!important;background:#160b21!important}
+body.admin-body.owner-page .finance-donut-center strong{color:#ead5ff!important}
+body.admin-body.owner-page .finance-table th{color:#c19adb!important;border-bottom-color:#47245f!important}
+body.admin-body.owner-page .finance-table td{color:#f0e4f8!important;border-bottom-color:#342044!important}
+body.admin-body.owner-page .finance-table-amount.deposit,body.admin-body.owner-page .finance-table-amount.withdraw{color:#d6a2ff!important}
+body.admin-body.owner-page .finance-updated button,body.admin-body.owner-page .finance-overview-range{color:#d09cff!important}
+body.admin-body.owner-page .owner-shortcut:hover{border-color:#a758dd!important}
+body.admin-body.owner-page .wallet-limit-note{color:#c3a5db!important}

@@ -663,8 +663,41 @@ html body.member-premium:not(.public-landing):not(.auth-public) .member-depth-ca
   body.public-landing .pl-logo-ticker-track{animation:none!important}
 }
 
-/* Keep the animated depth layers monochrome across every member route. */
-html body.member-premium:not(.auth-public) .member-depth-orb.one{background:radial-gradient(circle at 36% 34%,rgba(245,245,247,.34),rgba(151,153,159,.08) 57%,transparent 73%)!important;opacity:.3!important}
-html body.member-premium:not(.auth-public) .member-depth-orb.two{background:radial-gradient(circle at 40% 38%,rgba(224,225,228,.24),rgba(141,143,149,.06) 58%,transparent 74%)!important;opacity:.26!important}
-html body.member-premium:not(.auth-public) .member-depth-orb.three{background:radial-gradient(circle at 40% 38%,rgba(233,234,237,.18),rgba(133,135,141,.05) 60%,transparent 75%)!important;opacity:.22!important}
-html body.member-premium:not(.auth-public) .member-depth-ring,html body.member-premium:not(.auth-public) .member-depth-ring.ring-two{border-color:rgba(225,226,229,.1)!important;box-shadow:0 0 54px rgba(255,255,255,.035),inset 0 0 38px rgba(255,255,255,.025)!important}
+/* Restore crisp type and the blue/green meaning of network activity. */
+html body.member-premium:not(.auth-public) .member-depth-card{backface-visibility:visible!important;filter:none!important}
+html body.member-premium:not(.auth-public) .network-live-panel,html body.member-premium:not(.auth-public) .network-live-card{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:linear-gradient(145deg,#0d2742,#09192b 75%)!important;border-color:rgba(67,157,242,.28)!important;box-shadow:0 16px 38px rgba(0,0,0,.2)!important}
+html body.member-premium:not(.auth-public) .network-live-card{background:linear-gradient(145deg,#102a43,#0b1b2d)!important}
+html body.member-premium:not(.auth-public) .network-live-icon,html body.member-premium:not(.auth-public) .network-live-network-icon{background:linear-gradient(140deg,#1b79da,#28b5d6)!important;color:#fff!important;border-color:rgba(120,204,255,.38)!important;filter:none!important}
+html body.member-premium:not(.auth-public) .network-live-amount{color:#6bb5ff!important}
+html body.member-premium:not(.auth-public) .network-live-kind[data-kind="deposit"],html body.member-premium:not(.auth-public) .network-live-kind.deposit{color:#32d39a!important}
+html body.member-premium:not(.auth-public) .network-live-kind[data-kind="withdrawal"],html body.member-premium:not(.auth-public) .network-live-kind.withdrawal{color:#ff6678!important}
+html body.member-premium:not(.auth-public) .network-live-state{color:#a8c4df!important}
+html body.member-premium:not(.auth-public) :is(.network-icon,.network-chip,.status,.network-inline){filter:none!important}
+html body.member-premium:not(.auth-public) .network-live-legend i.in{background:#32d39a!important}
+html body.member-premium:not(.auth-public) .network-live-legend i.out{background:#ff6678!important}
+html body.member-premium:not(.auth-public) .network-live-empty,html body.member-premium:not(.auth-public) .network-live-loading{color:#bad2e9!important}
+html body.member-premium:not(.auth-public) .support-shell>.support-panel{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;opacity:1!important;transform:none!important;color:#eaf3fc!important}
+html body.member-premium:not(.auth-public) .support-panel{background:linear-gradient(145deg,#0c2239,#081729)!important;border-color:rgba(61,143,218,.32)!important;box-shadow:0 16px 40px rgba(0,0,0,.24)!important}
+html body.member-premium:not(.auth-public) .support-messages{background:#081727!important}
+html body.member-premium:not(.auth-public) .support-category{background:#0d2742!important;border:1px solid rgba(75,155,228,.24)!important;border-radius:14px!important;margin:8px 0;padding:15px!important}
+html body.member-premium:not(.auth-public) .support-category:hover{background:#123252!important}
+html body.member-premium:not(.auth-public) .support-compose,html body.member-premium:not(.auth-public) .quick-replies{background:#0b1d30!important}
+html body.member-premium:not(.auth-public) .support-compose input{background:#081727!important;color:#f4f8fd!important}
+html body.member-premium:not(.auth-public) .support-category small,html body.member-premium:not(.auth-public) .support-subtitle,html body.member-premium:not(.auth-public) .support-list-footer{color:#b2c7dc!important}
+html body.member-premium:not(.auth-public) .member-header-profile{margin-left:auto!important;display:grid!important;place-items:center!important;flex:0 0 42px!important;width:42px!important;height:42px!important;border:1px solid rgba(92,172,239,.34)!important;border-radius:50%!important;background:#102b46!important;color:#eaf5ff!important}
+html body.member-premium:not(.auth-public) .member-header-profile svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+html body.member-premium:not(.auth-public) .member-standard-header .wallet-balance-pill{display:none!important}
+html body.member-premium:not(.auth-public) .wallet-activity-panel .quick-action[href*="deposit"],html body.member-premium:not(.auth-public) .wallet-activity-panel a[href*="deposit"]{border-color:rgba(40,207,142,.55)!important;background:linear-gradient(120deg,rgba(19,132,91,.46),rgba(13,70,58,.72))!important;color:#c6ffe6!important}
+html body.member-premium:not(.auth-public) .wallet-activity-panel .quick-action[href*="withdraw"],html body.member-premium:not(.auth-public) .wallet-activity-panel a[href*="withdraw"]{border-color:rgba(245,88,111,.58)!important;background:linear-gradient(120deg,rgba(151,42,62,.52),rgba(76,25,40,.74))!important;color:#ffd6dd!important}
+html body.member-premium:not(.auth-public) .wallet-activity-panel .quick-action[href*="deposit"] svg,html body.member-premium:not(.auth-public) .wallet-activity-panel a[href*="deposit"] svg{color:#36d69b!important}
+html body.member-premium:not(.auth-public) .wallet-activity-panel .quick-action[href*="withdraw"] svg,html body.member-premium:not(.auth-public) .wallet-activity-panel a[href*="withdraw"] svg{color:#ff6478!important}
+html body.member-premium:not(.auth-public) .wallet-activity-panel [data-type="deposit"],html body.member-premium:not(.auth-public) .wallet-activity-panel .deposit{color:#37d69b!important}
+html body.member-premium:not(.auth-public) .wallet-activity-panel [data-type="withdrawal"],html body.member-premium:not(.auth-public) .wallet-activity-panel .withdrawal{color:#ff6478!important}
+html body.member-premium:not(.auth-public) .member-glass-brand{flex:0 0 auto!important;padding:7px 12px!important;border-radius:13px!important;background:rgba(13,39,66,.78)!important;border:1px solid rgba(82,165,242,.3)!important}
+html body.member-premium:not(.auth-public) .member-glass-brand>img{filter:none!important}
+html body.member-premium:not(.auth-public) .member-standard-header{display:flex!important;align-items:center!important;gap:18px!important;min-height:64px!important;padding:10px clamp(14px,2.4vw,28px)!important;border:1px solid rgba(77,151,218,.28)!important;border-radius:18px!important;background:linear-gradient(105deg,#0c2137,#091827)!important;box-shadow:0 10px 28px rgba(0,0,0,.18)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html body.member-premium:not(.auth-public) .member-standard-header>.member-glass-brand{order:-2}
+html body.member-premium:not(.auth-public) .member-standard-header .desktop-label{flex:1!important;min-width:0!important}
+html body.member-premium:not(.auth-public) .member-standard-header .header-actions{margin-left:auto!important}
+html body.member-premium:not(.auth-public) .member-standard-header .profile,html body.member-premium:not(.auth-public) .member-standard-header .user-pill{border-radius:50%!important;width:42px!important;height:42px!important;display:grid!important;place-items:center!important;overflow:hidden!important}
+@media(max-width:760px){html body.member-premium:not(.auth-public) .member-standard-header{min-height:56px!important;padding:8px 10px!important;gap:8px!important}.dash-header .mobile-inline-logo .inline-brand{display:flex!important;font-size:14px!important}.dash-header .mobile-inline-logo>img{width:36px!important;height:36px!important}}

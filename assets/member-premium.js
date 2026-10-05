@@ -1,6 +1,7 @@
 (()=>{
   if(!document.body)return;
   const body=document.body;
+  if(!document.getElementById('memberUnifiedStyle')){const style=document.createElement('link');style.id='memberUnifiedStyle';style.rel='stylesheet';style.href='/assets/member-unified.css?v=5';document.head.append(style);}
   body.classList.add('member-premium');
   body.dataset.memberTheme='obsidian';
 
@@ -48,12 +49,65 @@
     const inlineBrand=document.querySelector('.dash-brand-mobile .mobile-inline-logo');
     if(inlineBrand){inlineBrand.classList.add('member-glass-brand');inlineBrand.innerHTML=brandMarkup;}
     else{
-      const candidates=[...document.querySelectorAll('.dash-header,.topbar,.member-topbar,.member-header,.page-head,.finance-title')];
-      const heading=candidates.find(el=>getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden')||document.querySelector('.main,.main-content,.wrap');
-      if(heading&&!heading.querySelector('.member-glass-brand')){
-        const brand=document.createElement('a');brand.className='member-glass-brand';brand.href='dashboard.html';brand.setAttribute('aria-label','SafePays ana sayfa');brand.innerHTML=brandMarkup;heading.prepend(brand);
+      const brandSelector='.member-glass-brand,.member-brand,.mobile-inline-logo';
+      const candidates=[...document.querySelectorAll('.dash-header,.topbar,.member-topbar,.member-header')];
+      const visibleHeaders=candidates.filter(el=>getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden');
+      let heading=visibleHeaders.find(el=>el.querySelector(brandSelector))||visibleHeaders.find(el=>el.matches('.member-topbar'))||visibleHeaders[0];
+      const main=document.querySelector('.dash-main,.main,.main-content,main.wrap,main');
+      if(!heading&&main){heading=document.createElement('header');heading.className='member-standard-header';main.prepend(heading);}
+      if(heading){
+        heading.classList.add('member-standard-header');
+        const existingBrand=heading.querySelector(brandSelector);
+        if(existingBrand){
+          existingBrand.classList.add('member-glass-brand');
+          existingBrand.innerHTML=brandMarkup;
+          heading.querySelectorAll(brandSelector).forEach(node=>{if(node!==existingBrand)node.remove();});
+        }else{
+          const brand=document.createElement('a');brand.className='member-glass-brand';brand.href='dashboard.html';brand.setAttribute('aria-label','SafePays ana sayfa');brand.innerHTML=brandMarkup;heading.prepend(brand);
+        }
       }
     }
+    const standardHeader=inlineBrand?.closest('.dash-header')||document.querySelector('.member-standard-header');
+    if(standardHeader){
+      standardHeader.classList.add('member-standard-header');
+      const headerBrand=standardHeader.querySelector('.member-glass-brand,.member-brand,.mobile-inline-logo');
+      standardHeader.querySelectorAll('.member-glass-brand,.member-brand,.mobile-inline-logo').forEach(node=>{if(node!==headerBrand)node.remove();});
+      document.querySelectorAll('.dash-header,.topbar,.member-topbar,.member-header').forEach(candidate=>{
+        if(candidate!==standardHeader)candidate.querySelectorAll('.member-glass-brand,.member-brand,.mobile-inline-logo').forEach(node=>node.remove());
+      });
+      let profileMenu=standardHeader.querySelector('.member-profile-menu');
+      let profileTrigger=profileMenu?.querySelector('.member-header-profile')||standardHeader.querySelector('.user-pill,.member-header-profile,.profile,.member-avatar');
+      if(!profileMenu){
+        profileMenu=document.createElement('div');profileMenu.className='member-profile-menu';
+        if(profileTrigger){profileTrigger.parentNode.insertBefore(profileMenu,profileTrigger);profileMenu.append(profileTrigger);}
+        else{standardHeader.append(profileMenu);profileTrigger=document.createElement('button');profileTrigger.type='button';profileTrigger.className='member-header-profile';profileTrigger.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c.7-4 3-6 7-6s6.3 2 7 6"/></svg>';profileMenu.append(profileTrigger);}
+      }
+      profileTrigger=profileMenu.querySelector('.member-header-profile,.user-pill,.profile,.member-avatar');
+      profileTrigger.classList.add('member-header-profile');profileTrigger.setAttribute('aria-label','Profil menüsünü aç');profileTrigger.setAttribute('aria-haspopup','menu');profileTrigger.setAttribute('aria-expanded','false');
+      if(profileTrigger.tagName==='A'&&!profileTrigger.hasAttribute('href'))profileTrigger.href='profile.html';
+      if(!profileMenu.querySelector('.member-profile-dropdown')){
+        const menu=document.createElement('div');menu.className='member-profile-dropdown';menu.setAttribute('role','menu');menu.hidden=true;
+        menu.innerHTML='<a role="menuitem" href="profile.html"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c.7-4 3-6 7-6s6.3 2 7 6"/></svg><span>Profilim</span></a><a role="menuitem" href="security.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 19 6v5c0 4.5-2.8 7.4-7 10-4.2-2.6-7-5.5-7-10V6z"/><path d="m9 12 2 2 4-4"/></svg><span>Güvenlik</span></a><button type="button" role="menuitem" data-member-logout><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5v16h5M14 8l4 4-4 4m4-4H9"/></svg><span>Çıkış yap</span></button>';
+        profileMenu.append(menu);
+      }
+      if(!standardHeader.querySelector('.member-rate-indicator')){
+        const rates=document.createElement('div');rates.className='member-rate-indicator';rates.setAttribute('aria-label','TRC20 ve ERC20 güncel USDT fiyat ve ağ ücreti');
+        rates.innerHTML='<span class="member-rate-caption"><i></i> CANLI USDT · TRY</span><div class="member-rate-networks"><div class="member-rate-network trc"><b>TRC20</b><strong data-rate-price>Yükleniyor</strong><small>Ağ ücreti <span data-rate-fee>—</span></small></div><div class="member-rate-network erc"><b>ERC20</b><strong data-rate-price>Yükleniyor</strong><small>Ağ ücreti <span data-rate-fee>—</span></small></div></div>';
+        profileMenu.parentNode.insertBefore(rates,profileMenu);
+      }
+      if(!window.__memberProfileMenuBound){
+        window.__memberProfileMenuBound=true;
+        document.addEventListener('click',event=>{
+          const trigger=event.target.closest('.member-profile-menu>.member-header-profile,.member-profile-menu>.user-pill,.member-profile-menu>.profile,.member-profile-menu>.member-avatar');
+          if(trigger){if(trigger.tagName==='A')event.preventDefault();const wrap=trigger.closest('.member-profile-menu'),menu=wrap.querySelector('.member-profile-dropdown'),open=menu.hidden;document.querySelectorAll('.member-profile-dropdown').forEach(item=>{item.hidden=true;item.closest('.member-profile-menu')?.querySelector('[aria-haspopup="menu"]')?.setAttribute('aria-expanded','false');});menu.hidden=!open;trigger.setAttribute('aria-expanded',String(open));return;}
+          const logout=event.target.closest('[data-member-logout]');
+          if(logout){const token=localStorage.getItem('safepays_api_token')||'';localStorage.removeItem('safepays_api_token');fetch('/api/auth/logout',{method:'POST',headers:{Authorization:'Bearer '+token},cache:'no-store'}).catch(()=>{}).finally(()=>location.replace('login.html'));return;}
+          if(!event.target.closest('.member-profile-menu'))document.querySelectorAll('.member-profile-dropdown').forEach(item=>{item.hidden=true;item.closest('.member-profile-menu')?.querySelector('[aria-haspopup="menu"]')?.setAttribute('aria-expanded','false');});
+        });
+        document.addEventListener('keydown',event=>{if(event.key==='Escape')document.querySelectorAll('.member-profile-dropdown').forEach(item=>{item.hidden=true;item.closest('.member-profile-menu')?.querySelector('[aria-haspopup="menu"]')?.setAttribute('aria-expanded','false');});});
+      }
+    }
+    document.querySelectorAll('.dash-header .wallet-balance-pill,.dash-content .welcome>.wallet-balance-card').forEach(el=>el.remove());
     document.querySelectorAll('.side nav a').forEach(link=>{
       const label=link.textContent.replace(/\s+/g,' ').trim();
       if(label){link.dataset.memberLabel=label;link.setAttribute('aria-label',label);}
@@ -163,6 +217,20 @@
     card.addEventListener('pointercancel',resetTilt);
     card.addEventListener('focusout',event=>{if(!card.contains(event.relatedTarget))resetTilt();});
   });
+  document.querySelectorAll('a[href*="deposit.html"],#tabDeposit').forEach(el=>el.classList.add('member-flow-deposit'));
+  document.querySelectorAll('a[href*="withdraw.html"],#tabWithdraw').forEach(el=>el.classList.add('member-flow-withdraw'));
+  async function refreshMemberRates(){
+    const indicator=document.querySelector('.member-rate-indicator');if(!indicator)return;
+    try{
+      const response=await fetch('/api/rates',{cache:'no-store'});if(!response.ok)throw new Error('rate_unavailable');
+      const data=await response.json(),price=Number(data.safepaysRate),format=(n,d=2)=>Number(n||0).toLocaleString('tr-TR',{minimumFractionDigits:d,maximumFractionDigits:d});
+      indicator.querySelectorAll('[data-rate-price]').forEach(node=>node.textContent=Number.isFinite(price)?`₺${format(price,4)}`:'—');
+      indicator.querySelector('[data-rate-fee]').textContent=`${format(data.networks?.TRC20?.feeUsdt)} USDT`;
+      indicator.querySelectorAll('[data-rate-fee]')[1].textContent=`${format(data.networks?.ERC20?.feeUsdt)} USDT`;
+      indicator.dataset.stale=data.stale?'true':'false';indicator.title=data.updatedAt?`Güncelleme: ${new Date(data.updatedAt).toLocaleTimeString('tr-TR')}`:'';
+    }catch(_){indicator.dataset.stale='true';indicator.querySelectorAll('[data-rate-price]').forEach(node=>node.textContent='—');}
+  }
+  if(document.querySelector('.member-rate-indicator')){refreshMemberRates();setInterval(refreshMemberRates,30000);}
   function scan(node){
     if(node.nodeType!==1)return;
     if(node.matches(selector))registerCard(node);
