@@ -227,3 +227,6 @@ html body.member-premium.auth-public .auth-wrap>.auth :is(h1,p,label,a,button){-
 
 /* The public landing has its own smooth ambient background; remove the member-only perspective grid. */
 html body.member-premium.public-landing .member-depth-ambient{display:none!important}
+
+/* Keep the public gradients full-viewport; legacy tile sizing turns them into square patches. */
+html body.member-premium.public-landing{background-size:auto!important;background-position:center!important;background-repeat:no-repeat!important}
