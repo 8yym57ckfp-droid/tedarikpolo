@@ -725,7 +725,7 @@ async function route(req,res){
     if(!account)return json(res,404,{error:'team_account_not_found'});
     if(!account.allowSelfDisable)return json(res,403,{error:'self_disable_not_allowed'});
     const b=await body(req),requestedPause=typeof b.depositsPaused==='boolean'?b.depositsPaused:!account.depositsPaused;
-    if(!requestedPause&&(account.depositsPaused||account.active===false))return json(res,403,{error:'team_deposit_activation_owner_required',message:'Yeni yatırım alımını yeniden açmak için lütfen yöneticinizle iletişime geçin.'});
+    if(!requestedPause&&account.active===false)return json(res,403,{error:'team_deposit_activation_owner_required',message:'Yeni yatırım alımını yeniden açmak için lütfen yöneticinizle iletişime geçin.'});
     account.depositsPaused=requestedPause;account.updatedAt=new Date().toISOString();await saveTeamAccount(account);
     addAudit(account.depositsPaused?'team_deposit_routing_paused':'team_deposit_routing_resumed',account.email,{teamAccountId:account.id});
     return json(res,200,{ok:true,depositsPaused:!!account.depositsPaused,active:account.active!==false});
