@@ -52,7 +52,7 @@ html body.member-premium:not(.public-landing):not(.auth-public) .member-rate-net
 html body.member-premium:not(.public-landing):not(.auth-public) .member-rate-network.erc>b{color:#b7a1ff}
 html body.member-premium:not(.public-landing):not(.auth-public) .member-rate-network>strong{font-size:12px;font-variant-numeric:tabular-nums;color:#f3f7fc;white-space:nowrap}
 html body.member-premium:not(.public-landing):not(.auth-public) .member-rate-network>small{grid-column:2;color:#a7bed3;font-size:8px;white-space:nowrap}
-html body.member-premium:not(.public-landing):not(.auth-public) .member-standard-header .wallet-balance-pill{display:none!important}
+html body.member-premium:not(.public-landing):not(.auth-public) .member-standard-header :is(.wallet-balance-pill,.member-balance-pill){display:none!important}
 html body.member-premium:not(.public-landing):not(.auth-public) .dash-content .welcome>.wallet-balance-card{display:none!important}
 
 /* Wider workspace and consistent spacing on the member transaction hub. */

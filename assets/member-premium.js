@@ -1,7 +1,7 @@
 (()=>{
   if(!document.body)return;
   const body=document.body;
-  if(!document.getElementById('memberUnifiedStyle')){const style=document.createElement('link');style.id='memberUnifiedStyle';style.rel='stylesheet';style.href='/assets/member-unified.css?v=5';document.head.append(style);}
+  if(!document.getElementById('memberUnifiedStyle')){const style=document.createElement('link');style.id='memberUnifiedStyle';style.rel='stylesheet';style.href='/assets/member-unified.css?v=6';document.head.append(style);}
   body.classList.add('member-premium');
   body.dataset.memberTheme='obsidian';
 
@@ -107,7 +107,7 @@
         document.addEventListener('keydown',event=>{if(event.key==='Escape')document.querySelectorAll('.member-profile-dropdown').forEach(item=>{item.hidden=true;item.closest('.member-profile-menu')?.querySelector('[aria-haspopup="menu"]')?.setAttribute('aria-expanded','false');});});
       }
     }
-    document.querySelectorAll('.dash-header .wallet-balance-pill,.dash-content .welcome>.wallet-balance-card').forEach(el=>el.remove());
+    document.querySelectorAll('.member-standard-header .wallet-balance-pill,.member-standard-header .member-balance-pill,.dash-header .wallet-balance-pill,.dash-content .welcome>.wallet-balance-card').forEach(el=>el.remove());
     document.querySelectorAll('.side nav a').forEach(link=>{
       const label=link.textContent.replace(/\s+/g,' ').trim();
       if(label){link.dataset.memberLabel=label;link.setAttribute('aria-label',label);}
