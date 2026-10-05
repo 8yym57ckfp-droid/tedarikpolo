@@ -3,6 +3,29 @@
   const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const number=value=>Number(value||0).toLocaleString('tr-TR');
   const amount=value=>Number(value||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:4})+' USDT';
+  const cashUpdateTime=()=>new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  function updateTeamCash(admin){
+    const indicator=byId('teamCashIndicator');if(!indicator)return;
+    const total=Number(admin.collateralTotal||0);
+    byId('teamCashUsed').textContent=amount(admin.collateralExposure);
+    byId('teamCashAvailable').textContent=total>0?amount(admin.collateralAvailable):'Sınırsız';
+    const note=indicator.querySelector('.team-live-cash-note');
+    if(note)note.textContent=total>0?`Toplam teminat ${amount(total)}${admin.collateralPaused?' · yatırımlar duraklatıldı':' · çekim ödemeleriyle güncellenir'}`:'Teminat sınırı tanımlanmamış';
+    byId('teamCashUpdated').textContent='Güncel · '+cashUpdateTime();
+    indicator.dataset.state='live';indicator.setAttribute('aria-busy','false');
+  }
+  function markTeamCashStale(){
+    const indicator=byId('teamCashIndicator');if(!indicator)return;
+    indicator.dataset.state='stale';indicator.setAttribute('aria-busy','false');
+    byId('teamCashUpdated').textContent='Bağlantı yok · '+cashUpdateTime();
+  }
+  let cashRefreshInFlight=false;
+  async function refreshTeamCash(){
+    if(cashRefreshInFlight)return;cashRefreshInFlight=true;
+    try{const profile=await adminFetch('/me');updateTeamCash(profile.admin||{});}
+    catch(_){markTeamCashStale();}
+    finally{cashRefreshInFlight=false;}
+  }
   const statusLabel={pending:'Bekliyor',approved:'Onaylandı',rejected:'Reddedildi'};
   const dialog=byId('teamDialogBackdrop'),dialogTitle=byId('teamDialogTitle'),dialogMessage=byId('teamDialogMessage'),dialogKicker=byId('teamDialogKicker'),dialogIcon=byId('teamDialogIcon'),dialogCancel=byId('teamDialogCancel'),dialogConfirm=byId('teamDialogConfirm');
   let dialogResolve=null,dialogOpener=null;
@@ -17,6 +40,7 @@
     try{
       const [stats,data,profile]=await Promise.all([adminFetch('/stats'),adminFetch('/transactions'),adminFetch('/me')]);
       const admin=profile.admin||{},selfDisable=byId('selfDisableTeam'),selfDisableControl=byId('selfDisableTeamControl');
+      updateTeamCash(admin);
       if(selfDisable&&selfDisableControl){
         selfDisableControl.hidden=!admin.allowSelfDisable;
         const setSwitch=enabled=>{selfDisable.setAttribute('aria-checked',enabled?'true':'false');byId('teamActiveLabel').textContent=enabled?'Hesabım aktif':'Hesabım pasif';};
@@ -31,8 +55,8 @@
       }
       byId('teamLifetimeCommission').textContent=amount(admin.commissionEarned);
       byId('teamCommissionRate').textContent=`Onaylı yatırımlar · ekip payı %${Number(admin.commissionPercent||0).toLocaleString('tr-TR')}`;
-      byId('teamCollateralCapacity').textContent=amount(admin.collateralAvailable);
-      byId('teamCollateralNote').textContent=Number(admin.collateralTotal||0)>0?`${amount(admin.collateralExposure)} kullanım / ${amount(admin.collateralTotal)} teminat${admin.collateralPaused?' · yeni yatırımlar duraklatıldı':''}`:'Teminat sınırı ayarlanmamış';
+      byId('teamCollateralTotal').textContent=amount(admin.collateralTotal);
+      byId('teamCollateralNote').textContent=Number(admin.collateralTotal||0)>0?`${amount(admin.collateralExposure)} kullanım · ${amount(admin.collateralAvailable)} kapasite${admin.collateralPaused?' · yeni yatırımlar duraklatıldı':''}`:'Teminat sınırı ayarlanmamış';
       const tx=Array.isArray(data.transactions)?data.transactions:[];
       const pending=tx.filter(x=>x.status==='pending');
       byId('pendingCount').textContent=number(stats.pending);
@@ -54,4 +78,5 @@
   byId('refreshOverview')?.addEventListener('click',loadTeamOverview);
   loadTeamOverview();
   setInterval(loadTeamOverview,30000);
+  setInterval(refreshTeamCash,15000);
 })();

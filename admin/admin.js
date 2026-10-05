@@ -45,17 +45,15 @@ setInterval(tick,1000)
 })();
 
 function filterTable(){let q=(document.getElementById('search')?.value||'').toLowerCase();document.querySelectorAll('#requests tr').forEach((r,i)=>{if(i===0)return;r.style.display=r.innerText.toLowerCase().includes(q)?'':'none'})}
-document.addEventListener('DOMContentLoaded',()=>{
+function setupSharedProfile(){
   const a=window.SafeAdmin?.current?.();
   if(!a) return;
   const head=document.querySelector('.admin-head') || document.querySelector('.team-head');
   if(!head) return;
   const isOwner=a.role==='Super Admin';
-  const name=isOwner?'Super Admin':(a.teamName||a.name||a.email||'Ekip');
 
   // Keep one shared profile control set on every staff page.
-  // The standalone team-name chip was removed: the team name is shown only
-  // inside the profile dropdown so the header stays compact and consistent.
+  // The circular control keeps the header compact while exposing profile actions.
   const legacyUser=head.querySelector('.admin-user');
   if(legacyUser && legacyUser.id!=='adminCurrentUser') legacyUser.remove();
 
@@ -64,33 +62,41 @@ document.addEventListener('DOMContentLoaded',()=>{
     box=document.createElement('div');
     box.className='admin-tools';
     box.id='adminToolsShared';
-    box.innerHTML='<a class="admin-user-link team-profile-chip" href="profile.html" id="adminCurrentUser"><span class="team-profile-avatar" aria-hidden="true">◉</span><span class="team-profile-name">Profilim</span></a>';
+    box.innerHTML='<button type="button" class="admin-user-link team-profile-chip" id="adminCurrentUser" aria-label="Hesap menüsünü aç" title="Hesap menüsü"><span class="team-profile-avatar" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.25"></circle><path d="M5.2 20c.55-3.8 2.85-5.8 6.8-5.8s6.25 2 6.8 5.8"></path></svg></span></button>';
     const host = head.classList.contains('team-head') ? (head.querySelector('.team-head > div:last-child') || head) : head;
     const dateCard = host.querySelector('.date-card');
     if(dateCard) host.insertBefore(box,dateCard); else host.appendChild(box);
   }
 
-  // Standalone team-name chip intentionally removed. Team name remains in the profile dropdown.
   const u=document.getElementById('adminCurrentUser');
   if(u){
-    u.href=isOwner?'../owner/profile.html':'profile.html';
-    u.innerHTML='<span class="team-profile-avatar" aria-hidden="true">'+String(name).trim().charAt(0).toUpperCase()+'</span><span class="team-profile-name">'+name+' · Profilim</span><span class="team-profile-chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m7 9 5 5 5-5"/></svg></span>';
+    u.type='button';
+    u.setAttribute('aria-label','Hesap menüsünü aç');
+    u.title='Hesap menüsü';
+    u.innerHTML='<span class="team-profile-avatar" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.25"></circle><path d="M5.2 20c.55-3.8 2.85-5.8 6.8-5.8s6.25 2 6.8 5.8"></path></svg></span>';
     if(!u.dataset.dropdownReady){
       u.dataset.dropdownReady='1';
       u.setAttribute('aria-haspopup','menu');
       u.setAttribute('aria-expanded','false');
+      u.setAttribute('aria-controls','teamProfileMenu');
       const menu=document.createElement('div');
       menu.className='team-profile-menu';
-      menu.innerHTML=''+
-        '<a href="profile.html" class="team-menu-item"><span class="team-menu-icon">⌾</span><span>Profilim</span></a>'+
+      menu.id='teamProfileMenu';
+      menu.setAttribute('role','menu');
+      const profileHref=isOwner?'../owner/profile.html':'profile.html';
+      const securityHref=isOwner?'../owner/profile.html#security':'profile.html#security';
+      menu.innerHTML=
+        '<a href="'+profileHref+'" role="menuitem" class="team-menu-item"><span class="team-menu-icon" aria-hidden="true">◉</span><span>Profilim</span></a>'+
+        '<a href="'+securityHref+'" role="menuitem" class="team-menu-item"><span class="team-menu-icon" aria-hidden="true">◇</span><span>Güvenlik</span></a>'+
         '<div class="team-menu-divider"></div>'+
-        '<button type="button" class="team-menu-item team-menu-logout"><span class="team-menu-icon">↪</span><span>Çıkış Yap</span></button>';
+        '<button type="button" role="menuitem" class="team-menu-item team-menu-logout"><span class="team-menu-icon" aria-hidden="true">↪</span><span>Çıkış Yap</span></button>';
       u.parentElement.style.position='relative';
       u.parentElement.appendChild(menu);
       const close=()=>{menu.classList.remove('open');u.setAttribute('aria-expanded','false')};
       u.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const open=menu.classList.toggle('open');u.setAttribute('aria-expanded',open?'true':'false')});
       menu.addEventListener('click',e=>e.stopPropagation());
       document.addEventListener('click',close);
+      document.addEventListener('keydown',event=>{if(event.key==='Escape'&&menu.classList.contains('open')){close();u.focus();}});
       menu.querySelector('.team-menu-logout').addEventListener('click',async()=>{
         const ownerPortal=location.pathname.includes('/owner/');
         try{await fetch(ownerPortal?'../api/owner/logout':'../api/admin/logout',{method:'POST',credentials:'include'});}catch(_){}
@@ -104,7 +110,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Team dashboard previously had its own profile block; the shared controls replace it.
   const legacy=head.querySelector('.team-profile');
   if(legacy) legacy.remove();
-});
+}
+document.addEventListener('DOMContentLoaded',setupSharedProfile);
+window.addEventListener('safepays:portal-ready',setupSharedProfile);
 /* Separate portal guard and navigation for Team Admin and Owner pages. */
 (function(){
   function current(){try{return window.SafeAdmin?.current?.()||null}catch(e){return null}}
@@ -129,6 +137,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       if(window.SafeAdmin?.clearSessionProfile)SafeAdmin.clearSessionProfile();
       location.replace('login.html?denied=1');return false;
     }
+    window.dispatchEvent(new Event('safepays:portal-ready'));
     return true;
   }
   async function setupNav(){

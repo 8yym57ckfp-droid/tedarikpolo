@@ -5,21 +5,22 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>SafePays Admin — Yönetim Merkezi</title>
   <script>(function(){try{if(localStorage.getItem('safepays-admin-theme')==='dark')document.documentElement.classList.add('dark-theme')}catch(_){}})();</script>
-  <link rel="stylesheet" href="../assets/styles.css?v=20261005.2">
-  <link rel="stylesheet" href="admin.css?v=20261005.2">
-  <link rel="stylesheet" href="../assets/dark-theme.css?v=20261005.2">
-  <link rel="stylesheet" href="../assets/overview-finance.css?v=20261005.2">
-  <script src="admin-api.js?v=20261005.2"></script>
-  <script src="admin.js?v=20261005.2"></script>
-  <script src="../assets/app.js?v=20261005.2"></script>
-  <script src="../assets/maintenance.js?v=20261005.2"></script>
+  <link rel="stylesheet" href="../assets/styles.css?v=20261005.3">
+  <link rel="stylesheet" href="admin.css?v=20261005.3">
+  <link rel="stylesheet" href="../assets/dark-theme.css?v=20261005.3">
+  <link rel="stylesheet" href="../assets/overview-finance.css?v=20261005.3">
+  <script src="admin-api.js?v=20261005.3"></script>
+  <script src="admin-store.js?v=20261005.3"></script>
+  <script src="admin.js?v=20261005.3"></script>
+  <script src="../assets/app.js?v=20261005.3"></script>
+  <script src="../assets/maintenance.js?v=20261005.3"></script>
   <style>
     .team-overview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:18px 0}
     .team-stat{position:relative;overflow:hidden;min-height:125px;padding:18px;border:1px solid #dfe7f1;border-radius:16px;background:#fff;box-sizing:border-box}
     .team-stat:after{content:"";position:absolute;width:95px;height:95px;border-radius:50%;right:-24px;top:-28px;background:var(--stat-glow,rgba(62,142,255,.1))}
     .team-stat-label{color:#71839a;font-size:12px;font-weight:750}
     .team-stat-value{position:relative;z-index:1;margin-top:13px;font-size:30px;line-height:1;font-weight:900;letter-spacing:-.04em;color:#122b46;font-variant-numeric:tabular-nums}
-    #teamLifetimeCommission,#teamCollateralCapacity{font-size:clamp(16px,2.2vw,24px);overflow-wrap:anywhere}
+    #teamLifetimeCommission,#teamCollateralTotal{font-size:clamp(16px,2.2vw,24px);overflow-wrap:anywhere}
     .team-stat-note{margin-top:9px;color:#8292a7;font-size:11px}
     .team-stat.blue{--stat-glow:rgba(62,142,255,.13)}.team-stat.green{--stat-glow:rgba(49,194,133,.13)}.team-stat.amber{--stat-glow:rgba(245,176,55,.15)}.team-stat.purple{--stat-glow:rgba(137,108,255,.14)}
     .overview-columns{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(260px,.8fr);gap:14px}
@@ -51,6 +52,10 @@
     @media(max-width:1050px){.team-overview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.overview-columns{grid-template-columns:1fr}}
     @media(max-width:520px){.team-overview-grid{gap:8px}.team-stat{padding:13px;min-height:112px}.team-stat-value{font-size:25px}.overview-card{padding:14px}.overview-head{flex-direction:column}}
     .team-dashboard-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.team-active-control{display:flex;align-items:center;gap:10px;color:#a9bfd4;font-size:12px;font-weight:800}.team-active-control[hidden]{display:none}.team-status-switch{position:relative;width:58px;height:34px;flex:0 0 58px;border:1px solid #16895a;border-radius:999px;background:#138654;box-shadow:inset 0 1px 3px rgba(0,0,0,.25);cursor:pointer;transition:background .2s,border-color .2s}.team-status-switch:before{content:"";position:absolute;top:3px;left:27px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3);transition:transform .2s}.team-status-switch:after{content:"✓";position:absolute;left:9px;top:8px;color:#fff;font-size:13px;font-weight:900}.team-status-switch[aria-checked="false"]{background:#33465a;border-color:#536a82}.team-status-switch[aria-checked="false"]:before{transform:translateX(-24px)}.team-status-switch[aria-checked="false"]:after{content:"×";left:36px}.team-status-switch:focus-visible{outline:3px solid rgba(86,171,255,.42);outline-offset:3px}.team-status-switch:disabled{opacity:.6;cursor:wait}
+    .team-dashboard-head{align-items:flex-start;gap:14px}.team-dashboard-head>div:first-child{flex:1 1 220px}.team-dashboard-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+    .team-live-cash{min-width:264px;display:grid;grid-template-columns:1fr 1fr;gap:6px 15px;padding:9px 12px;border:1px solid #284c6d;border-radius:13px;background:linear-gradient(145deg,rgba(14,40,65,.96),rgba(8,24,42,.98));box-shadow:0 7px 20px rgba(0,0,0,.15);box-sizing:border-box}.team-live-cash-head{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:8px;color:#9db9d5;font-size:9px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}.team-cash-live-state{display:inline-flex;align-items:center;gap:5px;color:#65dfb1;letter-spacing:.04em}.team-cash-live-dot{width:7px;height:7px;border-radius:50%;background:#39d89b;box-shadow:0 0 0 3px rgba(57,216,155,.12);animation:teamCashPulse 1.8s ease-in-out infinite}.team-live-cash[data-state="stale"] .team-cash-live-state{color:#ffd17a}.team-live-cash[data-state="stale"] .team-cash-live-dot{background:#f3b94e;box-shadow:0 0 0 3px rgba(243,185,78,.12);animation:none}.team-live-cash[data-state="loading"] .team-cash-live-dot{background:#8aa7c3;box-shadow:none;animation:none}.team-cash-updated{color:#7290ad;font-size:9px;font-weight:650;letter-spacing:0;text-transform:none;font-variant-numeric:tabular-nums}.team-live-cash-metric{min-width:0}.team-live-cash-metric small{display:block;color:#829db8;font-size:9px}.team-live-cash-metric strong{display:block;margin-top:3px;color:#eef7ff;font-size:12px;line-height:1.2;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}.team-live-cash-metric:last-child strong{color:#66d6ff}.team-live-cash-note{grid-column:1/-1;color:#7692ae;font-size:9px;line-height:1.35}.team-dashboard-head>#adminToolsShared{flex:0 0 auto;align-self:flex-start}.team-live-cash[aria-busy="true"] .team-live-cash-metric{opacity:.66}@keyframes teamCashPulse{50%{opacity:.55;box-shadow:0 0 0 5px rgba(57,216,155,.06)}}
+    @media(max-width:1100px){.team-dashboard-head{flex-wrap:wrap}.team-dashboard-actions{margin-left:auto}.team-dashboard-head>#adminToolsShared{margin-left:auto}}
+    @media(max-width:600px){.team-dashboard-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:12px}.team-dashboard-head>div:first-child{grid-column:1;grid-row:1}.team-dashboard-head>#adminToolsShared{grid-column:2;grid-row:1;margin:0}.team-dashboard-actions{grid-column:1/-1;grid-row:2;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;width:100%;margin:0}.team-live-cash{grid-column:1/-1;min-width:0;width:100%}.team-dashboard-actions>.admin-btn{display:flex;align-items:center;justify-content:center;min-height:42px}.team-active-control{justify-content:flex-end;white-space:nowrap}.team-dashboard-head h1{font-size:23px}}
     body.team-dialog-open{overflow:hidden}.team-dialog-backdrop{position:fixed;inset:0;z-index:5000;display:grid;place-items:center;padding:20px;background:rgba(1,8,17,.72);backdrop-filter:blur(8px);opacity:0;visibility:hidden;transition:opacity .18s ease,visibility .18s ease}.team-dialog-backdrop[hidden],.team-dialog-actions button[hidden]{display:none}.team-dialog-backdrop.is-open{opacity:1;visibility:visible}.team-dialog{width:min(100%,440px);padding:25px;border:1px solid #294968;border-radius:22px;background:linear-gradient(150deg,#102943,#08182b 72%);box-shadow:0 28px 90px rgba(0,0,0,.58);color:#edf6ff;transform:translateY(10px) scale(.985);transition:transform .18s ease}.team-dialog-backdrop.is-open .team-dialog{transform:translateY(0) scale(1)}.team-dialog-icon{width:46px;height:46px;display:grid;place-items:center;margin-bottom:17px;border:1px solid rgba(255,112,123,.35);border-radius:15px;background:rgba(255,83,99,.12);color:#ff929a;font-size:23px;font-weight:900}.team-dialog-kicker{margin:0 0 6px;color:#8fb8df;font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}.team-dialog h2{margin:0;color:#f4f8ff;font-size:22px;letter-spacing:-.035em}.team-dialog-message{margin:10px 0 0;color:#a9bfd4;font-size:13px;line-height:1.65}.team-dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:23px}.team-dialog-actions button{min-height:42px;padding:0 16px;border:1px solid #35516d;border-radius:12px;background:#11263b;color:#d8e8f8;font:inherit;font-size:12px;font-weight:850;cursor:pointer;transition:filter .15s,transform .15s}.team-dialog-actions button:hover{filter:brightness(1.15);transform:translateY(-1px)}.team-dialog-actions .team-dialog-danger{border-color:#d75360;background:linear-gradient(135deg,#e15160,#ba3548);color:#fff;box-shadow:0 8px 22px rgba(199,55,73,.22)}.team-dialog-actions .team-dialog-primary{border-color:#367bc4;background:linear-gradient(135deg,#2588ed,#2863c8);color:#fff}.team-dialog-actions button:focus-visible{outline:3px solid rgba(95,174,255,.52);outline-offset:2px}.team-dialog-actions button:disabled{opacity:.55;cursor:wait;transform:none}@media(max-width:520px){.team-dialog-backdrop{padding:14px}.team-dialog{padding:21px;border-radius:19px}.team-dialog h2{font-size:20px}.team-dialog-actions button{flex:1}}
     @media(prefers-reduced-motion:reduce){.team-dialog-backdrop,.team-dialog,.team-dialog-actions button{transition:none}}
   </style>
@@ -73,19 +78,28 @@
       </nav>
     </aside>
     <main class="admin-main">
-      <header class="admin-head">
+      <header class="admin-head team-dashboard-head">
         <div>
           <div class="admin-muted">EKİP YÖNETİMİ</div>
           <h1>Yönetim Merkezi</h1>
           <div class="admin-muted">Bekleyen işlemleri ve hesap durumunu tek ekrandan takip et.</div>
         </div>
-        <div class="team-dashboard-actions"><a class="admin-btn" href="requests.html">Bekleyen işlemleri aç</a><div class="team-active-control" id="selfDisableTeamControl" hidden><span id="teamActiveLabel">Hesabım aktif</span><button id="selfDisableTeam" class="team-status-switch" type="button" role="switch" aria-checked="true" aria-label="Ekip hesabımı pasife al"></button></div></div>
+        <div class="team-dashboard-actions">
+          <div class="team-live-cash" id="teamCashIndicator" data-state="loading" aria-label="Ekip kasası canlı göstergesi" aria-busy="true">
+            <div class="team-live-cash-head"><span class="team-cash-live-state"><i class="team-cash-live-dot" aria-hidden="true"></i><span>Ekip kasası</span></span><span class="team-cash-updated" id="teamCashUpdated">Sunucu bekleniyor</span></div>
+            <div class="team-live-cash-metric"><small>Kasa kullanımı</small><strong id="teamCashUsed">—</strong></div>
+            <div class="team-live-cash-metric"><small>Kullanılabilir kapasite</small><strong id="teamCashAvailable">—</strong></div>
+            <div class="team-live-cash-note">Ekip teminatı · çekim ödemeleriyle güncellenir</div>
+          </div>
+          <a class="admin-btn" href="requests.html">Bekleyen işlemleri aç</a>
+          <div class="team-active-control" id="selfDisableTeamControl" hidden><span id="teamActiveLabel">Hesabım aktif</span><button id="selfDisableTeam" class="team-status-switch" type="button" role="switch" aria-checked="true" aria-label="Ekip hesabımı pasife al"></button></div>
+        </div>
       </header>
       <section class="team-overview-grid" aria-label="Güncel özet">
         <article class="team-stat amber"><div class="team-stat-label">Bekleyen işlem</div><div class="team-stat-value" id="pendingCount">—</div><div class="team-stat-note" id="pendingNote">Yatırım ve çekim talepleri</div></article>
         <article class="team-stat green"><div class="team-stat-label">Onaylanan işlem</div><div class="team-stat-value" id="approvedCount">—</div><div class="team-stat-note">Toplam onay kaydı</div></article>
         <article class="team-stat purple"><div class="team-stat-label">Birikmiş komisyon</div><div class="team-stat-value" id="teamLifetimeCommission">—</div><div class="team-stat-note" id="teamCommissionRate">Onaylanan yatırımlardan hesaplanır</div></article>
-        <article class="team-stat blue"><div class="team-stat-label">Kullanılabilir teminat</div><div class="team-stat-value" id="teamCollateralCapacity">—</div><div class="team-stat-note" id="teamCollateralNote">Kasa kullanım bilgisi yükleniyor</div></article>
+        <article class="team-stat blue"><div class="team-stat-label">Toplam teminat</div><div class="team-stat-value" id="teamCollateralTotal">—</div><div class="team-stat-note" id="teamCollateralNote">Kasa kullanım bilgisi yükleniyor</div></article>
       </section>
       <section class="finance-overview" id="financeOverview" aria-labelledby="financeTitle">
         <div class="finance-overview-head"><div><h2 id="financeTitle">Finansal görünüm</h2><p>Son yedi günün sunucudaki mutabakat ve onaylı işlem verileri.</p></div><span class="finance-overview-range" id="financePeriod">—</span></div>
@@ -130,7 +144,7 @@
       <div class="team-dialog-actions"><button type="button" id="teamDialogCancel">Vazgeç</button><button type="button" class="team-dialog-danger" id="teamDialogConfirm">Evet, pasife al</button></div>
     </section>
   </div>
-  <script src="team-dashboard-data.js?v=20261005.2"></script>
-  <script src="../assets/overview-finance.js?v=20261005.2"></script>
+  <script src="team-dashboard-data.js?v=20261005.3"></script>
+  <script src="../assets/overview-finance.js?v=20261005.3"></script>
 </body>
 </html>
