@@ -42,6 +42,8 @@
     finally{cashRefreshInFlight=false;}
   }
   const statusLabel={pending:'Bekliyor',approved:'Onaylandı',rejected:'Reddedildi'};
+  let overviewTransactions=[],overviewMembers=new Map(),overviewTeam={};
+  window.copyTeamOverviewTransaction=id=>{const tx=overviewTransactions.find(item=>String(item.id)===String(id));if(tx)return window.copySupportTransactionDetails?.(tx,overviewMembers.get(String(tx.userId))||{},overviewTeam);};
   const dialog=byId('teamDialogBackdrop'),dialogTitle=byId('teamDialogTitle'),dialogMessage=byId('teamDialogMessage'),dialogKicker=byId('teamDialogKicker'),dialogIcon=byId('teamDialogIcon'),dialogCancel=byId('teamDialogCancel'),dialogConfirm=byId('teamDialogConfirm');
   let dialogResolve=null,dialogOpener=null;
   function closeTeamDialog(result=false){if(!dialog||dialog.hidden)return;dialog.classList.remove('is-open');dialog.hidden=true;document.body.classList.remove('team-dialog-open');const resolve=dialogResolve;dialogResolve=null;if(dialogOpener?.isConnected)dialogOpener.focus();dialogOpener=null;resolve?.(result);}
@@ -53,8 +55,9 @@
   async function loadTeamOverview(){
     const rows=byId('recentRows');
     try{
-      const [stats,data,profile]=await Promise.all([adminFetch('/stats'),adminFetch('/transactions'),adminFetch('/me')]);
+      const [stats,data,profile,userData]=await Promise.all([adminFetch('/stats'),adminFetch('/transactions'),adminFetch('/me'),adminFetch('/users').catch(()=>({users:[]}))]);
       const admin=profile.admin||{},selfDisable=byId('selfDisableTeam'),selfDisableControl=byId('selfDisableTeamControl');
+      overviewTransactions=Array.isArray(data.transactions)?data.transactions:[];overviewMembers=new Map((userData.users||[]).map(user=>[String(user.id),user]));overviewTeam=admin;
       updateTeamCash(admin);
       if(selfDisable&&selfDisableControl){
         selfDisableControl.hidden=!admin.allowSelfDisable;
@@ -101,7 +104,7 @@
       byId('teamCommissionRate').textContent=`Onaylı yatırımlar · ekip payı %${Number(admin.commissionPercent||0).toLocaleString('tr-TR')}`;
       byId('teamCollateralTotal').textContent=amount(admin.collateralTotal);
       byId('teamCollateralNote').textContent=Number(admin.collateralTotal||0)>0?`${amount(admin.collateralExposure)} kullanım · ${amount(admin.collateralAvailable)} kapasite${admin.collateralPaused?' · yeni yatırımlar duraklatıldı':''}`:'Teminat sınırı ayarlanmamış';
-      const tx=Array.isArray(data.transactions)?data.transactions:[];
+      const tx=overviewTransactions;
       const pending=tx.filter(x=>x.status==='pending');
       byId('pendingCount').textContent=number(stats.pending);
       byId('pendingNote').textContent=`${pending.filter(x=>x.type==='deposit').length} yatırım · ${pending.filter(x=>x.type==='withdrawal').length} çekim`;
@@ -111,8 +114,8 @@
         const type=x.type==='deposit'?'Yatırım':x.type==='withdrawal'?'Çekim':x.type||'—';
         const status=statusLabel[x.status]||escapeHtml(x.status||'—');
         const date=x.createdAt?new Date(x.createdAt).toLocaleString('tr-TR',{dateStyle:'short',timeStyle:'short'}):'—';
-        return `<tr><td><a href="requests.html?open=${encodeURIComponent(x.id||'')}" class="overview-link">${escapeHtml(String(x.id||'—').slice(0,14))}</a></td><td>${escapeHtml(type)}</td><td>${escapeHtml(x.network||'—')}</td><td><b>${amount(x.amount)}</b></td><td><span class="overview-status ${escapeHtml(x.status||'')}">${status}</span></td><td>${escapeHtml(date)}</td></tr>`;
-      }).join('')||'<tr><td class="overview-empty" colspan="6">Henüz işlem kaydı yok.</td></tr>';
+        return `<tr><td><a href="requests.html?open=${encodeURIComponent(x.id||'')}" class="overview-link">${escapeHtml(String(x.id||'—').slice(0,14))}</a></td><td>${escapeHtml(type)}</td><td>${escapeHtml(x.network||'—')}</td><td><b>${amount(x.amount)}</b></td><td><span class="overview-status ${escapeHtml(x.status||'')}">${status}</span></td><td>${escapeHtml(date)}</td><td><button class="finance-copy-transaction" type="button" onclick="copyTeamOverviewTransaction('${escapeHtml(x.id)}')">Kopyala</button></td></tr>`;
+      }).join('')||'<tr><td class="overview-empty" colspan="7">Henüz işlem kaydı yok.</td></tr>';
       byId('updatedAt').textContent='Son güncelleme: '+new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
     }catch(_){
       rows.innerHTML='<tr><td class="overview-empty" colspan="6">Sunucu bilgileri alınamadı. Oturumu yenileyip tekrar dene.</td></tr>';

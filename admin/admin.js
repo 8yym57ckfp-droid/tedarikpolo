@@ -6,6 +6,19 @@ function formatTime(s){let m=Math.floor(s/60),sec=s%60;return String(m).padStart
 function tick(){document.querySelectorAll('.timer').forEach(el=>{let s=parseInt(el.dataset.seconds||'0');if(s>0)s--;el.dataset.seconds=s;el.textContent=s?formatTime(s):'Otomatik reddediliyor';el.classList.remove('timer-green','timer-yellow','timer-red');if(s>600)el.classList.add('timer-green');else if(s>300)el.classList.add('timer-yellow');else if(s>0)el.classList.add('timer-red');else{el.classList.add('timer-red');if(el.dataset.autored==='1'){el.textContent='Otomatik reddedildi'}}})}
 setInterval(tick,1000)
 
+window.copySupportTransactionDetails=async function(transaction,user={},team={}){
+  if(!transaction)return;
+  const displayName=[user.firstName,user.lastName].filter(Boolean).join(' ').trim()||user.name||transaction.userId||'—';
+  const username=user.username?('@'+String(user.username).replace(/^@/,'')):'—';
+  const requested=Number(transaction.requestedAmount??transaction.amount),approved=Number(transaction.receivedAmount??transaction.amount);
+  const amountLine=Math.abs(requested-approved)>1e-8?`Talep / onaylanan tutar: ${requested.toLocaleString('tr-TR')} / ${approved.toLocaleString('tr-TR')} USDT`:`Tutar: ${approved.toLocaleString('tr-TR')} USDT`;
+  const statusLabel={pending:'Bekliyor',approved:'Onaylandı',rejected:'Reddedildi','auto-rejected':'Süre doldu'};
+  const teamLabel=transaction.teamName||transaction.teamEmail||transaction.teamAccountId||team.email||team.id||'Belirtilmedi';
+  const lines=['SafePays · Destek işlem özeti','İşlem ID: '+(transaction.id||'—'),'Ekip: '+teamLabel,'Üye: '+displayName,'Kullanıcı adı: '+username,'Üye ID: '+(transaction.userId||user.id||'—'),'İşlem tipi: '+(transaction.type==='deposit'?'Yatırım':transaction.type==='withdrawal'?'Çekim':transaction.type||'—'),amountLine,'Ağ: '+(transaction.network||'—'),'TX Hash / adres: '+(transaction.txHash||transaction.address||'—'),'Durum: '+(statusLabel[transaction.status]||transaction.status||'—'),'Oluşturulma: '+(transaction.createdAt?new Date(transaction.createdAt).toLocaleString('tr-TR'):'—'),'Son işlem: '+(transaction.decisionAt?new Date(transaction.decisionAt).toLocaleString('tr-TR'):'—')].join('\n');
+  try{await navigator.clipboard.writeText(lines);}catch(_){const field=document.createElement('textarea');field.value=lines;field.style.position='fixed';field.style.opacity='0';document.body.appendChild(field);field.select();try{document.execCommand('copy');}finally{field.remove();}}
+  alert('Destek için işlem özeti kopyalandı.');
+};
+
 // Apply consistent semantic colors to financial values in every staff table.
 // Header mapping covers report tables; transaction rows also use their type or
 // ledger direction when the amount column itself is generically labeled.
@@ -201,7 +214,14 @@ window.addEventListener('safepays:portal-ready',setupSharedProfile);
       });
       nav.replaceChildren(...children);
       const path=location.pathname.split('/').pop()||'dashboard.html';
-      nav.querySelectorAll('a').forEach(el=>{const u=new URL(el.href,location.href),wantedParams=new URLSearchParams(u.search),currentParams=new URLSearchParams(location.search);const samePath=u.pathname.split('/').pop()===path;const wantedStatus=wantedParams.get('status');const currentStatus=currentParams.get('status');const sameStatus=(wantedStatus===null&&currentStatus===null)||(wantedStatus!==null&&wantedStatus===currentStatus);const wantedType=wantedParams.get('type');const currentType=currentParams.get('type');const sameType=(wantedType===null&&currentType===null)||(wantedType!==null&&wantedType===currentType);el.classList.toggle('active',samePath&&sameStatus&&sameType)});
+      const currentUrl=new URL(location.href);
+      const routeKey=url=>{
+        const file=url.pathname.split('/').pop()||'';
+        if(file==='requests.html')return `requests:${url.searchParams.get('type')==='withdrawal'?'withdrawal':'deposit'}`;
+        if(file==='history.html')return `history:${url.searchParams.get('status')||'approved'}`;
+        return file;
+      };
+      nav.querySelectorAll('a').forEach(el=>{const target=new URL(el.href,location.href),active=routeKey(target)===routeKey(currentUrl);el.classList.toggle('active',active);if(active)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');});
     });};
     renderStaffNav(a);
     const side=document.querySelector('.admin-side');

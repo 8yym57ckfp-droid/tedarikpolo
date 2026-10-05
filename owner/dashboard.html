@@ -6,9 +6,9 @@
   <title>Safepays — Owner Kontrol Merkezi</title>
   <script>(function(){try{if(localStorage.getItem('safepays-owner-theme')==='dark')document.documentElement.classList.add('dark-theme')}catch(e){}})();</script>
   <link rel="stylesheet" href="../assets/styles.css">
-  <link rel="stylesheet" href="../admin/admin.css?v=20261005.6">
+  <link rel="stylesheet" href="../admin/admin.css?v=20261005.7">
   <link rel="stylesheet" href="../assets/dark-theme.css">
-  <link rel="stylesheet" href="../assets/owner.css?v=20261005.6">
+  <link rel="stylesheet" href="../assets/owner.css?v=20261005.7">
   <link rel="stylesheet" href="../assets/overview-finance.css">
   <script src="../admin/admin-store.js?v=20261005.5"></script>
   <script src="../admin/admin-api.js?v=20261005.5"></script>
@@ -53,8 +53,8 @@
           <section class="finance-card"><h3>İşlem türlerine göre dağılım</h3><p class="finance-card-subtitle">Onaylı finans tutarlarının payı.</p><div class="finance-donut-area"><div class="finance-donut" id="financeDonut"><div class="finance-donut-center">Toplam<strong id="financeDonutTotal">—</strong></div></div><div class="finance-donut-legend"><span class="finance-donut-row"><i class="finance-dot"></i>Yatırım <b id="financeDepositPct">%0</b></span><span class="finance-donut-row"><i class="finance-dot withdraw"></i>Çekim <b id="financeWithdrawalPct">%0</b></span><span class="finance-donut-row" id="financeCommissionLegend"><i class="finance-dot commission"></i>Komisyon <b id="financeCommissionPct">%0</b></span></div></div></section>
         </div>
         <div class="finance-tables">
-          <section class="finance-card"><h3>Son yatırımlar</h3><div class="finance-table-wrap"><table class="finance-table"><thead><tr><th>İşlem</th><th>Tutar</th><th>Ağ</th><th>Tarih</th><th>Durum</th></tr></thead><tbody id="financeDepositRows"><tr><td colspan="5" class="finance-empty">Yükleniyor…</td></tr></tbody></table></div></section>
-          <section class="finance-card"><h3>Son çekimler</h3><div class="finance-table-wrap"><table class="finance-table"><thead><tr><th>İşlem</th><th>Tutar</th><th>Ağ</th><th>Tarih</th><th>Durum</th></tr></thead><tbody id="financeWithdrawalRows"><tr><td colspan="5" class="finance-empty">Yükleniyor…</td></tr></tbody></table></div></section>
+          <section class="finance-card"><h3>Son yatırımlar</h3><div class="finance-table-wrap"><table class="finance-table"><thead><tr><th>İşlem</th><th>Tutar</th><th>Ağ</th><th>Tarih</th><th>Durum</th><th>Destek</th></tr></thead><tbody id="financeDepositRows"><tr><td colspan="6" class="finance-empty">Yükleniyor…</td></tr></tbody></table></div></section>
+          <section class="finance-card"><h3>Son çekimler</h3><div class="finance-table-wrap"><table class="finance-table"><thead><tr><th>İşlem</th><th>Tutar</th><th>Ağ</th><th>Tarih</th><th>Durum</th><th>Destek</th></tr></thead><tbody id="financeWithdrawalRows"><tr><td colspan="6" class="finance-empty">Yükleniyor…</td></tr></tbody></table></div></section>
         </div>
         <div class="finance-updated"><span id="financeError" hidden>Finansal özet sunucudan alınamadı.</span> <span id="financeUpdated">Sunucu verileri yükleniyor</span> · <button class="refresh-button" id="financeRefresh" type="button">Yenile</button></div>
       </section>

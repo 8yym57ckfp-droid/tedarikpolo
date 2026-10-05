@@ -8,6 +8,7 @@
   const dateKey=date=>date.toISOString().slice(0,10);
   const owner=location.pathname.includes('/owner/');
   const statusText={pending:'Bekliyor',approved:'Onaylandı',rejected:'Reddedildi','auto-rejected':'Reddedildi'};
+  let transactionCache=[],memberCache=new Map(),supportTeam={};
 
   function makeRange(){
     const end=new Date();end.setUTCHours(0,0,0,0);
@@ -65,8 +66,8 @@
         const timestamp=tx.decisionAt||tx.approvedAt||tx.createdAt;
         const date=timestamp?new Date(timestamp).toLocaleString('tr-TR',{dateStyle:'short',timeStyle:'short'}):'—';
         const color=type==='deposit'?'deposit':'withdraw';
-        return `<tr><td><strong>#${escapeHtml(String(tx.id||'—').slice(0,16))}</strong></td><td class="finance-table-amount ${color}">${amount(tx.amount)}</td><td>${escapeHtml(tx.network||'—')}</td><td>${escapeHtml(date)}</td><td><span class="finance-table-status">${statusText[tx.status]||'Onaylandı'}</span></td></tr>`;
-      }).join('')||'<tr><td class="finance-empty" colspan="5">Seçilen dönemde onaylı kayıt yok.</td></tr>';
+        return `<tr><td><strong>#${escapeHtml(String(tx.id||'—').slice(0,16))}</strong></td><td class="finance-table-amount ${color}">${amount(tx.amount)}</td><td>${escapeHtml(tx.network||'—')}</td><td>${escapeHtml(date)}</td><td><span class="finance-table-status">${statusText[tx.status]||'Onaylandı'}</span></td><td><button class="finance-copy-transaction" type="button" onclick="copyFinanceSupportTransaction('${escapeHtml(tx.id)}')">Kopyala</button></td></tr>`;
+      }).join('')||'<tr><td class="finance-empty" colspan="6">Seçilen dönemde onaylı kayıt yok.</td></tr>';
     }
   }
   async function load(){
@@ -75,10 +76,16 @@
     const runId=owner?new URLSearchParams(location.search).get('testRunId'):null;
     if(runId)params.set('testRunId',runId);
     try{
-      const [finance,transactionData]=await Promise.all([
+      const [finance,transactionData,userData,profileData]=await Promise.all([
         adminFetch('/finance/reconciliation?'+params.toString()),
-        adminFetch('/transactions')
+        adminFetch('/transactions'),
+        adminFetch('/users').catch(()=>({users:[]})),
+        adminFetch('/me').catch(()=>({}))
       ]);
+      transactionCache=Array.isArray(transactionData.transactions)?transactionData.transactions:[];
+      memberCache=new Map((userData.users||[]).map(user=>[String(user.id),user]));
+      supportTeam=profileData.admin||profileData.owner||window.SafeAdmin?.current?.()||{};
+      window.copyFinanceSupportTransaction=id=>{const tx=transactionCache.find(item=>String(item.id)===String(id));if(tx)return window.copySupportTransactionDetails?.(tx,memberCache.get(String(tx.userId))||{},supportTeam);};
       const days=Array.isArray(finance.days)?finance.days:[];
       const totals=finance.totals||{};
       const commissionEnabled=!!finance.commissionEnabled;
@@ -94,7 +101,7 @@
       byId('financeWithdrawalsNote').textContent=`Bugün ${amount(today.withdrawal)}`;
       renderChart(days,commissionEnabled);
       renderDonut(totals,commissionEnabled);
-      renderTables(Array.isArray(transactionData.transactions)?transactionData.transactions:[],range);
+      renderTables(transactionCache,range);
       byId('financePeriod').textContent=`${new Date(range.startDate+'T00:00:00Z').toLocaleDateString('tr-TR',{day:'2-digit',month:'short',timeZone:'UTC'})} – ${new Date(range.endDate+'T00:00:00Z').toLocaleDateString('tr-TR',{day:'2-digit',month:'short',timeZone:'UTC'})}`;
       byId('financeUpdated').textContent='Son güncelleme: '+new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
       byId('financeError').hidden=true;

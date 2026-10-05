@@ -483,3 +483,5 @@ body.admin-body.owner-page .finance-table-amount.deposit,body.admin-body.owner-p
 body.admin-body.owner-page .finance-updated button,body.admin-body.owner-page .finance-overview-range{color:#d09cff!important}
 body.admin-body.owner-page .owner-shortcut:hover{border-color:#a758dd!important}
 body.admin-body.owner-page .wallet-limit-note{color:#c3a5db!important}
+
+.finance-copy-transaction{border:1px solid #2b5276;border-radius:8px;background:#102b48;color:#70b6ff;padding:6px 8px;font-size:10px;font-weight:850;cursor:pointer;white-space:nowrap}.finance-copy-transaction:hover{background:#153b60;border-color:#3b78ae}

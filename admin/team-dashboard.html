@@ -6,12 +6,12 @@
   <title>SafePays Admin — Yönetim Merkezi</title>
   <script>(function(){try{if(localStorage.getItem('safepays-admin-theme')==='dark')document.documentElement.classList.add('dark-theme')}catch(_){}})();</script>
   <link rel="stylesheet" href="../assets/styles.css?v=20261005.3">
-  <link rel="stylesheet" href="admin.css?v=20261005.6">
+  <link rel="stylesheet" href="admin.css?v=20261005.7">
   <link rel="stylesheet" href="../assets/dark-theme.css?v=20261005.3">
   <link rel="stylesheet" href="../assets/overview-finance.css?v=20261005.3">
   <script src="admin-api.js?v=20261005.5"></script>
   <script src="admin-store.js?v=20261005.5"></script>
-  <script src="admin.js?v=20261005.6"></script>
+  <script src="admin.js?v=20261005.7"></script>
   <script src="../assets/app.js?v=20261005.3"></script>
   <script src="../assets/maintenance.js?v=20261005.3"></script>
   <style>
@@ -103,15 +103,15 @@
           <section class="finance-card"><h3>İşlem türlerine göre dağılım</h3><p class="finance-card-subtitle">Onaylı finans tutarlarının payı.</p><div class="finance-donut-area"><div class="finance-donut" id="financeDonut"><div class="finance-donut-center">Toplam<strong id="financeDonutTotal">—</strong></div></div><div class="finance-donut-legend"><span class="finance-donut-row"><i class="finance-dot"></i>Yatırım <b id="financeDepositPct">%0</b></span><span class="finance-donut-row"><i class="finance-dot withdraw"></i>Çekim <b id="financeWithdrawalPct">%0</b></span><span class="finance-donut-row" id="financeCommissionLegend"><i class="finance-dot commission"></i>Komisyon <b id="financeCommissionPct">%0</b></span></div></div></section>
         </div>
         <div class="finance-tables">
-          <section class="finance-card"><h3>Son yatırımlar</h3><div class="finance-table-wrap"><table class="finance-table"><thead><tr><th>İşlem</th><th>Tutar</th><th>Ağ</th><th>Tarih</th><th>Durum</th></tr></thead><tbody id="financeDepositRows"><tr><td colspan="5" class="finance-empty">Yükleniyor…</td></tr></tbody></table></div></section>
-          <section class="finance-card"><h3>Son çekimler</h3><div class="finance-table-wrap"><table class="finance-table"><thead><tr><th>İşlem</th><th>Tutar</th><th>Ağ</th><th>Tarih</th><th>Durum</th></tr></thead><tbody id="financeWithdrawalRows"><tr><td colspan="5" class="finance-empty">Yükleniyor…</td></tr></tbody></table></div></section>
+          <section class="finance-card"><h3>Son yatırımlar</h3><div class="finance-table-wrap"><table class="finance-table"><thead><tr><th>İşlem</th><th>Tutar</th><th>Ağ</th><th>Tarih</th><th>Durum</th><th>Destek</th></tr></thead><tbody id="financeDepositRows"><tr><td colspan="6" class="finance-empty">Yükleniyor…</td></tr></tbody></table></div></section>
+          <section class="finance-card"><h3>Son çekimler</h3><div class="finance-table-wrap"><table class="finance-table"><thead><tr><th>İşlem</th><th>Tutar</th><th>Ağ</th><th>Tarih</th><th>Durum</th><th>Destek</th></tr></thead><tbody id="financeWithdrawalRows"><tr><td colspan="6" class="finance-empty">Yükleniyor…</td></tr></tbody></table></div></section>
         </div>
         <div class="finance-updated"><span id="financeError" hidden>Finansal özet sunucudan alınamadı.</span> <span id="financeUpdated">Sunucu verileri yükleniyor</span> · <button class="refresh-button" id="financeRefresh" type="button">Yenile</button></div>
       </section>
       <div class="overview-columns">
         <section class="overview-card">
           <div class="overview-head"><div><h2>Son işlemler</h2><p>En son oluşturulan yatırım ve çekim talepleri.</p></div><a class="overview-link" href="requests.html">Tüm işlemleri gör</a></div>
-          <div class="overview-table-wrap"><table class="overview-table"><thead><tr><th>İşlem</th><th>Tür</th><th>Ağ</th><th>Tutar</th><th>Durum</th><th>Tarih</th></tr></thead><tbody id="recentRows"><tr><td class="overview-empty" colspan="6">Yükleniyor…</td></tr></tbody></table></div>
+          <div class="overview-table-wrap"><table class="overview-table"><thead><tr><th>İşlem</th><th>Tür</th><th>Ağ</th><th>Tutar</th><th>Durum</th><th>Tarih</th><th>Destek</th></tr></thead><tbody id="recentRows"><tr><td class="overview-empty" colspan="7">Yükleniyor…</td></tr></tbody></table></div>
           <div class="overview-footer"><span id="updatedAt">Bilgiler yükleniyor</span><button class="refresh-button" id="refreshOverview" type="button">Yenile</button></div>
         </section>
         <section class="overview-card">

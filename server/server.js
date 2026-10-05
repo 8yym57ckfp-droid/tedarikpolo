@@ -395,9 +395,36 @@ function verifyPassword(password, stored){
   return expected.length===actual.length && crypto.timingSafeEqual(actual,expected);
 }
 function safeUser(u){const {passwordHash,totpSecret,isTestAccount,isSynthetic,testRunId,...safe}=u; return safe;}
-function safeTeamMember(u){return {id:u.id,firstName:u.firstName||'',lastName:u.lastName||'',kycStatus:u.kycStatus||'not_started',kycSubmittedAt:u.kycSubmittedAt||null,createdAt:u.createdAt||null};}
+function safeTeamMember(u){return {id:u.id,firstName:u.firstName||'',lastName:u.lastName||'',username:u.username||'',kycStatus:u.kycStatus||'not_started',kycSubmittedAt:u.kycSubmittedAt||null,createdAt:u.createdAt||null};}
 function safeTransaction(tx){const {isSynthetic,testRunId,...safe}=tx;return safe;}
 function safeLedgerEntry(entry){const {isSynthetic,testRunId,...safe}=entry;return safe;}
+function chainVerificationMessage(reason,network){
+  const networkName=String(network||'').toUpperCase();
+  const messages={
+    missing_tx_hash:'Transferin blokzincirdeki işlem kimliği girilmemiş.',
+    invalid_tx_hash:networkName==='TRC20'
+      ?'TRC20 işlem kimliği 64 hexadecimal karakter olmalı. Cüzdan adresini değil, transferin TX ID bilgisini girin.'
+      :'ERC20 işlem kimliği 0x ile başlayan 64 hexadecimal karakter olmalı. Cüzdan adresini değil, transferin TX ID bilgisini girin.',
+    transaction_not_solidified:'TRON transferi henüz kesinleşmedi. Biraz sonra yeniden kontrol edin.',
+    execution_status_unavailable:'Ağ transferinin sonucu henüz doğrulanamadı. Biraz sonra yeniden deneyin.',
+    transaction_not_mined:'Ethereum transferi henüz bloğa alınmadı.',
+    transaction_not_finalized:'Ethereum transferi henüz kesinleşmedi. Biraz sonra yeniden kontrol edin.',
+    transaction_failed:'Blokzincir transferi başarısız olmuş.',
+    usdt_transfer_not_found:'İşlem içinde doğrulanabilir USDT transferi bulunamadı.',
+    recipient_mismatch:'USDT transferi bu talepteki alıcı adrese gönderilmemiş.',
+    amount_mismatch:'Blokzincirdeki USDT tutarı talep tutarıyla uyuşmuyor.',
+    wrong_chain:'Transfer Ethereum ana ağında gerçekleşmemiş.',
+    ethereum_rpc_not_configured:'Ethereum doğrulaması şu anda yapılandırılmamış. Sistem yöneticisinin RPC ayarını kontrol etmesi gerekiyor.',
+    provider_timeout:'Blokzincir sağlayıcısından zamanında yanıt alınamadı. Biraz sonra yeniden deneyin.',
+    provider_unavailable:'Blokzincir sağlayıcısına şu anda ulaşılamıyor. Biraz sonra yeniden deneyin.',
+    provider_response_error:'Blokzincir sağlayıcısından doğrulanabilir yanıt alınamadı.',
+    provider_http_429:'Blokzincir sağlayıcısının istek sınırına ulaşıldı. Biraz sonra yeniden deneyin.',
+    invalid_tron_address:'Kayıtlı TRON alıcı adresi doğrulanamadı.',
+    invalid_usdt_amount:'Tutar, USDT transfer hassasiyetiyle uyuşmuyor.'
+  };
+  const detail=messages[reason]||'Blokzincir transferi doğrulanamadı. Girilen işlem kimliğini, ağı, alıcı adresi ve tutarı kontrol edin.';
+  return `${detail} Transfer kesinleşmeden işlem onaylanamaz.`;
+}
 function base32Encode(buf){const alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';let bits=0,val=0,out='';for(const b of buf){val=(val<<8)|b;bits+=8;while(bits>=5){out+=alphabet[(val>>(bits-5))&31];bits-=5;}}if(bits>0)out+=alphabet[(val<<(5-bits))&31];return out;}
 function base32Decode(str){const alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';let bits=0,val=0,out=[];for(const ch of String(str).replace(/=+$/,'').toUpperCase()){const n=alphabet.indexOf(ch);if(n<0)continue;val=(val<<5)|n;bits+=5;if(bits>=8){out.push((val>>(bits-8))&255);bits-=8;}}return Buffer.from(out);}
 function totp(secret,counter){const key=base32Decode(secret);const buf=Buffer.alloc(8);buf.writeBigUInt64BE(BigInt(counter));const h=crypto.createHmac('sha1',key).update(buf).digest();const off=h[h.length-1]&15;const code=((h[off]&127)<<24|(h[off+1]&255)<<16|(h[off+2]&255)<<8|(h[off+3]&255))%1000000;return String(code).padStart(6,'0');}
@@ -828,7 +855,7 @@ async function route(req,res){
           '/admin/reports.html':'reports','/admin/reconciliation.html':'reports','/admin/wallet-addresses.html':'wallets','/admin/support.html':'support'
         }[staticPath];
         if(pagePermission&&!teamAdmin.permissions?.[pagePermission])return redirect(res,'/admin/team-dashboard.html?access=denied');
-        if(!pagePermission&&!['/admin/login.html','/admin/team-dashboard.html','/admin/dashboard.html','/admin/profile.html'].includes(staticPath))return redirect(res,'/admin/team-dashboard.html?access=denied');
+        if(!pagePermission&&!['/admin/login.html','/admin/team-dashboard.html','/admin/dashboard.html','/admin/profile.html','/admin/settings.html'].includes(staticPath))return redirect(res,'/admin/team-dashboard.html?access=denied');
       }
       if(teamAdmin&&staticPath==='/admin/withdrawal-pool.html'){
         return redirect(res,'/admin/requests.html?type=withdrawal');
@@ -1284,7 +1311,7 @@ async function route(req,res){
       if(all.some(item=>item.id!==tx.id&&item.txHash&&item.txHash.toLowerCase()===transferHash.toLowerCase()))return json(res,409,{error:'chain_transfer_already_used',message:'Bu zincir işlem kimliği başka bir işlemde kullanılmış.'});
       const verification=await verifyUsdtTransfer({network:tx.network,txHash:transferHash,recipient:tx.address,amount:approvedAmount});
       addAudit('chain_transfer_check',admin.email,{transactionId:id,network:tx.network,type:tx.type,txHash:transferHash,status:verification.status,reason:verification.reason,blockNumber:verification.blockNumber||null});
-      if(verification.status!=='verified')return json(res,409,{error:'chain_transfer_unverified',message:`Zincir transferi doğrulanamadı (${verification.reason}). Transfer kesinleşmeden işlem onaylanamaz.`});
+      if(verification.status!=='verified')return json(res,409,{error:'chain_transfer_unverified',message:chainVerificationMessage(verification.reason,tx.network)});
     }
     if(decision==='approved' && tx.type==='withdrawal'){const u=await findUserById(tx.userId);if(approvedAmount>Number(u.balance||0))return json(res,409,{error:'insufficient_balance_at_approval'});}
     const decisionAt=new Date().toISOString(); const amountChanged=Math.abs(approvedAmount-requestedAmount)>1e-8;

@@ -49,6 +49,13 @@
     panel.querySelector('#chainCheckExplorer').hidden=true;
   }
 
+  function reasonMessage(reason,network){
+    if(reason==='invalid_tx_hash')return network==='TRC20'
+      ?'TRC20 TX ID, 64 hexadecimal karakterden oluşmalı. Cüzdan adresini değil transfer işlem kimliğini girin.'
+      :'ERC20 TX ID, 0x + 64 hexadecimal karakter olmalı. Cüzdan adresini değil transfer işlem kimliğini girin.';
+    return messages[reason]||`Kontrol sonucu: ${reason||'bilinmiyor'}.`;
+  }
+
   function explorerUrl(network,hash){
     const clean=String(hash||'').trim();
     if(network==='TRC20'&&/^[a-f0-9]{64}$/i.test(clean))return `https://tronscan.org/#/transaction/${encodeURIComponent(clean)}`;
@@ -70,7 +77,7 @@
     try{
       const data=await adminFetch('/transactions/verify-chain',{method:'POST',body:JSON.stringify({transactionId,txHash,amount})});
       const check=data.verification||{};
-      resultBox.textContent=messages[check.reason]||`Kontrol sonucu: ${check.status||'bilinmiyor'}.`;
+      resultBox.textContent=reasonMessage(check.reason,network);
       if(check.status==='verified')panel.classList.add('is-verified');
       if(check.status==='mismatch')panel.classList.add('is-mismatch');
       const link=explorerUrl(network,check.txHash||(isWithdrawal?txHash:text('dHash')));

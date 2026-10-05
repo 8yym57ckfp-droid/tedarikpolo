@@ -22,9 +22,7 @@ function historyStats() {
 async function copyHistoryInfo(id) {
   const tx = historyById(id); if (!tx) return;
   const user = historyUsers.get(String(tx.userId)) || {};
-  const info = ['Safepays işlem bilgisi', 'İşlem ID: '+tx.id, 'Kullanıcı: '+([user.firstName,user.lastName].filter(Boolean).join(' ') || user.email || tx.userId), 'Kullanıcı ID: '+(tx.userId||'—'), 'İşlem: '+(tx.type==='deposit'?'Yatırım':'Çekim'), 'Tutar: '+historyMoney(tx.amount), 'Ağ: '+(tx.network||'—'), 'TX / Adres: '+(tx.txHash||tx.address||'—'), 'Durum: '+tx.status, 'Oluşturulma: '+historyDate(tx.createdAt), 'Karar: '+historyDate(tx.decisionAt)].join('\n');
-  try { await navigator.clipboard.writeText(info); alert('İşlem bilgileri kopyalandı.'); }
-  catch (_) { const field=document.createElement('textarea');field.value=info;document.body.appendChild(field);field.select();document.execCommand('copy');field.remove(); }
+  return window.copySupportTransactionDetails?.(tx,user,window.SafeAdmin?.current?.()||{});
 }
 async function reopenHistoryTransaction(id) {
   const tx=historyById(id); if(!tx || !['rejected','auto-rejected'].includes(tx.status)) return;
