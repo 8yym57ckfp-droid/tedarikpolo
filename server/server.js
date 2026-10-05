@@ -663,7 +663,6 @@ async function route(req,res){
     const account=(await getTeamAccounts()).find(item=>item.email.toLowerCase()===email);
     if(!account)return json(res,503,{error:'team_login_not_configured'});
     if(!verifyPassword(password,account.passwordHash)){addAudit('team_login_failed',email||'unknown',{...requestAuditMeta(req),reason:'invalid_credentials'});return json(res,401,{error:'invalid_team_credentials'});}
-    if(account.active===false){addAudit('team_login_blocked_inactive',email,{...requestAuditMeta(req),teamAccountId:account.id});return json(res,403,{error:'team_account_inactive',message:'Hesabınız pasife alınmış. Lütfen yöneticinizle iletişime geçin.'});}
     const credentialsOverlap=account.email.toLowerCase()===ADMIN_EMAIL.toLowerCase()||(ADMIN_PASSWORD&&verifyPassword(ADMIN_PASSWORD,account.passwordHash))||(account.totpSecret&&account.totpSecret===ADMIN_TOTP_SECRET);
     if(credentialsOverlap)return json(res,503,{error:'team_credentials_not_separate'});
     if(account.totpSecret&&!account.twoFactorEnabled)return json(res,403,{error:'team_2fa_setup_pending',message:'Ekip hesabının 2FA kurulumu tamamlanmamış. Owner ile iletişime geçin.'});
@@ -725,7 +724,9 @@ async function route(req,res){
     const accounts=await getTeamAccounts(),account=accounts.find(item=>item.id===teamAdmin.adminId);
     if(!account)return json(res,404,{error:'team_account_not_found'});
     if(!account.allowSelfDisable)return json(res,403,{error:'self_disable_not_allowed'});
-    const b=await body(req);account.depositsPaused=typeof b.depositsPaused==='boolean'?b.depositsPaused:!account.depositsPaused;account.updatedAt=new Date().toISOString();await saveTeamAccount(account);
+    const b=await body(req),requestedPause=typeof b.depositsPaused==='boolean'?b.depositsPaused:!account.depositsPaused;
+    if(!requestedPause&&(account.depositsPaused||account.active===false))return json(res,403,{error:'team_deposit_activation_owner_required',message:'Yeni yatırım alımını yeniden açmak için lütfen yöneticinizle iletişime geçin.'});
+    account.depositsPaused=requestedPause;account.updatedAt=new Date().toISOString();await saveTeamAccount(account);
     addAudit(account.depositsPaused?'team_deposit_routing_paused':'team_deposit_routing_resumed',account.email,{teamAccountId:account.id});
     return json(res,200,{ok:true,depositsPaused:!!account.depositsPaused,active:account.active!==false});
   }
@@ -778,7 +779,9 @@ async function route(req,res){
     if(!validEmail(email)||email===ADMIN_EMAIL.toLowerCase()||password.length<12||password===ADMIN_PASSWORD)return json(res,400,{error:'invalid_team_account'});
     const controls=readTeamControls(b,{},true);if(!controls)return json(res,400,{error:'invalid_team_settings',message:'Cüzdan sınırı, teminat ve otomatik duraklatma değerlerini kontrol edin.'});
     const accounts=await getTeamAccounts();if(accounts.some(account=>account.email.toLowerCase()===email))return json(res,409,{error:'team_email_in_use'});
-    const now=new Date().toISOString(),secret=base32Encode(crypto.randomBytes(20)),account={id:`TEAM-${crypto.randomBytes(5).toString('hex').toUpperCase()}`,email,passwordHash:hashPassword(password),totpSecret:secret,twoFactorEnabled:false,active:true,permissions:cleanTeamPermissions(b.permissions||DEFAULT_TEAM_PERMISSIONS),...controls,collateralPaused:false,createdAt:now,updatedAt:now};
+    const suppliedSecret=String(b.totpSecret||'').replace(/[\s-]/g,'').replace(/=+$/,'').toUpperCase();
+    if(suppliedSecret&&!/^[A-Z2-7]{16,64}$/.test(suppliedSecret))return json(res,400,{error:'invalid_team_totp_secret',message:'2FA anahtarı 16–64 karakter uzunluğunda Base32 olmalı (A–Z ve 2–7).'});
+    const now=new Date().toISOString(),secret=suppliedSecret||base32Encode(crypto.randomBytes(20)),account={id:`TEAM-${crypto.randomBytes(5).toString('hex').toUpperCase()}`,email,passwordHash:hashPassword(password),totpSecret:secret,twoFactorEnabled:false,active:true,depositsPaused:false,permissions:cleanTeamPermissions(b.permissions||DEFAULT_TEAM_PERMISSIONS),...controls,collateralPaused:false,createdAt:now,updatedAt:now};
     await saveTeamAccount(account);addAudit('team_account_created',admin.email,{teamAccountId:account.id,email:account.email});
     const label=encodeURIComponent(`SafePays:${account.email}`),issuer=encodeURIComponent('SafePays');
     return json(res,201,{ok:true,account:publicTeamAccount(account),twoFactorSetup:{secret,otpauthUrl:`otpauth://totp/${label}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`}});
@@ -808,14 +811,13 @@ async function route(req,res){
     if(b.email!==undefined){const email=String(b.email||'').trim().toLowerCase();if(!validEmail(email)||email===ADMIN_EMAIL.toLowerCase())return json(res,400,{error:'invalid_team_email'});if(accounts.some(item=>item.id!==id&&item.email.toLowerCase()===email))return json(res,409,{error:'team_email_in_use'});account.email=email;}
     if(b.password!==undefined&&String(b.password)){const password=String(b.password);if(password.length<12||password===ADMIN_PASSWORD)return json(res,400,{error:'invalid_team_password'});account.passwordHash=hashPassword(password);}
     const wasCollateralPaused=!!account.collateralPaused,controls=readTeamControls(b,account);if(!controls)return json(res,400,{error:'invalid_team_settings',message:'Cüzdan sınırı, komisyon, teminat ve otomatik duraklatma değerlerini kontrol edin.'});Object.assign(account,controls);
-    if(b.active!==undefined)account.active=!!b.active;
+    if(b.active!==undefined){account.active=!!b.active;if(account.active)account.depositsPaused=false;}
     const teamMetrics=teamCollateralMetrics(id,await getTransactions(),await getWalletAddresses(),await getDepositIntents()),currentExposure=teamMetrics.collateralExposure,threshold=Number(account.collateralTotal||0)*Number(account.collateralPausePercent||80)/100;
     if(Number(account.collateralTotal||0)>0&&currentExposure>Number(account.collateralTotal)+1e-8)return json(res,409,{error:'team_collateral_below_exposure',message:'Teminat tutarı mevcut ekip kullanımından düşük olamaz.'});
-    if(b.active===false)account.collateralPaused=false;
-    else if(account.collateralAutoPause&&account.collateralTotal>0&&currentExposure>=threshold-1e-8){if(b.active===true&&wasCollateralPaused)return json(res,409,{error:'team_collateral_threshold_reached',message:'Teminat kullanımı otomatik duraklatma eşiğinin üzerinde; ekip çekim ödemesiyle kapasite açıldığında yeniden etkinleşir.'});account.collateralPaused=true;}
-    else if(wasCollateralPaused){account.collateralPaused=false;if(b.active===undefined)account.active=true;}
+    if(account.collateralAutoPause&&account.collateralTotal>0&&currentExposure>=threshold-1e-8)account.collateralPaused=true;
+    else if(wasCollateralPaused)account.collateralPaused=false;
     if(b.permissions!==undefined)account.permissions=cleanTeamPermissions(b.permissions);
-    account.updatedAt=now;await saveTeamAccount(account);await clearTeamSessions(id);addAudit('team_account_updated',admin.email,{teamAccountId:id,emailChanged:b.email!==undefined,passwordChanged:!!b.password,active:account.active,permissions:account.permissions,walletLimit:account.walletLimit,collateralExposure:currentExposure,commissionPercent:account.commissionPercent});
+    account.updatedAt=now;await saveTeamAccount(account);if(b.email!==undefined||!!b.password||b.permissions!==undefined)await clearTeamSessions(id);addAudit('team_account_updated',admin.email,{teamAccountId:id,emailChanged:b.email!==undefined,passwordChanged:!!b.password,active:account.active,depositsPaused:account.depositsPaused,permissions:account.permissions,walletLimit:account.walletLimit,collateralExposure:currentExposure,commissionPercent:account.commissionPercent});
     return json(res,200,{ok:true,account:publicTeamAccount(account,teamMetrics)});
   }
   if(adminUrl.pathname==='/api/admin/synthetic-finance/eligible-users' && req.method==='GET'){

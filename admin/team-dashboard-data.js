@@ -9,12 +9,12 @@
     if(!status||!statusText)return;
     const manuallyPaused=!!admin.depositsPaused,collateralPaused=!!admin.collateralPaused,accountActive=admin.active!==false;
     const accepting=admin.acceptingDeposits===undefined?accountActive&&!manuallyPaused&&!collateralPaused:!!admin.acceptingDeposits;
-    status.dataset.state=accepting?'active':accountActive?'paused':'inactive';
-    statusText.textContent=accepting?'Yatırım alımı aktif':!accountActive?'Hesap pasif':collateralPaused&&!manuallyPaused?'Yatırım pasif · teminat sınırı':'Yatırım alımı pasif';
+    status.dataset.state=accepting?'active':'paused';
+    statusText.textContent=accepting?'Yatırım alımı aktif':collateralPaused&&!manuallyPaused?'Yatırım pasif · teminat sınırı':!accountActive?'Yatırım alımı pasif · yöneticiye başvur':'Yatırım alımı pasif';
     const total=Number(admin.collateralTotal||0),note=byId('teamCashNote');
     if(note)note.textContent=total>0?`Toplam teminat ${amount(total)}${accepting?' · çekim ödemeleriyle güncellenir':' · yeni yatırımlar duraklatıldı'}`:accepting?'Teminat sınırı tanımlanmamış':'Yeni yatırım yönlendirmesi duraklatıldı';
     const toggle=byId('selfDisableTeam'),label=byId('teamActiveLabel');
-    if(toggle){toggle.setAttribute('aria-checked',manuallyPaused?'false':'true');toggle.setAttribute('aria-label',manuallyPaused?'Yeni yatırım yönlendirmesini yeniden aç':'Yeni yatırım yönlendirmesini durdur');}
+    if(toggle){toggle.setAttribute('aria-checked',accepting?'true':'false');toggle.setAttribute('aria-label',accepting?'Yeni yatırım yönlendirmesini durdur':'Yatırım alımını açmak için yöneticinizle iletişime geçin');}
     if(label)label.textContent='Yatırım alımı';
   }
   function updateTeamCash(admin){
@@ -60,8 +60,14 @@
         selfDisableControl.hidden=!admin.allowSelfDisable;
         let manuallyPaused=!!admin.depositsPaused;
         selfDisable.onclick=async()=>{
-          const nextPaused=!manuallyPaused;
-          const accepted=await showTeamDialog({title:nextPaused?'Yeni yatırım alımı durdurulsun mu?':'Yeni yatırım alımı yeniden açılsın mı?',message:nextPaused?'Bu ekibe bağlı cüzdanlara yeni yatırım yönlendirmesi durur. Paneliniz açık kalır; çekim taleplerini inceleyip ödemeye devam edebilirsiniz.':'Bu ekibe bağlı cüzdanlar yeni yatırım yönlendirmesine yeniden katılır. Teminat sınırları sistem tarafından uygulanmaya devam eder.',confirmText:nextPaused?'Yatırımı durdur':'Yatırımı yeniden aç',cancelText:'Vazgeç',danger:nextPaused,icon:nextPaused?'Ⅱ':'✓'});
+          const accepting=admin.acceptingDeposits===undefined?admin.active!==false&&!manuallyPaused&&!admin.collateralPaused:!!admin.acceptingDeposits;
+          if(!accepting){
+            const message=admin.collateralPaused&&!manuallyPaused?'Teminat kullanım sınırına ulaşıldığı için yeni yatırım alımı beklemede. Çekim ödemeleri kapasiteyi açınca sistem durumu günceller.':'Yeni yatırım alımını yalnızca Owner yeniden açabilir. Lütfen yöneticinizle iletişime geçin.';
+            await showTeamDialog({title:'Yatırım alımı pasif',message,kicker:'YÖNETİCİ ONAYI GEREKİYOR',confirmText:'Anladım',icon:'!'});
+            return;
+          }
+          const nextPaused=true;
+          const accepted=await showTeamDialog({title:'Yeni yatırım alımı durdurulsun mu?',message:'Bu ekibe bağlı cüzdanlara yeni yatırım yönlendirmesi durur. Paneliniz açık kalır; çekim taleplerini inceleyip ödemeye devam edebilirsiniz. Yeniden açılması için yöneticinizle iletişime geçmeniz gerekir.',confirmText:'Yatırımı durdur',cancelText:'Vazgeç',danger:true,icon:'Ⅱ'});
           if(!accepted)return;
           selfDisable.disabled=true;selfDisable.setAttribute('aria-checked',nextPaused?'false':'true');
           try{

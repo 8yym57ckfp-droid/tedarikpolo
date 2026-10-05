@@ -22,7 +22,9 @@
       const collateralTotal=Number(account.collateralTotal||0),collateralExposure=Number(account.collateralExposure||0),threshold=Number(account.collateralPausePercent||80),commissionPercent=Number(account.commissionPercent??3);
       const collateral=collateralTotal?`${collateralExposure.toLocaleString('tr-TR')} / ${collateralTotal.toLocaleString('tr-TR')} USDT · ${Number(account.collateralAvailable||0).toLocaleString('tr-TR')} boş`:'Ayarlı değil';
       const twoFactor=account.twoFactorEnabled?'Açık':account.twoFactorSetupPending?'Kurulum bekliyor':'Kapalı';
-      return `<tr><td><b>${esc(account.id)}</b></td><td class="team-account-email">${esc(account.email)}</td><td>${twoFactor}</td><td>${Number(account.walletLimit||0)||'Sınırsız'}</td><td>${esc(collateral)}${account.collateralAutoPause?`<small class="team-account-sub">%${threshold} yatırım eşiği</small>`:''}${account.collateralPaused?'<small class="team-account-sub is-error">Yeni yatırımlar duraklatıldı · çekim ödemesiyle açılır</small>':''}</td><td><b>%${commissionPercent.toLocaleString('tr-TR')}</b><small class="team-account-sub">${Number(account.commissionEarned||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} USDT birikmiş</small></td><td><span class="team-account-badge ${account.active&&!account.collateralPaused?'':'is-error'}">${account.collateralPaused?'Teminat eşiği':account.active?'Aktif':'Pasif'}</span></td><td><div class="team-account-permission-list">${access}</div></td><td><button class="team-row-action" type="button" onclick="editTeamAccount('${esc(account.id)}')">Düzenle</button><button class="team-row-action ${account.active?'danger':''}" type="button" onclick="toggleTeamAccount('${esc(account.id)}')">${account.active?'Pasif yap':'Aktif yap'}</button><button class="team-row-action" type="button" onclick="toggleTeamTwoFactor('${esc(account.id)}')">2FA ${account.twoFactorEnabled?'kapat':'kur'}</button></td></tr>`;
+      const accepting=account.acceptingDeposits===undefined?account.active&&!account.depositsPaused&&!account.collateralPaused:!!account.acceptingDeposits;
+      const stateLabel=accepting?'Yatırım aktif':account.collateralPaused?'Teminat eşiği':account.depositsPaused?'Yatırım duraklatıldı':'Yönetici duraklattı';
+      return `<tr><td><b>${esc(account.id)}</b></td><td class="team-account-email">${esc(account.email)}</td><td>${twoFactor}</td><td>${Number(account.walletLimit||0)||'Sınırsız'}</td><td>${esc(collateral)}${account.collateralAutoPause?`<small class="team-account-sub">%${threshold} yatırım eşiği</small>`:''}${account.collateralPaused?'<small class="team-account-sub is-error">Yeni yatırımlar duraklatıldı · çekim ödemesiyle açılır</small>':''}</td><td><b>%${commissionPercent.toLocaleString('tr-TR')}</b><small class="team-account-sub">${Number(account.commissionEarned||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} USDT birikmiş</small></td><td><span class="team-account-badge ${accepting?'':'is-error'}">${stateLabel}</span></td><td><div class="team-account-permission-list">${access}</div></td><td><button class="team-row-action" type="button" onclick="editTeamAccount('${esc(account.id)}')">Düzenle</button><button class="team-row-action ${accepting?'danger':''}" type="button" onclick="toggleTeamAccount('${esc(account.id)}')">${accepting?'Yatırımı durdur':'Yatırımı aç'}</button><button class="team-row-action" type="button" onclick="toggleTeamTwoFactor('${esc(account.id)}')">${account.twoFactorEnabled?'2FA kapat':account.twoFactorSetupPending?'2FA doğrula':'2FA kur'}</button></td></tr>`;
     }).join('')+'</tbody></table>';
   }
   async function load(){
@@ -30,21 +32,22 @@
     try{const data=await request('',null);accounts=Array.isArray(data.accounts)?data.accounts:[];render();}
     catch(error){target.textContent=error.message||'Ekip hesapları alınamadı.';}
   }
-  function resetForm(){
+  function resetForm({keepSetup=false}={}){
     $('teamAccountId').value='';$('teamEmail').value='';$('teamPassword').value='';$('teamEmail').readOnly=false;
+    $('teamTotpSecret').value='';$('teamTotpSecret').disabled=false;if(!keepSetup)$('teamTwoFactorSetupPanel').hidden=true;$('teamTwoFactorCopyMessage').textContent='';
     $('saveTeamAccount').textContent='Ekip hesabı ekle';$('cancelTeamEdit').hidden=true;setPermissions({});setControls({});$('teamAccountMessage').textContent='';
   }
   window.editTeamAccount=id=>{
     const account=accounts.find(item=>item.id===id);if(!account)return;
-    $('teamAccountId').value=account.id;$('teamEmail').value=account.email;$('teamPassword').value='';$('teamEmail').readOnly=false;
+    $('teamAccountId').value=account.id;$('teamEmail').value=account.email;$('teamPassword').value='';$('teamEmail').readOnly=false;$('teamTotpSecret').value='';$('teamTotpSecret').disabled=true;$('teamTwoFactorSetupPanel').hidden=true;
     setPermissions(account.permissions);setControls(account);$('saveTeamAccount').textContent='Değişiklikleri kaydet';$('cancelTeamEdit').hidden=false;
     $('teamAccountMessage').textContent='Parolayı değiştirmeyeceksen boş bırak.';form.scrollIntoView({behavior:'smooth',block:'center'});
   };
   window.toggleTeamAccount=async id=>{
     const account=accounts.find(item=>item.id===id);if(!account)return;
-    const active=!account.active;if(!confirm(`${account.email} hesabı ${active?'aktif':'pasif'} yapılsın mı?`))return;
+    const accepting=account.acceptingDeposits===undefined?account.active&&!account.depositsPaused&&!account.collateralPaused:!!account.acceptingDeposits,active=!accepting;if(!confirm(`${account.email} için yeni yatırım alımı ${active?'açılsın':'durdurulsun'} mı? Ekip hesabı giriş yapmaya ve çekim işlemlerini yürütmeye devam edebilir.`))return;
     const ownerTotpCode=prompt('Owner Google Authenticator kodunu girin:');if(!ownerTotpCode)return;
-    try{await request('/'+encodeURIComponent(id),{action:'update',active,ownerTotpCode,permissions:account.permissions});await load();}
+    try{await request('/'+encodeURIComponent(id),{action:'update',active,ownerTotpCode});await load();}
     catch(error){alert(error.message||'Hesap durumu değiştirilemedi.');}
   };
   window.toggleTeamTwoFactor=async id=>{
@@ -54,6 +57,13 @@
       const ownerTotpCode=prompt('Owner Google Authenticator kodunu girin:');if(!ownerTotpCode)return;
       try{await request('/'+encodeURIComponent(id),{action:'disable_2fa',ownerTotpCode});await load();}
       catch(error){alert(error.message||'2FA kapatılamadı.');}
+      return;
+    }
+    if(account.twoFactorSetupPending){
+      const teamTotpCode=prompt('Ekibin paylaştığınız anahtarla ürettiği 6 haneli kodu girin:');if(!teamTotpCode)return;
+      const ownerTotpCode=prompt('İşlemi tamamlamak için Owner Google Authenticator kodunu girin:');if(!ownerTotpCode)return;
+      try{await request('/'+encodeURIComponent(id),{action:'verify_2fa',teamTotpCode,ownerTotpCode});await load();}
+      catch(error){alert(error.message||'Ekip 2FA kodu doğrulanamadı.');}
       return;
     }
     const ownerTotpCode=prompt('Owner Google Authenticator kodunu girin:');if(!ownerTotpCode)return;
@@ -66,20 +76,34 @@
     }catch(error){alert(error.message||'2FA kurulamadı.');}
   };
   $('cancelTeamEdit').addEventListener('click',resetForm);
+  function showTwoFactorSetup(setup){
+    if(!setup?.secret)return;
+    $('teamTwoFactorSecretValue').textContent=setup.secret;
+    $('openTeamTwoFactorSetup').href=setup.otpauthUrl||'#';
+    $('teamTwoFactorSetupPanel').hidden=false;
+  }
+  async function copyTwoFactorValue(value){
+    if(!value)return;
+    try{await navigator.clipboard.writeText(value);}
+    catch(_){const field=document.createElement('textarea');field.value=value;field.style.position='fixed';field.style.opacity='0';document.body.appendChild(field);field.select();document.execCommand('copy');field.remove();}
+    $('teamTwoFactorCopyMessage').textContent='Kopyalandı. Anahtarı güvenli bir kanaldan ekiple paylaş.';
+  }
+  $('copyTeamTwoFactorSecret').addEventListener('click',()=>copyTwoFactorValue($('teamTwoFactorSecretValue').textContent));
+  $('copyTeamTwoFactorUri').addEventListener('click',()=>copyTwoFactorValue($('openTeamTwoFactorSetup').href));
   form.addEventListener('submit',async event=>{
     event.preventDefault();const id=$('teamAccountId').value,email=$('teamEmail').value.trim(),password=$('teamPassword').value;
     if(!id&&password.length<12){$('teamAccountMessage').textContent='Yeni hesap parolası en az 12 karakter olmalı.';return;}
     const ownerTotpCode=prompt('Kaydetmek için Owner Google Authenticator kodunu girin:');if(!ownerTotpCode)return;
-    const payload={email,permissions:permissions(),ownerTotpCode,...controls()};if(password)payload.password=password;
+    const payload={email,permissions:permissions(),ownerTotpCode,...controls()};if(password)payload.password=password;if(!id&&$('teamTotpSecret').value.trim())payload.totpSecret=$('teamTotpSecret').value.trim();
     $('saveTeamAccount').disabled=true;$('teamAccountMessage').textContent='Kaydediliyor…';
     try{
       let resultMessage='Ekip hesabı kaydedildi.';
       if(id){await request('/'+encodeURIComponent(id),{action:'update',...payload});$('teamAccountMessage').textContent='Ekip hesabı kaydedildi.';}
       else{
-        const result=await request('',payload),setup=result.twoFactorSetup;
-        if(setup){alert(`Ekip hesabı için doğrulayıcı anahtarı:\n\n${setup.secret}\n\nAnahtarı ekip telefonundaki doğrulayıcı uygulamasına ekleyin.`);const teamTotpCode=prompt('Ekip doğrulayıcı uygulamasındaki 6 haneli kod:'),confirmOwnerCode=teamTotpCode?prompt('2FA kurulumunu tamamlamak için Owner doğrulama kodunu girin:'):null;if(teamTotpCode&&confirmOwnerCode)await request('/'+encodeURIComponent(result.account.id),{action:'verify_2fa',teamTotpCode,ownerTotpCode:confirmOwnerCode});else resultMessage='Hesap oluşturuldu; 2FA kurulumu tamamlanana kadar giriş kapalı kalır.';}
+        const result=await request('',payload),setup=result.twoFactorSetup;showTwoFactorSetup(setup);
+        if(setup)resultMessage='Hesap oluşturuldu. 2FA anahtarı aşağıda hazır; ekibe paylaşıp listeden “2FA doğrula” ile kurulumu tamamlayın. Doğrulanana kadar giriş kapalı.';
       }
-      resetForm();$('teamAccountMessage').textContent=resultMessage;await load();
+      resetForm({keepSetup:!id});$('teamAccountMessage').textContent=resultMessage;await load();
     }
     catch(error){$('teamAccountMessage').textContent=error.message||'Ekip hesabı kaydedilemedi.';}
     finally{$('saveTeamAccount').disabled=false;}

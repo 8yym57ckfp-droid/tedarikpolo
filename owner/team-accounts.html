@@ -41,6 +41,7 @@
     .team-account-permission-list{display:flex;flex-wrap:wrap;gap:5px;color:#c3b5d0;font-size:10px}
     .team-account-state{min-height:44px}
     .team-account-actions .admin-btn{background:rgba(255,255,255,.06);border:1px solid #49385e;color:#f4eaff}
+    .team-2fa-key-panel{margin:14px 0;padding:15px;border:1px solid #4d3670;border-radius:13px;background:rgba(130,82,200,.09)}.team-2fa-key-panel[hidden]{display:none}.team-2fa-key-panel strong{display:block;color:#f3eaff;font-size:12px}.team-2fa-key-panel p{margin:6px 0 10px;color:#b9a5cc;font-size:11px;line-height:1.5}.team-2fa-key-value{display:block;margin:9px 0;padding:11px 12px;border:1px solid #49385e;border-radius:9px;background:#100c17;color:#a8d5ff;font:700 13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere;user-select:all}.team-2fa-key-actions{display:flex;gap:9px;flex-wrap:wrap}.team-2fa-key-actions button,.team-2fa-key-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 11px;border:1px solid #655080;border-radius:9px;background:#241630;color:#f4eaff;font:inherit;font-size:11px;font-weight:800;text-decoration:none;cursor:pointer}
     @media(max-width:600px){.team-account-card{padding:16px}}
     @media(max-width:640px){.team-account-fields{grid-template-columns:1fr}}
   </style>
@@ -52,12 +53,13 @@
       <header class="admin-head"><div><div class="admin-muted">OWNER CONTROL CENTER</div><h1>Ekip Hesapları</h1><div class="admin-muted">Ekip giriş bilgilerini, durumunu ve panel erişimlerini yönetin.</div></div><div class="owner-badge">● OWNER</div></header>
       <section class="team-account-card">
         <h2>Admin ekip girişi</h2>
-        <p class="team-account-intro">Ekibin yatırım komisyonunu ve teminat sınırını belirle. Teminat kullanımı onaylı yatırımlar ve bekleyen taleplerle artar; ekibin ödediği çekimler aynı tutarda kapasiteyi geri açar. Teminatı aşan yatırım talepleri sunucu tarafından engellenir.</p>
+        <p class="team-account-intro">Ekibin yatırım komisyonunu ve teminat sınırını belirle. Yatırım alımı durdurulsa bile ekip paneline girebilir ve çekim ödemelerini sürdürebilir. Teminat kullanımı onaylı yatırımlar ve bekleyen taleplerle artar; ekibin ödediği çekimler aynı tutarda kapasiteyi geri açar.</p>
         <form class="team-account-form" id="teamAccountForm">
           <input id="teamAccountId" type="hidden">
           <div class="team-account-fields">
             <label for="teamEmail">Giriş e-postası<input id="teamEmail" type="email" required autocomplete="off"></label>
             <label for="teamPassword">Yeni parola<input id="teamPassword" type="password" minlength="12" autocomplete="new-password" placeholder="Yeni hesapta zorunlu, düzenlemede isteğe bağlı"></label>
+            <label for="teamTotpSecret">Paylaşılacak 2FA anahtarı<input id="teamTotpSecret" type="text" inputmode="latin" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Boş bırak: otomatik oluşturulur"><small>Base32 anahtarını gir; aynı anahtarı ekiple paylaş. Boş bırakırsan sistem üretir.</small></label>
             <label for="teamWalletLimit">Cüzdan sınırı<input id="teamWalletLimit" type="number" min="0" max="5000" step="1" value="0"><small>0 = sınırsız</small></label>
             <label for="teamCollateralTotal">Toplam teminat (USDT)<input id="teamCollateralTotal" type="number" min="0" step="0.01" value="0"></label>
             <label for="teamCommissionPercent">Yatırım komisyonu (%)<input id="teamCommissionPercent" type="number" min="0" max="100" step="0.01" value="3"><small>Onaylanan yatırımlardan hesaplanır.</small></label>
@@ -76,12 +78,19 @@
           </div></div>
           <div class="team-account-form-actions"><button class="primary" id="saveTeamAccount" type="submit">Ekip hesabı ekle</button><button id="cancelTeamEdit" type="button" hidden>İptal</button><span id="teamAccountMessage" class="team-account-form-message" role="status" aria-live="polite"></span></div>
         </form>
+        <section class="team-2fa-key-panel" id="teamTwoFactorSetupPanel" hidden aria-live="polite">
+          <strong>Ekip için 2FA anahtarı hazır</strong>
+          <p>Bu anahtarı ekip üyesine güvenli kanaldan gönderin. Doğrulayıcıya eklenip ilk kod onaylanana kadar giriş 2FA kurulum beklemede kalır.</p>
+          <code class="team-2fa-key-value" id="teamTwoFactorSecretValue"></code>
+          <div class="team-2fa-key-actions"><button type="button" id="copyTeamTwoFactorSecret">Anahtarı kopyala</button><button type="button" id="copyTeamTwoFactorUri">Kurulum bağlantısını kopyala</button><a id="openTeamTwoFactorSetup" href="#" rel="noopener">Authenticator'a ekle</a></div>
+          <span id="teamTwoFactorCopyMessage" class="team-account-form-message" role="status" aria-live="polite"></span>
+        </section>
         <div id="teamAccountContent" class="team-account-state" role="status" aria-live="polite">Ekip hesabı bilgisi yükleniyor…</div>
         <div class="team-account-actions"><a class="admin-btn dark" href="../admin/login.html">Ekip giriş sayfası</a></div>
         <p class="team-account-footnote">Cüzdan sınırında 0 sınırsız demektir. Eşik, toplam teminatın kullanılmasına izin verilen yüzdesidir. Çekim ödendiğinde kapasite aynı tutarda geri açılır. Yeni parola en az 12 karakter olmalıdır.</p>
       </section>
     </main>
   </div>
-  <script src="team-accounts-data.js"></script>
+  <script src="team-accounts-data.js?v=20261005.1"></script>
 </body>
 </html>
