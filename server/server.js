@@ -815,7 +815,7 @@ async function route(req,res){
   if(req.url==='/api/owner/logout' && req.method==='POST'){
     const c=parseCookies(req)[OWNER_COOKIE]||'';if(c)await deleteStaffSession(c,'owner');return json(res,200,{ok:true},{'Set-Cookie':clearCookie(OWNER_COOKIE)});
   }
-  const owner=await ownerAuth(req),teamAdmin=await adminAuth(req);
+  let owner=await ownerAuth(req);const teamAdmin=await adminAuth(req);
   const telegramUrl=new URL(req.url,'http://localhost');
   if(telegramUrl.pathname==='/api/owner/support/telegram'&&['GET','POST'].includes(req.method)){
     if(!owner)return json(res,teamAdmin?403:401,{error:teamAdmin?'owner_only':'unauthorized'});
@@ -905,6 +905,8 @@ async function route(req,res){
   const teamApiRequest=requestedApiPath==='/api/admin'||requestedApiPath.startsWith('/api/admin/');
   if(ownerApiRequest&&!owner)return json(res,teamAdmin?403:401,{error:teamAdmin?'owner_only':'owner_unauthorized'});
   if(teamApiRequest&&!teamAdmin)return json(res,owner?403:401,{error:owner?'team_admin_only':'team_admin_unauthorized'});
+  // Owner and team cookies can coexist in one browser; the API namespace chooses the active authority.
+  if(teamApiRequest)owner=null;
   if(ownerApiRequest)req.url=req.url.replace(/^\/api\/owner(?=\/|$)/,'/api/admin');
   const admin=ownerApiRequest?owner:teamAdmin;
   if(new URL(req.url,'http://localhost').pathname==='/api/admin/public-stats-display'&&['GET','POST'].includes(req.method)){
