@@ -4,6 +4,14 @@
   const number=value=>Number(value||0).toLocaleString('tr-TR');
   const amount=value=>Number(value||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:4})+' USDT';
   const statusLabel={pending:'Bekliyor',approved:'Onaylandı',rejected:'Reddedildi'};
+  const dialog=byId('teamDialogBackdrop'),dialogTitle=byId('teamDialogTitle'),dialogMessage=byId('teamDialogMessage'),dialogKicker=byId('teamDialogKicker'),dialogIcon=byId('teamDialogIcon'),dialogCancel=byId('teamDialogCancel'),dialogConfirm=byId('teamDialogConfirm');
+  let dialogResolve=null,dialogOpener=null;
+  function closeTeamDialog(result=false){if(!dialog||dialog.hidden)return;dialog.classList.remove('is-open');dialog.hidden=true;document.body.classList.remove('team-dialog-open');const resolve=dialogResolve;dialogResolve=null;if(dialogOpener?.isConnected)dialogOpener.focus();dialogOpener=null;resolve?.(result);}
+  function showTeamDialog({title,message,kicker='HESAP DURUMU',confirmText='Tamam',cancelText='',danger=false,icon='!'}){if(!dialog)return Promise.resolve(false);dialogResolve&&closeTeamDialog(false);dialogOpener=document.activeElement;dialogTitle.textContent=title;dialogMessage.textContent=message;dialogKicker.textContent=kicker;dialogIcon.textContent=icon;dialogCancel.textContent=cancelText||'Vazgeç';dialogCancel.hidden=!cancelText;dialogConfirm.textContent=confirmText;dialogConfirm.classList.toggle('team-dialog-danger',danger);dialogConfirm.classList.toggle('team-dialog-primary',!danger);dialog.hidden=false;document.body.classList.add('team-dialog-open');requestAnimationFrame(()=>{dialog.classList.add('is-open');(cancelText?dialogCancel:dialogConfirm).focus();});return new Promise(resolve=>{dialogResolve=resolve;});}
+  dialogCancel?.addEventListener('click',()=>closeTeamDialog(false));
+  dialogConfirm?.addEventListener('click',()=>closeTeamDialog(true));
+  dialog?.addEventListener('click',event=>{if(event.target===dialog)closeTeamDialog(false);});
+  document.addEventListener('keydown',event=>{if(dialog?.hidden)return;if(event.key==='Escape'){event.preventDefault();closeTeamDialog(false);}if(event.key==='Tab'){const focusable=[dialogCancel,dialogConfirm].filter(button=>button&&!button.hidden&&!button.disabled);if(!focusable.length)return;const first=focusable[0],last=focusable[focusable.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}});
   async function loadTeamOverview(){
     const rows=byId('recentRows');
     try{
@@ -14,10 +22,11 @@
         const setSwitch=enabled=>{selfDisable.setAttribute('aria-checked',enabled?'true':'false');byId('teamActiveLabel').textContent=enabled?'Hesabım aktif':'Hesabım pasif';};
         setSwitch(true);
         selfDisable.onclick=async()=>{
-          if(!confirm('Ekip hesabınızı pasife almak istiyor musunuz? Oturumunuz kapanır ve atanmış cüzdanlardan yeni yatırım yönlendirilmez.'))return;
+          const accepted=await showTeamDialog({title:'Hesap pasife alınsın mı?',message:'Oturumunuz kapatılacak. Bu ekip hesabına bağlı cüzdanlara yeni yatırım yönlendirilmesi durdurulacak.',confirmText:'Evet, pasife al',cancelText:'Vazgeç',danger:true});
+          if(!accepted)return;
           selfDisable.disabled=true;setSwitch(false);
           try{await adminFetch('/team/self-disable',{method:'POST',body:JSON.stringify({})});location.replace('login.html?disabled=1');}
-          catch(error){setSwitch(true);selfDisable.disabled=false;alert('Hesap pasife alınamadı: '+error.message);}
+          catch(error){setSwitch(true);selfDisable.disabled=false;await showTeamDialog({title:'Hesap pasife alınamadı',message:error.message||'İşlem sırasında bir hata oluştu. Tekrar deneyin veya yöneticinizle iletişime geçin.',kicker:'İŞLEM TAMAMLANAMADI',confirmText:'Anladım',icon:'×'});}
         };
       }
       byId('teamLifetimeCommission').textContent=amount(admin.commissionEarned);
