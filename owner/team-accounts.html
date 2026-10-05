@@ -42,6 +42,7 @@
     .team-account-state{min-height:44px}
     .team-account-actions .admin-btn{background:rgba(255,255,255,.06);border:1px solid #49385e;color:#f4eaff}
     .team-2fa-key-panel{margin:14px 0;padding:15px;border:1px solid #4d3670;border-radius:13px;background:rgba(130,82,200,.09)}.team-2fa-key-panel[hidden]{display:none}.team-2fa-key-panel strong{display:block;color:#f3eaff;font-size:12px}.team-2fa-key-panel p{margin:6px 0 10px;color:#b9a5cc;font-size:11px;line-height:1.5}.team-2fa-key-value{display:block;margin:9px 0;padding:11px 12px;border:1px solid #49385e;border-radius:9px;background:#100c17;color:#a8d5ff;font:700 13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere;user-select:all}.team-2fa-key-actions{display:flex;gap:9px;flex-wrap:wrap}.team-2fa-key-actions button,.team-2fa-key-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 11px;border:1px solid #655080;border-radius:9px;background:#241630;color:#f4eaff;font:inherit;font-size:11px;font-weight:800;text-decoration:none;cursor:pointer}
+    .team-action-backdrop{position:fixed;inset:0;z-index:6000;display:grid;place-items:center;padding:18px;background:rgba(5,2,12,.76);backdrop-filter:blur(7px)}.team-action-backdrop[hidden]{display:none}.team-action-dialog{width:min(100%,420px);padding:22px;border:1px solid #55327d;border-radius:18px;background:linear-gradient(145deg,#1a0d2a,#10071c);box-shadow:0 24px 80px rgba(0,0,0,.55);color:#f4eaff}.team-action-dialog h2{margin:0;font-size:19px}.team-action-dialog p{color:#b9a5cc;font-size:12px;line-height:1.55}.team-action-dialog label{display:grid;gap:7px;margin-top:16px;color:#e9e1f0;font-size:12px;font-weight:750}.team-action-dialog input{box-sizing:border-box;width:100%;padding:12px;border:1px solid #60417e;border-radius:10px;background:#100c17;color:#fff;font:inherit;letter-spacing:.25em}.team-action-dialog-status{min-height:18px;margin-top:10px;color:#c4b3d4;font-size:11px}.team-action-dialog-status.is-error{color:#ff9aa4}.team-action-dialog-status.is-success{color:#62efbb}.team-action-dialog-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:15px}.team-action-dialog-actions button{min-height:39px;padding:0 14px;border:1px solid #58436f;border-radius:9px;background:#241630;color:#f4eaff;font:inherit;font-size:11px;font-weight:800;cursor:pointer}.team-action-dialog-actions button.primary{border-color:#2786e8;background:linear-gradient(135deg,#2786e8,#6252d9)}.team-action-dialog-actions button:disabled{opacity:.6;cursor:wait}
     @media(max-width:600px){.team-account-card{padding:16px}}
     @media(max-width:640px){.team-account-fields{grid-template-columns:1fr}}
   </style>
@@ -91,6 +92,15 @@
       </section>
     </main>
   </div>
-  <script src="team-accounts-data.js?v=20261005.1"></script>
+  <div class="team-action-backdrop" id="teamActionBackdrop" hidden>
+    <section class="team-action-dialog" role="dialog" aria-modal="true" aria-labelledby="teamActionTitle" aria-describedby="teamActionDescription">
+      <h2 id="teamActionTitle">Yatırım alımını aç</h2>
+      <p id="teamActionDescription">Ekip hesabına yeni yatırım yönlendirmesi açılacak. Owner doğrulama kodunu girerek işlemi kaydet.</p>
+      <label for="teamActionTotpCode">Owner doğrulama kodu<input id="teamActionTotpCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="6 haneli kod"></label>
+      <div class="team-action-dialog-status" id="teamActionStatus" role="status" aria-live="polite"></div>
+      <div class="team-action-dialog-actions"><button type="button" id="teamActionCancel">Vazgeç</button><button type="button" class="primary" id="teamActionSubmit">Yatırımı aç</button></div>
+    </section>
+  </div>
+  <script src="team-accounts-data.js?v=20261005.2"></script>
 </body>
 </html>

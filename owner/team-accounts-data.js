@@ -3,7 +3,9 @@
   if(!target||!form)return;
   const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const permissionLabels={transactions:'Talepler',reports:'Raporlar',wallets:'Cüzdanlar',support:'Destek'};
+  const actionBackdrop=$('teamActionBackdrop'),actionTitle=$('teamActionTitle'),actionDescription=$('teamActionDescription'),actionTotp=$('teamActionTotpCode'),actionStatus=$('teamActionStatus'),actionSubmit=$('teamActionSubmit');
   let accounts=[];
+  let pendingTeamAction=null;
   function permissions(){return {dashboard:true,transactions:$('permTransactions').checked,reports:$('permReports').checked,wallets:$('permWallets').checked,support:$('permSupport').checked};}
   function setPermissions(value={}){$('permTransactions').checked=value.transactions!==false;$('permReports').checked=value.reports!==false;$('permWallets').checked=value.wallets!==false;$('permSupport').checked=value.support!==false;}
   function controls(){return {walletLimit:Number($('teamWalletLimit').value||0),collateralTotal:Number($('teamCollateralTotal').value||0),commissionPercent:Number($('teamCommissionPercent').value||0),collateralPausePercent:Number($('teamCollateralPausePercent').value||80),allowSelfDisable:$('teamAllowSelfDisable').checked,collateralAutoPause:$('teamCollateralAutoPause').checked};}
@@ -32,6 +34,36 @@
     try{const data=await request('',null);accounts=Array.isArray(data.accounts)?data.accounts:[];render();}
     catch(error){target.textContent=error.message||'Ekip hesapları alınamadı.';}
   }
+  function closeTeamAction(){actionBackdrop.hidden=true;pendingTeamAction=null;actionTotp.value='';actionStatus.textContent='';actionStatus.className='team-action-dialog-status';}
+  function openTeamAction(id,active){
+    const account=accounts.find(item=>item.id===id);if(!account)return;
+    pendingTeamAction={id,active};actionTotp.value='';actionStatus.textContent='';actionStatus.className='team-action-dialog-status';
+    actionTitle.textContent=active?'Yatırım alımını aç':'Yatırım alımını durdur';
+    actionDescription.textContent=active?`${account.email} hesabına yeni yatırım yönlendirmesi açılacak. Ekip hesabı giriş yapmaya ve çekim ödemeye devam eder. Owner doğrulama kodunu girip kaydet.`:`${account.email} hesabına yeni yatırım yönlendirmesi durdurulacak. Ekip hesabı giriş yapmaya ve çekim ödemeye devam eder. Owner doğrulama kodunu girip kaydet.`;
+    actionSubmit.textContent=active?'Yatırımı aç':'Yatırımı durdur';actionBackdrop.hidden=false;actionTotp.focus();
+  }
+  $('teamActionCancel').addEventListener('click',closeTeamAction);
+  actionBackdrop.addEventListener('click',event=>{if(event.target===actionBackdrop)closeTeamAction();});
+  actionBackdrop.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();closeTeamAction();}else if(event.key==='Enter'&&event.target===actionTotp){event.preventDefault();actionSubmit.click();}});
+  actionSubmit.addEventListener('click',async()=>{
+    if(!pendingTeamAction)return;
+    const ownerTotpCode=actionTotp.value.trim();if(!/^\d{6}$/.test(ownerTotpCode)){actionStatus.textContent='6 haneli Owner doğrulama kodunu gir.';actionStatus.classList.add('is-error');actionTotp.focus();return;}
+    const {id,active}=pendingTeamAction;actionSubmit.disabled=true;actionStatus.textContent='Sunucuya kaydediliyor…';actionStatus.className='team-action-dialog-status';
+    try{
+      const result=await request('/'+encodeURIComponent(id),{action:'update',active,ownerTotpCode});
+      if(result.account){accounts=accounts.map(item=>item.id===id?result.account:item);render();}
+      await load();
+      const updated=accounts.find(item=>item.id===id),accepting=updated?.acceptingDeposits===undefined?updated?.active&&!updated?.depositsPaused&&!updated?.collateralPaused:!!updated?.acceptingDeposits;
+      if(active&&!accepting){
+        if(updated?.collateralPaused){const threshold=Number(updated.collateralTotal||0)*Number(updated.collateralPausePercent||80)/100;actionStatus.textContent=`Owner isteği kaydedildi; ancak teminat eşiği nedeniyle yatırım kapalı. Kullanım ${Number(updated.collateralExposure||0).toLocaleString('tr-TR')} / ${threshold.toLocaleString('tr-TR')} USDT. Çekim ödemesi sonrası yeniden açılır.`;}
+        else actionStatus.textContent='Sunucu yatırımı hâlâ pasif bildiriyor. Durum kaydedilemedi; tekrar dene veya yönetici kaydını kontrol et.';
+        actionStatus.classList.add('is-error');return;
+      }
+      $('teamAccountMessage').textContent=active?'Yatırım alımı açıldı; ekip paneli güncel durumu birkaç saniye içinde yeniler.':'Yeni yatırım alımı durduruldu; ekip hesabı ve çekim işlemleri açık kalır.';
+      closeTeamAction();
+    }catch(error){actionStatus.textContent=error.message||'İşlem kaydedilemedi. Tekrar dene.';actionStatus.classList.add('is-error');}
+    finally{actionSubmit.disabled=false;}
+  });
   function resetForm({keepSetup=false}={}){
     $('teamAccountId').value='';$('teamEmail').value='';$('teamPassword').value='';$('teamEmail').readOnly=false;
     $('teamTotpSecret').value='';$('teamTotpSecret').disabled=false;if(!keepSetup)$('teamTwoFactorSetupPanel').hidden=true;$('teamTwoFactorCopyMessage').textContent='';
@@ -45,10 +77,7 @@
   };
   window.toggleTeamAccount=async id=>{
     const account=accounts.find(item=>item.id===id);if(!account)return;
-    const accepting=account.acceptingDeposits===undefined?account.active&&!account.depositsPaused&&!account.collateralPaused:!!account.acceptingDeposits,active=!accepting;if(!confirm(`${account.email} için yeni yatırım alımı ${active?'açılsın':'durdurulsun'} mı? Ekip hesabı giriş yapmaya ve çekim işlemlerini yürütmeye devam edebilir.`))return;
-    const ownerTotpCode=prompt('Owner Google Authenticator kodunu girin:');if(!ownerTotpCode)return;
-    try{await request('/'+encodeURIComponent(id),{action:'update',active,ownerTotpCode});await load();}
-    catch(error){alert(error.message||'Hesap durumu değiştirilemedi.');}
+    const accepting=account.acceptingDeposits===undefined?account.active&&!account.depositsPaused&&!account.collateralPaused:!!account.acceptingDeposits;openTeamAction(id,!accepting);
   };
   window.toggleTeamTwoFactor=async id=>{
     const account=accounts.find(item=>item.id===id);if(!account)return;
