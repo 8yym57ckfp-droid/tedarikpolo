@@ -19,14 +19,15 @@
   function render(){
     if(!accounts.length){target.className='team-account-state';target.textContent='Henüz ekip hesabı eklenmemiş.';return;}
     target.className='team-account-table-wrap';
-    target.innerHTML='<table class="team-account-table"><thead><tr><th>Hesap</th><th>E-posta</th><th>2FA</th><th>Cüzdan</th><th>Teminat kullanımı</th><th>Komisyon</th><th>Durum</th><th>Erişimler</th><th>İşlemler</th></tr></thead><tbody>'+accounts.map(account=>{
+    target.innerHTML='<table class="team-account-table"><thead><tr><th>Hesap</th><th>E-posta</th><th>2FA</th><th>Cüzdan</th><th>Teminat kullanımı</th><th>Komisyon</th><th>Durum</th><th>Zincir doğrulaması</th><th>Erişimler</th><th>İşlemler</th></tr></thead><tbody>'+accounts.map(account=>{
       const access=Object.entries(permissionLabels).filter(([key])=>account.permissions?.[key]).map(([,label])=>`<span>${label}</span>`).join('')||'<span>Yok</span>';
       const collateralTotal=Number(account.collateralTotal||0),collateralExposure=Number(account.collateralExposure||0),threshold=Number(account.collateralPausePercent||80),commissionPercent=Number(account.commissionPercent??3);
       const collateral=collateralTotal?`${collateralExposure.toLocaleString('tr-TR')} / ${collateralTotal.toLocaleString('tr-TR')} USDT · ${Number(account.collateralAvailable||0).toLocaleString('tr-TR')} boş`:'Ayarlı değil';
       const twoFactor=account.twoFactorEnabled?'Açık':account.twoFactorSetupPending?'Kurulum bekliyor':'Kapalı';
       const accepting=account.acceptingDeposits===undefined?account.active&&!account.depositsPaused&&!account.collateralPaused:!!account.acceptingDeposits;
+      const chainRequired=account.requireChainVerification!==false;
       const stateLabel=accepting?'Yatırım aktif':account.collateralPaused?'Teminat eşiği':account.depositsPaused?'Yatırım duraklatıldı':'Yönetici duraklattı';
-      return `<tr><td><b>${esc(account.id)}</b></td><td class="team-account-email">${esc(account.email)}</td><td>${twoFactor}</td><td>${Number(account.walletLimit||0)||'Sınırsız'}</td><td>${esc(collateral)}${account.collateralAutoPause?`<small class="team-account-sub">%${threshold} yatırım eşiği</small>`:''}${account.collateralPaused?'<small class="team-account-sub is-error">Yeni yatırımlar duraklatıldı · çekim ödemesiyle açılır</small>':''}</td><td><b>%${commissionPercent.toLocaleString('tr-TR')}</b><small class="team-account-sub">${Number(account.commissionEarned||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} USDT birikmiş</small></td><td><span class="team-account-badge ${accepting?'':'is-error'}">${stateLabel}</span></td><td><div class="team-account-permission-list">${access}</div></td><td><button class="team-row-action" type="button" onclick="editTeamAccount('${esc(account.id)}')">Düzenle</button><button class="team-row-action ${accepting?'danger':''}" type="button" onclick="toggleTeamAccount('${esc(account.id)}')">${accepting?'Yatırımı durdur':'Yatırımı aç'}</button><button class="team-row-action" type="button" onclick="toggleTeamTwoFactor('${esc(account.id)}')">${account.twoFactorEnabled?'2FA kapat':account.twoFactorSetupPending?'2FA doğrula':'2FA kur'}</button></td></tr>`;
+      return `<tr><td><b>${esc(account.id)}</b></td><td class="team-account-email">${esc(account.email)}</td><td>${twoFactor}</td><td>${Number(account.walletLimit||0)||'Sınırsız'}</td><td>${esc(collateral)}${account.collateralAutoPause?`<small class="team-account-sub">%${threshold} yatırım eşiği</small>`:''}${account.collateralPaused?'<small class="team-account-sub is-error">Yeni yatırımlar duraklatıldı · çekim ödemesiyle açılır</small>':''}</td><td><b>%${commissionPercent.toLocaleString('tr-TR')}</b><small class="team-account-sub">${Number(account.commissionEarned||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} USDT birikmiş</small></td><td><span class="team-account-badge ${accepting?'':'is-error'}">${stateLabel}</span></td><td class="team-chain-setting"><span class="team-account-badge ${chainRequired?'':'is-off'}">${chainRequired?'Zorunlu':'Kapalı'}</span><button class="team-row-action ${chainRequired?'danger':''}" type="button" onclick="toggleTeamChainVerification('${esc(account.id)}')">${chainRequired?'Doğrulamayı kapat':'Doğrulamayı aç'}</button></td><td><div class="team-account-permission-list">${access}</div></td><td><button class="team-row-action" type="button" onclick="editTeamAccount('${esc(account.id)}')">Düzenle</button><button class="team-row-action ${accepting?'danger':''}" type="button" onclick="toggleTeamAccount('${esc(account.id)}')">${accepting?'Yatırımı durdur':'Yatırımı aç'}</button><button class="team-row-action" type="button" onclick="toggleTeamTwoFactor('${esc(account.id)}')">${account.twoFactorEnabled?'2FA kapat':account.twoFactorSetupPending?'2FA doğrula':'2FA kur'}</button></td></tr>`;
     }).join('')+'</tbody></table>';
   }
   async function load(){
@@ -42,14 +43,25 @@
     actionDescription.textContent=active?`${account.email} hesabına yeni yatırım yönlendirmesi açılacak. Ekip hesabı giriş yapmaya ve çekim ödemeye devam eder. Owner doğrulama kodunu girip kaydet.`:`${account.email} hesabına yeni yatırım yönlendirmesi durdurulacak. Ekip hesabı giriş yapmaya ve çekim ödemeye devam eder. Owner doğrulama kodunu girip kaydet.`;
     actionSubmit.textContent=active?'Yatırımı aç':'Yatırımı durdur';actionBackdrop.hidden=false;actionTotp.focus();
   }
+  function openTeamChainAction(id,requireChainVerification){
+    const account=accounts.find(item=>item.id===id);if(!account)return;
+    pendingTeamAction={id,requireChainVerification};actionTotp.value='';actionStatus.textContent='';actionStatus.className='team-action-dialog-status';
+    actionTitle.textContent=requireChainVerification?'Zincir doğrulamasını aç':'Zincir doğrulamasını kapat';
+    actionDescription.textContent=requireChainVerification?`${account.email} ekibinin yatırım ve çekim onaylarında blokzincir doğrulaması yeniden zorunlu olacak.`:`${account.email} ekibinin işlemleri blokzincirde doğrulanmadan onaylanabilecek. Bu ayar yalnızca bu ekibe uygulanır ve işlem audit kaydına yazılır.`;
+    actionSubmit.textContent=requireChainVerification?'Doğrulamayı aç':'Doğrulamayı kapat';actionBackdrop.hidden=false;actionTotp.focus();
+  }
   $('teamActionCancel').addEventListener('click',closeTeamAction);
   actionBackdrop.addEventListener('click',event=>{if(event.target===actionBackdrop)closeTeamAction();});
   actionBackdrop.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();closeTeamAction();}else if(event.key==='Enter'&&event.target===actionTotp){event.preventDefault();actionSubmit.click();}});
   actionSubmit.addEventListener('click',async()=>{
     if(!pendingTeamAction)return;
     const ownerTotpCode=actionTotp.value.trim();if(!/^\d{6}$/.test(ownerTotpCode)){actionStatus.textContent='6 haneli Owner doğrulama kodunu gir.';actionStatus.classList.add('is-error');actionTotp.focus();return;}
-    const {id,active}=pendingTeamAction;actionSubmit.disabled=true;actionStatus.textContent='Sunucuya kaydediliyor…';actionStatus.className='team-action-dialog-status';
+    const {id,active,requireChainVerification}=pendingTeamAction;actionSubmit.disabled=true;actionStatus.textContent='Sunucuya kaydediliyor…';actionStatus.className='team-action-dialog-status';
     try{
+      if(requireChainVerification!==undefined){
+        await request('/'+encodeURIComponent(id),{action:'set_chain_verification',enabled:requireChainVerification,ownerTotpCode});
+        await load();$('teamAccountMessage').textContent=requireChainVerification?'Ekip için blokzincir doğrulaması açıldı.':'Ekip için blokzincir doğrulaması kapatıldı; onaylar audit kaydına işlenir.';closeTeamAction();return;
+      }
       const result=await request('/'+encodeURIComponent(id),{action:'update',active,ownerTotpCode});
       if(result.account){accounts=accounts.map(item=>item.id===id?result.account:item);render();}
       await load();
@@ -78,6 +90,10 @@
   window.toggleTeamAccount=async id=>{
     const account=accounts.find(item=>item.id===id);if(!account)return;
     const accepting=account.acceptingDeposits===undefined?account.active&&!account.depositsPaused&&!account.collateralPaused:!!account.acceptingDeposits;openTeamAction(id,!accepting);
+  };
+  window.toggleTeamChainVerification=async id=>{
+    const account=accounts.find(item=>item.id===id);if(!account)return;
+    openTeamChainAction(id,account.requireChainVerification===false);
   };
   window.toggleTeamTwoFactor=async id=>{
     const account=accounts.find(item=>item.id===id);if(!account)return;

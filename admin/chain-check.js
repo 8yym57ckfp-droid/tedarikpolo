@@ -30,10 +30,10 @@
       panel=document.createElement('section');
       panel.id='chainCheckPanel';
       panel.className='chain-check-panel';
-      panel.innerHTML='<div class="chain-check-title">Blokzincir kontrolü</div><label class="chain-check-label" for="chainCheckHash">Çekim gönderim işlem kimliği</label><input id="chainCheckHash" class="chain-check-input" spellcheck="false" autocomplete="off" placeholder="TRON: 64 hex · Ethereum: 0x + 64 hex"><button id="chainCheckButton" type="button">Zincirde kontrol et</button><div id="chainCheckResult" class="chain-check-result" aria-live="polite">Kontrol, bakiyeyi değiştirmez ve talebi otomatik onaylamaz.</div><a id="chainCheckExplorer" class="chain-check-explorer" target="_blank" rel="noopener noreferrer" hidden>Blokzincir gezgininde aç</a>';
+      panel.innerHTML='<div class="chain-check-title">Blokzincir kontrolü</div><div id="chainCheckPolicy" class="chain-check-policy" role="status"></div><label class="chain-check-label" for="chainCheckHash">Çekim gönderim işlem kimliği</label><input id="chainCheckHash" class="chain-check-input" spellcheck="false" autocomplete="off" placeholder="TRON: 64 hex · Ethereum: 0x + 64 hex"><button id="chainCheckButton" type="button">Zincirde kontrol et</button><div id="chainCheckResult" class="chain-check-result" aria-live="polite">Kontrol, bakiyeyi değiştirmez ve talebi otomatik onaylamaz.</div><a id="chainCheckExplorer" class="chain-check-explorer" target="_blank" rel="noopener noreferrer" hidden>Blokzincir gezgininde aç</a>';
       hashBlock.parentElement.insertBefore(panel,hashBlock.parentElement.nextSibling);
       const style=document.createElement('style');
-      style.textContent='.chain-check-panel{margin:12px 0;padding:14px;border:1px solid #245074;border-radius:12px;background:#0b2037;color:#e7f1fc}.chain-check-title{font-size:13px;font-weight:900;margin-bottom:8px}.chain-check-label{display:block;color:#9bb1c9;font-size:11px;margin:8px 0 5px}.chain-check-input{display:block;width:100%;box-sizing:border-box;height:38px;padding:0 10px;border:1px solid #2b5276;border-radius:8px;background:#071527;color:#eef6ff}.chain-check-panel button{margin-top:9px;padding:9px 12px;border:0;border-radius:8px;background:#1478d4;color:#fff;font-weight:800;cursor:pointer}.chain-check-panel button:disabled{opacity:.6;cursor:wait}.chain-check-result{margin-top:9px;color:#9bb1c9;font-size:11px;line-height:1.5}.chain-check-explorer{display:inline-block;margin-top:7px;color:#67b8ff;font-size:11px}.chain-check-panel.is-verified .chain-check-result{color:#64e0a9}.chain-check-panel.is-mismatch .chain-check-result{color:#ff8995}';
+      style.textContent='.chain-check-panel{margin:12px 0;padding:14px;border:1px solid #245074;border-radius:12px;background:#0b2037;color:#e7f1fc}.chain-check-title{font-size:13px;font-weight:900;margin-bottom:8px}.chain-check-policy{margin:0 0 9px;padding:8px 9px;border:1px solid #236b4c;border-radius:8px;background:rgba(26,161,101,.1);color:#74e0ad;font-size:10px;line-height:1.45}.chain-check-policy.is-optional{border-color:#755b24;background:rgba(213,158,47,.1);color:#ffd773}.chain-check-label{display:block;color:#9bb1c9;font-size:11px;margin:8px 0 5px}.chain-check-input{display:block;width:100%;box-sizing:border-box;height:38px;padding:0 10px;border:1px solid #2b5276;border-radius:8px;background:#071527;color:#eef6ff}.chain-check-panel button{margin-top:9px;padding:9px 12px;border:0;border-radius:8px;background:#1478d4;color:#fff;font-weight:800;cursor:pointer}.chain-check-panel button:disabled{opacity:.6;cursor:wait}.chain-check-result{margin-top:9px;color:#9bb1c9;font-size:11px;line-height:1.5}.chain-check-explorer{display:inline-block;margin-top:7px;color:#67b8ff;font-size:11px}.chain-check-panel.is-verified .chain-check-result{color:#64e0a9}.chain-check-panel.is-mismatch .chain-check-result{color:#ff8995}';
       document.head.appendChild(style);
       panel.querySelector('#chainCheckButton').addEventListener('click',verifyCurrent);
     }
@@ -47,7 +47,20 @@
     panel.classList.remove('is-verified','is-mismatch');
     panel.querySelector('#chainCheckResult').textContent='Kontrol, bakiyeyi değiştirmez ve talebi otomatik onaylamaz.';
     panel.querySelector('#chainCheckExplorer').hidden=true;
+    updatePolicy(document.getElementById('backdrop')?.dataset.chainVerificationRequired!=='false');
   }
+
+  function updatePolicy(required){
+    const policy=document.getElementById('chainCheckPolicy');if(!policy)return;
+    policy.classList.toggle('is-optional',!required);
+    policy.textContent=required
+      ?'Bu ekibin işlemlerinde zincir doğrulaması zorunludur. Onaydan önce sunucu transferi kontrol eder.'
+      :'Owner bu ekip için zorunlu zincir doğrulamasını kapattı. Onay öncesi kontrol isteğe bağlıdır; bu panelden yine de kontrol edebilirsiniz.';
+  }
+  window.updateChainCheckPolicy=required=>{
+    const backdrop=document.getElementById('backdrop');if(backdrop)backdrop.dataset.chainVerificationRequired=required?'true':'false';
+    updatePolicy(required);
+  };
 
   function reasonMessage(reason,network){
     if(reason==='invalid_tx_hash')return network==='TRC20'

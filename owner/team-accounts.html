@@ -14,7 +14,7 @@
     .team-account-card{margin-top:4px;padding:22px;border:1px solid #4b1d78;border-radius:17px;background:linear-gradient(145deg,#170a27,#10051d)}
     .team-account-intro{max-width:800px;margin:8px 0 19px;color:#c0b1d1;line-height:1.65;font-size:12px}
     .team-account-table-wrap{overflow:auto}
-    .team-account-table{width:100%;min-width:780px;border-collapse:collapse}
+    .team-account-table{width:100%;min-width:1040px;border-collapse:collapse}
     .team-account-table th,.team-account-table td{padding:13px 10px;border-bottom:1px solid #351750;text-align:left;font-size:12px}
     .team-account-table th{color:#a88dbc;font-size:9px;letter-spacing:.07em;text-transform:uppercase}
     .team-account-table td{color:#f0e8f8}
@@ -25,6 +25,7 @@
     .team-account-state{padding:18px;border:1px dashed #5a2a88;border-radius:12px;color:#c0b1d1;font-size:12px;line-height:1.6}
     .team-account-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:17px}
     .team-account-footnote{margin:17px 0 0;color:#a88dbc;font-size:10px;line-height:1.6}
+    .team-chain-setting{min-width:148px}.team-chain-setting .team-account-badge{margin:0 0 6px}.team-chain-setting .team-row-action{display:block;margin:0}.team-account-badge.is-off{background:rgba(255,102,123,.12);color:#ff9aa4}
     .team-account-form{display:grid;gap:14px;margin:20px 0;padding:18px;border:1px solid #3b2b52;border-radius:14px;background:rgba(255,255,255,.025)}
     .team-account-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
     .team-account-form label{display:grid;gap:7px;color:#e9e1f0;font-size:12px;font-weight:750}
@@ -54,7 +55,7 @@
       <header class="admin-head"><div><div class="admin-muted">OWNER CONTROL CENTER</div><h1>Ekip Hesapları</h1><div class="admin-muted">Ekip giriş bilgilerini, durumunu ve panel erişimlerini yönetin.</div></div><div class="owner-badge">● OWNER</div></header>
       <section class="team-account-card">
         <h2>Admin ekip girişi</h2>
-        <p class="team-account-intro">Ekibin yatırım komisyonunu ve teminat sınırını belirle. Yatırım alımı durdurulsa bile ekip paneline girebilir ve çekim ödemelerini sürdürebilir. Teminat kullanımı onaylı yatırımlar ve bekleyen taleplerle artar; ekibin ödediği çekimler aynı tutarda kapasiteyi geri açar.</p>
+        <p class="team-account-intro">Ekibin yatırım komisyonunu ve teminat sınırını belirle. Yatırım alımı durdurulsa bile ekip paneline girebilir ve çekim ödemelerini sürdürebilir. Teminat kullanımı onaylı yatırımlar ve bekleyen taleplerle artar; ekibin ödediği çekimler aynı tutarda kapasiteyi geri açar. Her ekip için blokzincir doğrulamasını da ayrı ayrı yönetebilirsin.</p>
         <form class="team-account-form" id="teamAccountForm">
           <input id="teamAccountId" type="hidden">
           <div class="team-account-fields">
@@ -88,7 +89,7 @@
         </section>
         <div id="teamAccountContent" class="team-account-state" role="status" aria-live="polite">Ekip hesabı bilgisi yükleniyor…</div>
         <div class="team-account-actions"><a class="admin-btn dark" href="../admin/login.html">Ekip giriş sayfası</a></div>
-        <p class="team-account-footnote">Cüzdan sınırında 0 sınırsız demektir. Eşik, toplam teminatın kullanılmasına izin verilen yüzdesidir. Çekim ödendiğinde kapasite aynı tutarda geri açılır. Yeni parola en az 12 karakter olmalıdır.</p>
+        <p class="team-account-footnote">Cüzdan sınırında 0 sınırsız demektir. Eşik, toplam teminatın kullanılmasına izin verilen yüzdesidir. Çekim ödendiğinde kapasite aynı tutarda geri açılır. Zincir doğrulamasını kapatmak, o ekibin işlemlerinin ağda doğrulanmadan onaylanmasına izin verir; değişiklik owner audit kaydına yazılır ve owner doğrulama kodu ister.</p>
       </section>
     </main>
   </div>
@@ -101,6 +102,6 @@
       <div class="team-action-dialog-actions"><button type="button" id="teamActionCancel">Vazgeç</button><button type="button" class="primary" id="teamActionSubmit">Yatırımı aç</button></div>
     </section>
   </div>
-  <script src="team-accounts-data.js?v=20261005.2"></script>
+  <script src="team-accounts-data.js?v=20261006.1"></script>
 </body>
 </html>
