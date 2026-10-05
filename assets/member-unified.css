@@ -224,3 +224,6 @@ html body.member-premium.auth-public .auth-wrap>.auth,
 html body.member-premium.auth-public .auth-wrap>.auth.member-depth-visible,
 html body.member-premium.auth-public .auth-wrap>.auth.member-depth-visible:hover{opacity:1!important;transform:none!important;filter:none!important;transform-style:flat!important;backface-visibility:visible!important;will-change:auto!important}
 html body.member-premium.auth-public .auth-wrap>.auth :is(h1,p,label,a,button){-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+/* The public landing has its own smooth ambient background; remove the member-only perspective grid. */
+html body.member-premium.public-landing .member-depth-ambient{display:none!important}

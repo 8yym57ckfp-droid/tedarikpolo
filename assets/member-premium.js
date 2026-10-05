@@ -1,7 +1,7 @@
 (()=>{
   if(!document.body)return;
   const body=document.body;
-  if(!document.getElementById('memberUnifiedStyle')){const style=document.createElement('link');style.id='memberUnifiedStyle';style.rel='stylesheet';style.href='/assets/member-unified.css?v=6';document.head.append(style);}
+  if(!document.getElementById('memberUnifiedStyle')){const style=document.createElement('link');style.id='memberUnifiedStyle';style.rel='stylesheet';style.href='/assets/member-unified.css?v=7';document.head.append(style);}
   body.classList.add('member-premium');
   body.dataset.memberTheme='obsidian';
 
