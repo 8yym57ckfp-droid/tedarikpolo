@@ -295,3 +295,7 @@ html.dark-theme .admin-login .admin-card h1{color:#f4f7fb!important}
 .finance-copy-transaction{border:1px solid #2b5276;border-radius:8px;background:#102b48;color:#70b6ff;padding:6px 8px;font-size:10px;font-weight:850;cursor:pointer;white-space:nowrap}.finance-copy-transaction:hover{background:#153b60;border-color:#3b78ae}
 
 .copy-info{display:inline-flex;align-items:center;justify-content:center;border:1px solid #2d5278;border-radius:8px;background:#102b48;color:#70b6ff;padding:6px 8px;font-size:10px;font-weight:850;cursor:pointer;white-space:nowrap}.copy-info:hover{background:#153b60}
+.admin-main .queue-wrap{scrollbar-color:#315f85 #09192a;scrollbar-width:thin}
+.admin-main .queue-wrap::-webkit-scrollbar{height:8px}
+.admin-main .queue-wrap::-webkit-scrollbar-track{background:#09192a;border-radius:999px}
+.admin-main .queue-wrap::-webkit-scrollbar-thumb{background:#315f85;border:2px solid #09192a;border-radius:999px}
