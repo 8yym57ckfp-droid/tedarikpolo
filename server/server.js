@@ -1147,7 +1147,7 @@ async function route(req,res){
     if(span>366)return json(res,400,{error:'date_range_too_large'});
     const run=testRunId?await getSyntheticFinanceRun(testRunId):null;
     if(testRunId&&!run)return json(res,404,{error:'synthetic_run_not_found'});
-    let financeTransactions=await getTransactions(),commissionRate=run?Number(run.commissionRate):0,commissionEnabled=!!run,commissionPercent=commissionRate*100,lifetimeSettlement=null;
+    let financeTransactions=await getTransactions(),commissionRate=run?Number(run.commissionRate):0,commissionEnabled=!!run,commissionPercent=commissionRate*100,lifetimeSettlement=null,commissionByTeam=null,teamForTransaction=()=>null;
     if(teamAdmin&&!owner&&!testRunId){
       const accounts=await getTeamAccounts(),account=accounts.find(item=>item.id===teamAdmin.adminId),wallets=await getWalletAddresses(),walletById=new Map(wallets.map(wallet=>[wallet.id,wallet]));
       financeTransactions=financeTransactions.filter(tx=>transactionTeamId(tx,financeTransactions,walletById)===teamAdmin.adminId);
@@ -1156,13 +1156,13 @@ async function route(req,res){
     }else if(owner&&!testRunId){
       const accounts=await getTeamAccounts(),wallets=await getWalletAddresses(),walletById=new Map(wallets.map(wallet=>[wallet.id,wallet]));
       const teamByTransaction=new Map(financeTransactions.map(tx=>[tx.id,transactionTeamId(tx,financeTransactions,walletById)]));
-      const commissionByTeam=new Map(accounts.map(account=>[account.id,Number(account.commissionPercent??3)]));
+      commissionByTeam=new Map(accounts.map(account=>[account.id,Number(account.commissionPercent??3)]));
       const teamTransactions=financeTransactions.filter(tx=>teamByTransaction.get(tx.id));
-      const teamForTransaction=tx=>teamByTransaction.get(tx.id)||null;
+      teamForTransaction=tx=>teamByTransaction.get(tx.id)||null;
       lifetimeSettlement=calculateSettlement(teamTransactions,{commissionByTeam,teamForTransaction});
       commissionEnabled=accounts.length>0;
     }
-    const finance=buildFinanceReconciliation(financeTransactions,{startDate,endDate,runId:testRunId,commissionRate,commissionEnabled,commissionPercent});
+    const finance=buildFinanceReconciliation(financeTransactions,{startDate,endDate,runId:testRunId,commissionRate,commissionEnabled,commissionPercent,commissionByTeam,teamForTransaction});
     if(commissionEnabled&&finance.totals.deposit)finance.commissionPercent=finance.totals.commission/finance.totals.deposit*100;
     return json(res,200,{...finance,lifetimeSettlement:lifetimeSettlement?{...lifetimeSettlement,scope:owner?'teams':'team'}:null,run:run?{id:run.id,targetUserId:run.targetUserId,createdAt:run.createdAt,memberCount:Number(run.memberCount),transactionCount:Number(run.transactionCount)}:null});
   }
