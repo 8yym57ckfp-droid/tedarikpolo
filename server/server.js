@@ -157,6 +157,18 @@ async function saveRequestLimits(value){
   else{const db=readDb();db.requestLimits=limits;writeDb(db);}
   return limits;
 }
+async function getDepositSettings(){
+  let stored={};
+  if(pool){const result=await pool.query('SELECT content FROM site_content WHERE id=$1',['deposit-settings']);stored=result.rows[0]?.content||{};}
+  else stored=readDb().depositSettings||{};
+  return {requireTxId:stored.requireTxId!==false};
+}
+async function saveDepositSettings(value){
+  const settings={requireTxId:value?.requireTxId!==false};
+  if(pool)await pool.query('INSERT INTO site_content (id,content,updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (id) DO UPDATE SET content=EXCLUDED.content,updated_at=NOW()',['deposit-settings',JSON.stringify(settings)]);
+  else{const db=readDb();db.depositSettings=settings;writeDb(db);}
+  return settings;
+}
 function makeLegacyTeamAccount(){
   if(!TEAM_ADMIN_EMAIL||!TEAM_ADMIN_PASSWORD||!TEAM_ADMIN_TOTP_SECRET)return null;
   if(TEAM_ADMIN_EMAIL.toLowerCase()===ADMIN_EMAIL.toLowerCase()||TEAM_ADMIN_PASSWORD===ADMIN_PASSWORD||TEAM_ADMIN_TOTP_SECRET===ADMIN_TOTP_SECRET)return null;
@@ -657,12 +669,19 @@ async function walletTeamAllowed(teamId,currentWalletId=null){
   const wallets=await getWalletAddresses();return wallets.filter(wallet=>wallet.teamId===teamId&&wallet.id!==currentWalletId).length<limit;
 }
 function transactionTeamId(transaction,allTransactions,walletById){
-  if(transaction.type==='deposit')return transaction.teamAccountId||walletById.get(transaction.walletId)?.teamId||null;
+  const findDepositWallet=deposit=>{
+    const byId=deposit?.walletId?walletById.get(String(deposit.walletId)):null;
+    if(byId)return byId;
+    const address=String(deposit?.address||'').trim().toLowerCase(),network=String(deposit?.network||'').toUpperCase();
+    if(!address)return null;
+    return [...walletById.values()].find(wallet=>String(wallet.network||'').toUpperCase()===network&&String(wallet.address||'').trim().toLowerCase()===address)||null;
+  };
+  if(transaction.type==='deposit')return transaction.teamAccountId||findDepositWallet(transaction)?.teamId||null;
   if(transaction.type!=='withdrawal')return null;
   if(transaction.teamAccountId)return transaction.teamAccountId;
   const timestamp=new Date(transaction.createdAt||0).getTime();
-  const latestDeposit=allTransactions.filter(item=>item.userId===transaction.userId&&item.type==='deposit'&&item.status==='approved'&&new Date(item.createdAt||0).getTime()<=timestamp).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))[0];
-  return latestDeposit?.walletId?walletById.get(latestDeposit.walletId)?.teamId||null:null;
+  const latestDeposit=allTransactions.filter(item=>item.userId===transaction.userId&&!item.isSynthetic&&item.type==='deposit'&&item.status==='approved'&&new Date(item.createdAt||0).getTime()<=timestamp).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))[0];
+  return latestDeposit?.teamAccountId||findDepositWallet(latestDeposit)?.teamId||null;
 }
 async function teamOwnsTransaction(teamId,transaction,allTransactions){
   if(!teamId||!transaction)return false;
@@ -921,7 +940,7 @@ async function route(req,res){
   if(requestedTestRunId&&!owner)return json(res,403,{error:'owner_only'});
   const requestedTestRun=requestedTestRunId?await getSyntheticFinanceRun(requestedTestRunId):null;
   if(requestedTestRunId&&!requestedTestRun)return json(res,404,{error:'synthetic_run_not_found'});
-  const ownerOnlyAdminRequest=adminPath==='/api/admin/content'||adminPath==='/api/admin/maintenance'||adminPath==='/api/admin/request-limits'||adminPath.startsWith('/api/admin/synthetic-finance')||adminPath.startsWith('/api/admin/team-accounts')||adminPath.startsWith('/api/admin/audit')||adminPath.startsWith('/api/admin/user-center')||adminPath.startsWith('/api/admin/user/')||adminPath.startsWith('/api/admin/kyc')||(adminPath==='/api/admin/rates'&&req.method==='POST');
+  const ownerOnlyAdminRequest=adminPath==='/api/admin/content'||adminPath==='/api/admin/maintenance'||adminPath==='/api/admin/request-limits'||adminPath==='/api/admin/deposit-settings'||adminPath.startsWith('/api/admin/synthetic-finance')||adminPath.startsWith('/api/admin/team-accounts')||adminPath.startsWith('/api/admin/audit')||adminPath.startsWith('/api/admin/user-center')||adminPath.startsWith('/api/admin/user/')||adminPath.startsWith('/api/admin/kyc')||(adminPath==='/api/admin/rates'&&req.method==='POST');
   if(teamAdmin&&!owner&&ownerOnlyAdminRequest)return json(res,403,{error:'owner_only'});
   if(teamAdmin&&!owner){const permission=teamPermissionForPath(adminPath);if(!teamAdmin.permissions?.[permission])return json(res,403,{error:'team_permission_denied',permission});}
   if(req.url==='/api/admin/verify-2fa' && req.method==='POST'){if(!admin)return json(res,401,{error:'unauthorized'});const b=await body(req),code=String(b.code||'').trim(),teamAccount=teamAdmin? (await getTeamAccounts()).find(account=>account.id===teamAdmin.adminId):null,secret=owner?ADMIN_TOTP_SECRET:teamAccount?.totpSecret,valid=!!secret&&verifyTotp(secret,code);if(!/^\d{6}$/.test(code)||!valid)return json(res,401,{error:'invalid_2fa_code'});addAudit('admin_sensitive_change_verified',admin.email,{role:admin.role});return json(res,200,{ok:true})}
@@ -945,6 +964,16 @@ async function route(req,res){
     if(!owner)return json(res,403,{error:'owner_only'});
     try{const limits=await saveRequestLimits(await body(req));addAudit('request_limits_updated',admin.email,{limits});return json(res,200,{ok:true,limits});}
     catch(error){return json(res,400,{error:'invalid_request_limits',message:error.message});}
+  }
+  if(adminPath==='/api/admin/deposit-settings'&&req.method==='GET'){
+    if(!owner)return json(res,403,{error:'owner_only'});
+    return json(res,200,{settings:await getDepositSettings()});
+  }
+  if(adminPath==='/api/admin/deposit-settings'&&req.method==='POST'){
+    if(!owner)return json(res,403,{error:'owner_only'});
+    const settings=await saveDepositSettings(await body(req));
+    addAudit('deposit_settings_updated',owner.email,{requireTxId:settings.requireTxId});
+    return json(res,200,{ok:true,settings});
   }
   const adminUrl=new URL(req.url,'http://localhost');
   if(adminUrl.pathname==='/api/admin/team-accounts'&&req.method==='POST'){
@@ -1188,7 +1217,7 @@ async function route(req,res){
     addAudit('user_security_'+action,admin.email,{userId:id,reason}); return json(res,200,{ok:true,security:{status,withdrawalFrozen:wf,depositFrozen:df,reason:reason||null,updatedAt:now}});
   }
   if(adminQuery.pathname==='/api/admin/transactions' && req.method==='GET'){
-    if(!admin)return json(res,401,{error:'unauthorized'}); const all=await getTransactions();let transactions=all.filter(item=>requestedTestRunId?item.testRunId===requestedTestRunId:isProductionTransaction(item));const wallets=await getWalletAddresses(),walletById=new Map(wallets.map(wallet=>[wallet.id,wallet])),teams=await getTeamAccounts(),chainPolicyByTeam=new Map(teams.map(account=>[account.id,account.requireChainVerification!==false]));if(teamAdmin&&!owner)transactions=transactions.filter(item=>transactionTeamId(item,all,walletById)===teamAdmin.adminId);return json(res,200,{transactions:transactions.map(item=>{const teamId=transactionTeamId(item,all,walletById),safe=item=>owner&&requestedTestRunId?item:safeTransaction(item);return {...safe(item),chainVerificationRequired:teamId?chainPolicyByTeam.get(teamId)!==false:true};})});
+    if(!admin)return json(res,401,{error:'unauthorized'}); const all=await getTransactions();let transactions=all.filter(item=>requestedTestRunId?item.testRunId===requestedTestRunId:isProductionTransaction(item));const wallets=await getWalletAddresses(),walletById=new Map(wallets.map(wallet=>[wallet.id,wallet])),teams=await getTeamAccounts(),teamById=new Map(teams.map(account=>[account.id,account])),depositSettings=await getDepositSettings();if(teamAdmin&&!owner)transactions=transactions.filter(item=>transactionTeamId(item,all,walletById)===teamAdmin.adminId);return json(res,200,{transactions:transactions.map(item=>{const teamId=transactionTeamId(item,all,walletById),team=teamId?teamById.get(teamId):null,chainVerificationRequired=(team?team.requireChainVerification!==false:true)&&!(item.type==='deposit'&&!item.txHash&&!depositSettings.requireTxId),safe=item=>owner&&requestedTestRunId?item:safeTransaction(item);return {...safe(item),teamAccountId:teamId||null,teamName:team?.email||null,teamEmail:team?.email||null,chainVerificationRequired};})});
   }
   if(req.url==='/api/admin/transactions/verify-chain' && req.method==='POST'){
     if(!admin)return json(res,401,{error:'unauthorized'});
@@ -1200,7 +1229,7 @@ async function route(req,res){
     const amount=Number(b.amount??tx.amount);
     if(!txHash)return json(res,400,{error:'tx_hash_required'});
     if(!Number.isFinite(amount)||amount<=0)return json(res,400,{error:'invalid_amount'});
-    const wallets=await getWalletAddresses(),teamId=transactionTeamId(tx,transactions,new Map(wallets.map(wallet=>[wallet.id,wallet]))),team=teamId?(await getTeamAccounts()).find(account=>account.id===teamId):null,chainVerificationRequired=team?team.requireChainVerification!==false:true;
+    const wallets=await getWalletAddresses(),teamId=transactionTeamId(tx,transactions,new Map(wallets.map(wallet=>[wallet.id,wallet]))),team=teamId?(await getTeamAccounts()).find(account=>account.id===teamId):null,depositSettings=await getDepositSettings(),chainVerificationRequired=(team?team.requireChainVerification!==false:true)&&!(tx.type==='deposit'&&!tx.txHash&&!depositSettings.requireTxId);
     const verification=await verifyUsdtTransfer({network:tx.network,txHash,recipient:tx.address,amount});
     addAudit('chain_transfer_check',admin.email,{transactionId:id,network:tx.network,type:tx.type,txHash,status:verification.status,reason:verification.reason,blockNumber:verification.blockNumber||null});
     return json(res,200,{ok:true,verification,chainVerificationRequired,teamAccountId:teamId});
@@ -1314,7 +1343,7 @@ async function route(req,res){
     const all=await getTransactions(); const tx=all.find(x=>x.id===id); if(!tx||teamAdmin&&!owner&&!(await teamOwnsTransaction(teamAdmin.adminId,tx,all)))return json(res,404,{error:'transaction_not_found'}); if(tx.isSynthetic&&(!owner||!requestedTestRunId||tx.testRunId!==requestedTestRunId))return json(res,404,{error:'transaction_not_found'}); if(tx.status!=='pending')return json(res,409,{error:'already_processed',status:tx.status});
     if(isLocked(tx) && tx.lockedBy!==admin.email)return json(res,409,{error:'transaction_locked',lockedBy:tx.lockedBy});
     const requestedAmount=Number(tx.requestedAmount??tx.requested_amount??tx.amount); const rawApproved=b.approvedAmount; const approvedAmount=decision==='approved' && rawApproved!==undefined && rawApproved!==null && rawApproved!==''?Number(rawApproved):Number(tx.amount); if(decision==='approved'&&(!Number.isFinite(approvedAmount)||approvedAmount<=0))return json(res,400,{error:'invalid_approved_amount'});
-    const approvalWallets=await getWalletAddresses(),approvalWalletById=new Map(approvalWallets.map(wallet=>[wallet.id,wallet])),resolvedTeamAccountId=transactionTeamId(tx,all,approvalWalletById)||(teamAdmin&&!owner?teamAdmin.adminId:null),approvalTeam=resolvedTeamAccountId?(await getTeamAccounts()).find(account=>account.id===resolvedTeamAccountId):null,chainVerificationRequired=approvalTeam?approvalTeam.requireChainVerification!==false:true;
+    const approvalWallets=await getWalletAddresses(),approvalWalletById=new Map(approvalWallets.map(wallet=>[wallet.id,wallet])),resolvedTeamAccountId=transactionTeamId(tx,all,approvalWalletById)||(teamAdmin&&!owner?teamAdmin.adminId:null),approvalTeam=resolvedTeamAccountId?(await getTeamAccounts()).find(account=>account.id===resolvedTeamAccountId):null,depositSettings=await getDepositSettings(),chainVerificationRequired=(approvalTeam?approvalTeam.requireChainVerification!==false:true)&&!(tx.type==='deposit'&&!tx.txHash&&!depositSettings.requireTxId);
     const payoutTxHash=tx.type==='withdrawal'&&decision==='approved'&&!tx.isSynthetic?(String(b.payoutTxHash||'').trim()||null):null;
     if(payoutTxHash&&payoutTxHash.length<16)return json(res,400,{error:'payout_tx_hash_required',message:'Gönderim işlem kimliğini kontrol edin.'});
     const chainCheckApplies=decision==='approved'&&!tx.isSynthetic&&['deposit','withdrawal'].includes(tx.type);
@@ -1519,12 +1548,26 @@ async function route(req,res){
     const a=admin; if(!a)return json(res,401,{error:'unauthorized'}); if(!owner)return json(res,403,{error:'owner_only'}); const b=await body(req); const usdTrySpread=Math.max(0,Number(b.usdTrySpread)); const trc20FeeUsdt=Math.max(0,Number(b.trc20FeeUsdt)); const erc20FeeUsdt=Math.max(0,Number(b.erc20FeeUsdt)); const quoteTtlSeconds=Math.min(300,Math.max(15,Number(b.quoteTtlSeconds||60))); const maxRateAgeSeconds=Math.min(3600,Math.max(30,Number(b.maxRateAgeSeconds||300))); const minRate=Math.max(0,Number(b.minRate||0)); const maxRate=Math.max(minRate,Number(b.maxRate||100000)); if(![usdTrySpread,trc20FeeUsdt,erc20FeeUsdt,quoteTtlSeconds,maxRateAgeSeconds,minRate,maxRate].every(Number.isFinite))return json(res,400,{error:'invalid_rate_settings'}); await saveRateSettings({usdTrySpread,trc20FeeUsdt,erc20FeeUsdt,quoteTtlSeconds,maxRateAgeSeconds,minRate,maxRate}); addAudit('rate_settings_update',a.email,{usdTrySpread,trc20FeeUsdt,erc20FeeUsdt,quoteTtlSeconds,maxRateAgeSeconds,minRate,maxRate}); const snap=await getMarketSnapshot(); return json(res,200,{ok:true,marketRate:snap.market,safepaysRate:calc(snap.market,usdTrySpread),source:snap.source,usdTrySpread,trc20FeeUsdt,erc20FeeUsdt,quoteTtlSeconds,maxRateAgeSeconds,minRate,maxRate});
   }
 
+  if(req.url.startsWith('/api/deposits/intent-status?')&&req.method==='GET'){
+    if(!uid)return json(res,401,{error:'unauthorized'});
+    const url=new URL(req.url,'http://localhost'),intent=await getDepositIntent(String(url.searchParams.get('intentId')||''),uid),settings=await getDepositSettings();
+    if(!intent||intent.usedAt||new Date(intent.expiresAt).getTime()<=Date.now())return json(res,200,{eligible:false,requireTxId:settings.requireTxId});
+    const wallets=await getWalletAddresses(),wallet=wallets.find(item=>item.id===intent.walletId);let eligible=!!wallet&&wallet.active!==false&&String(wallet.network).toUpperCase()===String(intent.network).toUpperCase();
+    if(eligible&&wallet.teamId){const team=(await getTeamAccounts()).find(item=>item.id===wallet.teamId);eligible=!!team&&team.active!==false&&!team.depositsPaused&&!team.collateralPaused;if(eligible){const metrics=await getTeamMetrics([team]),exposure=Number(metrics.get(team.id)?.collateralExposure||0),total=Number(team.collateralTotal||0),limit=total>0?total*(team.collateralAutoPause?Number(team.collateralPausePercent||80):100)/100:Infinity;if(total>0&&exposure>=limit-1e-8)eligible=false;}}
+    return json(res,200,{eligible,requireTxId:settings.requireTxId});
+  }
+  if(req.url==='/api/deposits/intent/cancel'&&req.method==='POST'){
+    if(!uid)return json(res,401,{error:'unauthorized'});
+    const b=await body(req),intentId=String(b.intentId||'');
+    if(pool){const result=await pool.query('UPDATE deposit_intents SET used_at=NOW() WHERE id=$1 AND user_id=$2 AND used_at IS NULL RETURNING id',[intentId,uid]);return json(res,200,{ok:true,cancelled:!!result.rows[0]});}
+    const db=readDb(),intent=(db.depositIntents||[]).find(item=>item.id===intentId&&item.userId===uid&&!item.usedAt);if(intent){intent.usedAt=new Date().toISOString();writeDb(db);}return json(res,200,{ok:true,cancelled:!!intent});
+  }
   if(req.url==='/api/deposits/prepare' && req.method==='POST'){
     if(!uid)return json(res,401,{error:'unauthorized'});
     const b=await body(req),amount=Number(b.amount),network=String(b.network||'').toUpperCase(),user=await findUserById(uid);
     if(user?.securityStatus==='locked'||user?.securityStatus==='suspended'||user?.depositFrozen)return json(res,403,{error:'deposits_blocked'});
     if(!Number.isFinite(amount)||amount<10)return json(res,400,{error:'invalid_amount'});if(!isValidNetwork(network))return json(res,400,{error:'invalid_network'});
-    const available=(await getWalletAddresses()).filter(w=>w.network===network&&w.active!==false);if(!available.length)return json(res,409,{error:'wallet_unavailable',message:'Bu ağ için aktif yatırım adresi henüz yapılandırılmadı.'});
+    const allWallets=await getWalletAddresses(),teamById=new Map((await getTeamAccounts()).map(team=>[team.id,team])),available=allWallets.filter(w=>w.network===network&&w.active!==false&&(!w.teamId||(!!teamById.get(w.teamId)&&teamById.get(w.teamId).active!==false&&!teamById.get(w.teamId).depositsPaused)));if(!available.length)return json(res,409,{error:'wallet_unavailable',message:'Bu ağ için aktif yatırım adresi henüz yapılandırılmadı.'});
     const now=new Date(),expiresAt=new Date(now.getTime()+20*60*1000).toISOString();let wallet,intent;
     if(pool){
       const client=await pool.connect();
@@ -1579,23 +1622,23 @@ async function route(req,res){
       if(wallet.teamId){const team=(db.teamAccounts||[]).find(item=>item.id===wallet.teamId);if(team){const exposure=teamCollateralMetrics(wallet.teamId,db.transactions||[],db.walletAddresses||[],db.depositIntents).collateralExposure;await syncTeamCollateral({teamId:wallet.teamId,exposure,dbState:db,at:now.toISOString()});}}
       writeDb(db);
     }
-    return json(res,201,{ok:true,intentId:intent.id,amount,network,address:wallet.address,label:wallet.label,walletId:wallet.id,createdAt:intent.createdAt,expiresAt:intent.expiresAt});
+    const depositSettings=await getDepositSettings();return json(res,201,{ok:true,intentId:intent.id,amount,network,address:wallet.address,label:wallet.label,walletId:wallet.id,createdAt:intent.createdAt,expiresAt:intent.expiresAt,requireTxId:depositSettings.requireTxId});
   }
   if(req.url==='/api/deposits' && req.method==='POST'){
     if(!uid)return json(res,401,{error:'unauthorized'});
-    const b=await body(req); const amount=Number(b.amount); const network=String(b.network||'').toUpperCase(); const txHash=String(b.txHash||'').trim(); const currentUser=await findUserById(uid); if(currentUser?.securityStatus==='locked'||currentUser?.securityStatus==='suspended'||currentUser?.depositFrozen) return json(res,403,{error:'deposits_blocked',message:'Yatırım talepleri güvenlik nedeniyle geçici olarak dondurulmuştur.'}); const requestKey=getRequestKey(req,b) || `AUTO-${crypto.randomUUID()}`;
+    const b=await body(req); const amount=Number(b.amount); const network=String(b.network||'').toUpperCase(); const txHash=String(b.txHash||'').trim(),depositSettings=await getDepositSettings(); const currentUser=await findUserById(uid); if(currentUser?.securityStatus==='locked'||currentUser?.securityStatus==='suspended'||currentUser?.depositFrozen) return json(res,403,{error:'deposits_blocked',message:'Yatırım talepleri güvenlik nedeniyle geçici olarak dondurulmuştur.'}); const requestKey=getRequestKey(req,b) || `AUTO-${crypto.randomUUID()}`;
     if(requestKey){const existingKey=(await getTransactions()).find(x=>x.requestKey===requestKey && x.userId===uid); if(existingKey)return json(res,200,{ok:true,idempotent:true,transaction:existingKey});}
     if(!Number.isFinite(amount)||amount<10)return json(res,400,{error:'invalid_amount',message:'Minimum yatırım 10 USDT.'});
     if(!isValidNetwork(network))return json(res,400,{error:'invalid_network'});
-    if(txHash.length<16)return json(res,400,{error:'invalid_tx_hash'});
+    if((depositSettings.requireTxId||txHash)&&txHash.length<16)return json(res,400,{error:'invalid_tx_hash'});
     const intent=await getDepositIntent(String(b.intentId||''),uid);
     if(!intent||intent.usedAt||new Date(intent.expiresAt).getTime()<=Date.now()||Number(intent.amount)!==amount||intent.network!==network)return json(res,400,{error:'invalid_deposit_intent'});
     const wallet=(await getWalletAddresses()).find(w=>w.id===intent.walletId);if(!wallet)return json(res,400,{error:'wallet_unavailable'});
-    const existing=(await getTransactions()).find(x=>x.txHash&&x.txHash.toLowerCase()===txHash.toLowerCase());
+    const existing=txHash?(await getTransactions()).find(x=>x.txHash&&x.txHash.toLowerCase()===txHash.toLowerCase()):null;
     if(existing)return json(res,409,{error:'duplicate_tx_hash',transactionId:existing.id});
     const cooldown=await requestCooldownRemaining(uid,'deposit');
     if(cooldown>0)return json(res,429,{error:'request_cooldown',cooldownSeconds:Math.ceil(cooldown/1000),message:'Yeni yatırım talebi için '+Math.ceil(cooldown/1000)+' saniye beklemelisiniz.'});
-    const createdAt=new Date(); const tx={id:makeTxId(),userId:uid,type:'deposit',amount,requestedAmount:amount,receivedAmount:null,currency:'USDT',network,status:'pending',createdAt:createdAt.toISOString(),txHash,address:wallet.address,walletId:wallet.id,teamAccountId:wallet.teamId||null,requestKey,expiresAt:new Date(createdAt.getTime()+TX_CONTROL.autoRejectMinutes*60000).toISOString()};
+    const createdAt=new Date(); const tx={id:makeTxId(),userId:uid,type:'deposit',amount,requestedAmount:amount,receivedAmount:null,currency:'USDT',network,status:'pending',createdAt:createdAt.toISOString(),txHash:txHash||null,address:wallet.address,walletId:wallet.id,teamAccountId:wallet.teamId||null,requestKey,expiresAt:new Date(createdAt.getTime()+TX_CONTROL.autoRejectMinutes*60000).toISOString()};
     if(pool){
       const client=await pool.connect();
       try{
