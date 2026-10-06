@@ -258,6 +258,8 @@ async function pgInit(){
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS is_synthetic BOOLEAN NOT NULL DEFAULT FALSE');
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS test_run_id TEXT');
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS team_account_id TEXT');
+  await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS claimed_by_team_id TEXT');
+  await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS claimed_at TIMESTAMPTZ');
   await pool.query('CREATE INDEX IF NOT EXISTS idx_transactions_test_run ON transactions(test_run_id,created_at) WHERE is_synthetic=TRUE');
   await pool.query(`CREATE TABLE IF NOT EXISTS ledger_entries (
     id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), transaction_id TEXT, direction TEXT NOT NULL,
@@ -358,7 +360,7 @@ async function getUsers(){
 }
 async function getTransactions(){
   if(!pool) return readDb().transactions;
-  const r=await pool.query('SELECT id, user_id AS "userId", type, amount, requested_amount AS "requestedAmount", received_amount AS "receivedAmount", currency, network, status, created_at AS "createdAt", tx_hash AS "txHash", address, wallet_id AS "walletId", team_account_id AS "teamAccountId", request_key AS "requestKey", locked_by AS "lockedBy", locked_at AS "lockedAt", decision_by AS "decisionBy", decision_at AS "decisionAt", expires_at AS "expiresAt", is_synthetic AS "isSynthetic", test_run_id AS "testRunId" FROM transactions ORDER BY created_at DESC');
+  const r=await pool.query('SELECT id, user_id AS "userId", type, amount, requested_amount AS "requestedAmount", received_amount AS "receivedAmount", currency, network, status, created_at AS "createdAt", tx_hash AS "txHash", address, wallet_id AS "walletId", team_account_id AS "teamAccountId", claimed_by_team_id AS "claimedByTeamId", claimed_at AS "claimedAt", request_key AS "requestKey", locked_by AS "lockedBy", locked_at AS "lockedAt", decision_by AS "decisionBy", decision_at AS "decisionAt", expires_at AS "expiresAt", is_synthetic AS "isSynthetic", test_run_id AS "testRunId" FROM transactions ORDER BY created_at DESC');
   return r.rows;
 }
 async function getLedger(userId){
@@ -515,7 +517,7 @@ function redirect(res,location){res.writeHead(302,{'Location':location,'Cache-Co
 
 async function insertTransaction(tx, client=null){
   if(!pool){const db=readDb();db.transactions.unshift(tx);writeDb(db);return;}
-  await (client||pool).query('INSERT INTO transactions (id,user_id,type,amount,requested_amount,received_amount,currency,network,status,created_at,tx_hash,address,wallet_id,team_account_id,request_key,locked_by,locked_at,decision_by,decision_at,expires_at,is_synthetic,test_run_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)',[tx.id,tx.userId,tx.type,tx.amount,tx.requestedAmount??tx.amount,tx.receivedAmount??null,tx.currency,tx.network,tx.status,tx.createdAt,tx.txHash||null,tx.address||null,tx.walletId||null,tx.teamAccountId||null,tx.requestKey||null,tx.lockedBy||null,tx.lockedAt||null,tx.decisionBy||null,tx.decisionAt||null,tx.expiresAt||null,!!tx.isSynthetic,tx.testRunId||null]);
+  await (client||pool).query('INSERT INTO transactions (id,user_id,type,amount,requested_amount,received_amount,currency,network,status,created_at,tx_hash,address,wallet_id,team_account_id,claimed_by_team_id,claimed_at,request_key,locked_by,locked_at,decision_by,decision_at,expires_at,is_synthetic,test_run_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)',[tx.id,tx.userId,tx.type,tx.amount,tx.requestedAmount??tx.amount,tx.receivedAmount??null,tx.currency,tx.network,tx.status,tx.createdAt,tx.txHash||null,tx.address||null,tx.walletId||null,tx.teamAccountId||null,tx.claimedByTeamId||null,tx.claimedAt||null,tx.requestKey||null,tx.lockedBy||null,tx.lockedAt||null,tx.decisionBy||null,tx.decisionAt||null,tx.expiresAt||null,!!tx.isSynthetic,tx.testRunId||null]);
 }
 async function syncTeamCollateral({teamId,exposure,client=null,dbState=null,at}){
   let account;
@@ -678,6 +680,7 @@ function transactionTeamId(transaction,allTransactions,walletById){
   };
   if(transaction.type==='deposit')return transaction.teamAccountId||findDepositWallet(transaction)?.teamId||null;
   if(transaction.type!=='withdrawal')return null;
+  if(transaction.claimedByTeamId)return transaction.claimedByTeamId;
   if(transaction.teamAccountId)return transaction.teamAccountId;
   const timestamp=new Date(transaction.createdAt||0).getTime();
   const latestDeposit=allTransactions.filter(item=>item.userId===transaction.userId&&!item.isSynthetic&&item.type==='deposit'&&item.status==='approved'&&new Date(item.createdAt||0).getTime()<=timestamp).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))[0];
@@ -685,6 +688,7 @@ function transactionTeamId(transaction,allTransactions,walletById){
 }
 async function teamOwnsTransaction(teamId,transaction,allTransactions){
   if(!teamId||!transaction)return false;
+  if(transaction.type==='withdrawal'&&transaction.status==='pending')return String(transaction.claimedByTeamId||'')===String(teamId);
   const wallets=await getWalletAddresses();
   return transactionTeamId(transaction,allTransactions,new Map(wallets.map(wallet=>[wallet.id,wallet])))===teamId;
 }
@@ -718,7 +722,7 @@ async function getTeamCollateralExposure(client,teamId){
   const result=await client.query(`WITH assigned AS (
     SELECT t.type,t.status,t.amount,
       CASE WHEN t.type='deposit' THEN COALESCE(t.team_account_id,w.team_id)
-           WHEN t.type='withdrawal' THEN COALESCE(t.team_account_id,(
+           WHEN t.type='withdrawal' THEN COALESCE(t.claimed_by_team_id,t.team_account_id,(
              SELECT wd.team_id FROM transactions d JOIN wallet_addresses wd ON wd.id=d.wallet_id
              WHERE d.user_id=t.user_id AND d.type='deposit' AND d.status='approved' AND d.is_synthetic=FALSE AND d.created_at<=t.created_at
              ORDER BY d.created_at DESC LIMIT 1))
@@ -1217,7 +1221,7 @@ async function route(req,res){
     addAudit('user_security_'+action,admin.email,{userId:id,reason}); return json(res,200,{ok:true,security:{status,withdrawalFrozen:wf,depositFrozen:df,reason:reason||null,updatedAt:now}});
   }
   if(adminQuery.pathname==='/api/admin/transactions' && req.method==='GET'){
-    if(!admin)return json(res,401,{error:'unauthorized'}); const all=await getTransactions();let transactions=all.filter(item=>requestedTestRunId?item.testRunId===requestedTestRunId:isProductionTransaction(item));const wallets=await getWalletAddresses(),walletById=new Map(wallets.map(wallet=>[wallet.id,wallet])),teams=await getTeamAccounts(),teamById=new Map(teams.map(account=>[account.id,account])),depositSettings=await getDepositSettings();if(teamAdmin&&!owner)transactions=transactions.filter(item=>transactionTeamId(item,all,walletById)===teamAdmin.adminId);return json(res,200,{transactions:transactions.map(item=>{const teamId=transactionTeamId(item,all,walletById),team=teamId?teamById.get(teamId):null,chainVerificationRequired=(team?team.requireChainVerification!==false:true)&&!(item.type==='deposit'&&!item.txHash&&!depositSettings.requireTxId),safe=item=>owner&&requestedTestRunId?item:safeTransaction(item);return {...safe(item),teamAccountId:teamId||null,teamName:team?.email||null,teamEmail:team?.email||null,chainVerificationRequired};})});
+    if(!admin)return json(res,401,{error:'unauthorized'}); const all=await getTransactions();let transactions=all.filter(item=>requestedTestRunId?item.testRunId===requestedTestRunId:isProductionTransaction(item));const wallets=await getWalletAddresses(),walletById=new Map(wallets.map(wallet=>[wallet.id,wallet])),teams=await getTeamAccounts(),teamById=new Map(teams.map(account=>[account.id,account])),depositSettings=await getDepositSettings();if(teamAdmin&&!owner)transactions=transactions.filter(item=>item.type==='withdrawal'&&item.status==='pending'?(!item.claimedByTeamId||String(item.claimedByTeamId)===String(teamAdmin.adminId)):transactionTeamId(item,all,walletById)===teamAdmin.adminId);return json(res,200,{transactions:transactions.map(item=>{const teamId=item.type==='withdrawal'&&item.status==='pending'?(item.claimedByTeamId||null):transactionTeamId(item,all,walletById),team=teamId?teamById.get(teamId):null,chainVerificationRequired=(team?team.requireChainVerification!==false:true)&&!(item.type==='deposit'&&!item.txHash&&!depositSettings.requireTxId),safe=item=>owner&&requestedTestRunId?item:safeTransaction(item);return {...safe(item),teamAccountId:teamId||null,claimedByTeamId:item.claimedByTeamId||null,claimedAt:item.claimedAt||null,teamName:team?.email||(item.type==='withdrawal'&&item.status==='pending'?'Havuzda':null),teamEmail:team?.email||null,chainVerificationRequired};})});
   }
   if(req.url==='/api/admin/transactions/verify-chain' && req.method==='POST'){
     if(!admin)return json(res,401,{error:'unauthorized'});
@@ -1302,6 +1306,59 @@ async function route(req,res){
     if(!admin)return json(res,401,{error:'unauthorized'}); const b=await body(req); const id=String(b.userId||''); const decision=['approved','rejected'].includes(b.decision)?b.decision:null; if(!decision)return json(res,400,{error:'invalid_decision'});
     if(pool)await pool.query('UPDATE users SET kyc_status=$1 WHERE id=$2',[decision,id]); else{const db=readDb();const u=db.users.find(x=>x.id===id);if(!u)return json(res,404,{error:'user_not_found'});u.kycStatus=decision;writeDb(db);} addAudit('kyc_decision',admin.email,{userId:id,decision}); return json(res,200,{ok:true,status:decision});
   }
+  if(req.url==='/api/admin/transactions/claim' && req.method==='POST'){
+    if(!admin)return json(res,401,{error:'unauthorized'});
+    if(!teamAdmin||owner)return json(res,403,{error:'team_admin_required'});
+    const b=await body(req),id=String(b.transactionId||'');
+    if(!id)return json(res,400,{error:'transaction_id_required'});
+    const now=new Date().toISOString();
+    if(pool){
+      const client=await pool.connect();
+      try{
+        await client.query('BEGIN');
+        const lock=await client.query('SELECT type,status,claimed_by_team_id AS "claimedByTeamId",is_synthetic AS "isSynthetic" FROM transactions WHERE id=$1 FOR UPDATE',[id]);
+        const row=lock.rows[0];
+        if(!row){await client.query('ROLLBACK');return json(res,404,{error:'transaction_not_found'});}
+        if(row.type!=='withdrawal'||row.status!=='pending'||row.isSynthetic){await client.query('ROLLBACK');return json(res,409,{error:'withdrawal_not_claimable'});}
+        if(row.claimedByTeamId&&String(row.claimedByTeamId)!==String(teamAdmin.adminId)){await client.query('ROLLBACK');return json(res,409,{error:'withdrawal_claimed_by_another_team'});}
+        await client.query('UPDATE transactions SET claimed_by_team_id=$1,claimed_at=$2,locked_by=NULL,locked_at=NULL WHERE id=$3',[teamAdmin.adminId,now,id]);
+        await client.query('COMMIT');
+      }catch(error){await client.query('ROLLBACK');throw error;}finally{client.release();}
+    }else{
+      const db=readDb(),row=(db.transactions||[]).find(item=>String(item.id)===id);
+      if(!row)return json(res,404,{error:'transaction_not_found'});
+      if(row.type!=='withdrawal'||row.status!=='pending'||row.isSynthetic)return json(res,409,{error:'withdrawal_not_claimable'});
+      if(row.claimedByTeamId&&String(row.claimedByTeamId)!==String(teamAdmin.adminId))return json(res,409,{error:'withdrawal_claimed_by_another_team'});
+      row.claimedByTeamId=teamAdmin.adminId;row.claimedAt=now;row.lockedBy=null;row.lockedAt=null;writeDb(db);
+    }
+    addAudit('withdrawal_claimed',admin.email,{transactionId:id,teamAccountId:teamAdmin.adminId});
+    return json(res,200,{ok:true,transactionId:id,claimedByTeamId:teamAdmin.adminId,claimedAt:now});
+  }
+  if(req.url==='/api/admin/transactions/release' && req.method==='POST'){
+    if(!admin)return json(res,401,{error:'unauthorized'});
+    if(!teamAdmin||owner)return json(res,403,{error:'team_admin_required'});
+    const b=await body(req),id=String(b.transactionId||'');
+    if(!id)return json(res,400,{error:'transaction_id_required'});
+    if(pool){
+      const client=await pool.connect();
+      try{
+        await client.query('BEGIN');
+        const lock=await client.query('SELECT type,status,claimed_by_team_id AS "claimedByTeamId" FROM transactions WHERE id=$1 FOR UPDATE',[id]);
+        const row=lock.rows[0];
+        if(!row){await client.query('ROLLBACK');return json(res,404,{error:'transaction_not_found'});}
+        if(row.type!=='withdrawal'||row.status!=='pending'||String(row.claimedByTeamId||'')!==String(teamAdmin.adminId)){await client.query('ROLLBACK');return json(res,409,{error:'withdrawal_not_owned'});}
+        await client.query('UPDATE transactions SET claimed_by_team_id=NULL,claimed_at=NULL,team_account_id=NULL,locked_by=NULL,locked_at=NULL WHERE id=$1',[id]);
+        await client.query('COMMIT');
+      }catch(error){await client.query('ROLLBACK');throw error;}finally{client.release();}
+    }else{
+      const db=readDb(),row=(db.transactions||[]).find(item=>String(item.id)===id);
+      if(!row)return json(res,404,{error:'transaction_not_found'});
+      if(row.type!=='withdrawal'||row.status!=='pending'||String(row.claimedByTeamId||'')!==String(teamAdmin.adminId))return json(res,409,{error:'withdrawal_not_owned'});
+      row.claimedByTeamId=null;row.claimedAt=null;row.teamAccountId=null;row.lockedBy=null;row.lockedAt=null;writeDb(db);
+    }
+    addAudit('withdrawal_released',admin.email,{transactionId:id,teamAccountId:teamAdmin.adminId});
+    return json(res,200,{ok:true,transactionId:id,released:true});
+  }
   if(req.url==='/api/admin/transactions/lock' && req.method==='POST'){
     if(!admin)return json(res,401,{error:'unauthorized'}); const b=await body(req); const id=String(b.transactionId||''); const all=await getTransactions(); const tx=all.find(x=>x.id===id); if(!tx||teamAdmin&&!owner&&!(await teamOwnsTransaction(teamAdmin.adminId,tx,all)))return json(res,404,{error:'transaction_not_found'}); if(tx.isSynthetic&&!owner)return json(res,404,{error:'transaction_not_found'}); if(tx.status!=='pending')return json(res,409,{error:'not_pending',status:tx.status});
     if(isLocked(tx) && tx.lockedBy!==admin.email)return json(res,409,{error:'transaction_locked',lockedBy:tx.lockedBy});
@@ -1340,7 +1397,7 @@ async function route(req,res){
   }
   if(adminQuery.pathname==='/api/admin/transactions/decision' && req.method==='POST'){
     if(!admin)return json(res,401,{error:'unauthorized'}); const b=await body(req); const id=String(b.transactionId||''); const decision=['approved','rejected'].includes(b.decision)?b.decision:null; if(!decision)return json(res,400,{error:'invalid_decision'});
-    const all=await getTransactions(); const tx=all.find(x=>x.id===id); if(!tx||teamAdmin&&!owner&&!(await teamOwnsTransaction(teamAdmin.adminId,tx,all)))return json(res,404,{error:'transaction_not_found'}); if(tx.isSynthetic&&(!owner||!requestedTestRunId||tx.testRunId!==requestedTestRunId))return json(res,404,{error:'transaction_not_found'}); if(tx.status!=='pending')return json(res,409,{error:'already_processed',status:tx.status});
+    const all=await getTransactions(); const tx=all.find(x=>x.id===id); if(!tx||teamAdmin&&!owner&&!(await teamOwnsTransaction(teamAdmin.adminId,tx,all)))return json(res,404,{error:'transaction_not_found'}); if(tx.isSynthetic&&(!owner||!requestedTestRunId||tx.testRunId!==requestedTestRunId))return json(res,404,{error:'transaction_not_found'}); if(tx.status!=='pending')return json(res,409,{error:'already_processed',status:tx.status}); if(teamAdmin&&!owner&&tx.type==='withdrawal'&&decision==='rejected')return json(res,403,{error:'withdrawal_release_required',message:'Çekimi reddetmek yerine havuza bırakın.'});
     if(isLocked(tx) && tx.lockedBy!==admin.email)return json(res,409,{error:'transaction_locked',lockedBy:tx.lockedBy});
     const requestedAmount=Number(tx.requestedAmount??tx.requested_amount??tx.amount); const rawApproved=b.approvedAmount; const approvedAmount=decision==='approved' && rawApproved!==undefined && rawApproved!==null && rawApproved!==''?Number(rawApproved):Number(tx.amount); if(decision==='approved'&&(!Number.isFinite(approvedAmount)||approvedAmount<=0))return json(res,400,{error:'invalid_approved_amount'});
     const approvalWallets=await getWalletAddresses(),approvalWalletById=new Map(approvalWallets.map(wallet=>[wallet.id,wallet])),resolvedTeamAccountId=transactionTeamId(tx,all,approvalWalletById)||(teamAdmin&&!owner?teamAdmin.adminId:null),approvalTeam=resolvedTeamAccountId?(await getTeamAccounts()).find(account=>account.id===resolvedTeamAccountId):null,depositSettings=await getDepositSettings(),chainVerificationRequired=(approvalTeam?approvalTeam.requireChainVerification!==false:true)&&!(tx.type==='deposit'&&!tx.txHash&&!depositSettings.requireTxId);

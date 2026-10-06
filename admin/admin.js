@@ -65,6 +65,10 @@ function setupSharedProfile(){
   if(!head){head=document.createElement('div');head.className='admin-head admin-shared-head';document.querySelector('.admin-main')?.prepend(head);}
   if(!head) return;
   const isOwner=a.role==='Super Admin';
+  if(!isOwner){
+    head.classList.add('admin-shared-head');
+    head.querySelectorAll('.admin-muted').forEach(node=>node.remove());
+  }
 
   // Keep one shared profile control set on every staff page.
   // The circular control keeps the header compact while exposing profile actions.
@@ -82,11 +86,11 @@ function setupSharedProfile(){
     if(dateCard) host.insertBefore(box,dateCard); else host.appendChild(box);
   }
 
-  if(!isOwner&&!document.getElementById('teamCashIndicator')&&!document.getElementById('teamCashShared')){
+  if(!isOwner&&!document.getElementById('teamCashShared')){
     const cash=document.createElement('section');cash.id='teamCashShared';cash.className='team-cash-shared';cash.setAttribute('aria-label','Ekip kasası canlı durumu');
-    cash.innerHTML='<span class="team-cash-shared-status" id="teamCashSharedStatus"><i></i> Yatırım durumu alınıyor</span><span><small>Kasa kullanımı</small><b id="teamCashSharedUsed">—</b></span><span><small>Kullanılabilir</small><b id="teamCashSharedAvailable">—</b></span>';
+    cash.innerHTML='<span class="team-cash-shared-status" id="teamCashSharedStatus"><i></i> Yatırım durumu alınıyor</span><span><small>Kasa limiti</small><b id="teamCashSharedLimit">—</b></span><span><small>Kasa kullanımı</small><b id="teamCashSharedUsed">—</b></span><span><small>Kullanılabilir</small><b id="teamCashSharedAvailable">—</b></span>';
     const tools=document.getElementById('adminToolsShared');if(tools)head.insertBefore(cash,tools);else head.appendChild(cash);
-    const refresh=async()=>{try{const r=await fetch('/api/admin/me',{credentials:'include',cache:'no-store'}),d=await r.json();if(!r.ok)throw new Error('unavailable');const x=d.admin||{},money=n=>Number(n||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+' USDT',active=x.acceptingDeposits===undefined?x.active!==false&&!x.depositsPaused&&!x.collateralPaused:!!x.acceptingDeposits,status=document.getElementById('teamCashSharedStatus');document.getElementById('teamCashSharedUsed').textContent=money(x.collateralExposure);document.getElementById('teamCashSharedAvailable').textContent=Number(x.collateralTotal||0)>0?money(x.collateralAvailable):'Sınırsız';status.dataset.state=active?'active':'paused';status.innerHTML='<i></i> Yatırım alımı '+(active?'aktif':'pasif');}catch(_){const status=document.getElementById('teamCashSharedStatus');if(status){status.dataset.state='stale';status.innerHTML='<i></i> Durum güncellenemedi';}}};
+    const refresh=async()=>{try{const r=await fetch('/api/admin/me',{credentials:'include',cache:'no-store'}),d=await r.json();if(!r.ok)throw new Error('unavailable');const x=d.admin||{},money=n=>Number(n||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+' USDT',active=x.acceptingDeposits===undefined?x.active!==false&&!x.depositsPaused&&!x.collateralPaused:!!x.acceptingDeposits,status=document.getElementById('teamCashSharedStatus');document.getElementById('teamCashSharedLimit').textContent=Number(x.collateralTotal||0)>0?money(x.collateralTotal):'Sınırsız';document.getElementById('teamCashSharedUsed').textContent=money(x.collateralExposure);document.getElementById('teamCashSharedAvailable').textContent=Number(x.collateralTotal||0)>0?money(x.collateralAvailable):'Sınırsız';status.dataset.state=active?'active':'paused';status.innerHTML='<i></i> Yatırım alımı '+(active?'aktif':'pasif');}catch(_){const status=document.getElementById('teamCashSharedStatus');if(status){status.dataset.state='stale';status.innerHTML='<i></i> Durum güncellenemedi';}}};
     refresh();if(!window.__teamCashSharedTimer)window.__teamCashSharedTimer=setInterval(refresh,15000);
   }
 
@@ -95,7 +99,8 @@ function setupSharedProfile(){
     u.type='button';
     u.setAttribute('aria-label','Hesap menüsünü aç');
     u.title='Hesap menüsü';
-    u.innerHTML='<span class="team-profile-avatar" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.25"></circle><path d="M5.2 20c.55-3.8 2.85-5.8 6.8-5.8s6.25 2 6.8 5.8"></path></svg></span>';
+    const initials=String(a.email||a.name||'EP').split('@')[0].split(/[ ._-]+/).filter(Boolean).slice(0,2).map(part=>part[0].toLocaleUpperCase('tr-TR')).join('')||'EP';
+    u.innerHTML=isOwner?'<span class="team-profile-avatar" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.25"></circle><path d="M5.2 20c.55-3.8 2.85-5.8 6.8-5.8s6.25 2 6.8 5.8"></path></svg></span>':'<span class="team-profile-avatar" aria-hidden="true">'+initials+'</span><span class="team-profile-label"><b>Ekip hesabı</b><small>'+String(a.email||'Güvenli oturum').replace(/[&<>"']/g,'')+'</small></span><span class="team-profile-chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg></span>';
     if(!u.dataset.dropdownReady){
       u.dataset.dropdownReady='1';
       u.setAttribute('aria-haspopup','menu');
