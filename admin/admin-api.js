@@ -36,14 +36,15 @@ function preserveTestRunInAdminLinks(runId){
 }
 function showTestRunBanner(){
   const runId=new URLSearchParams(location.search).get('testRunId');
-  if(!runId||!document.querySelector('.admin-main')||document.getElementById('syntheticRunBanner'))return;
-  if(!document.getElementById('syntheticRunBannerStyle')){const style=document.createElement('style');style.id='syntheticRunBannerStyle';style.textContent='.synthetic-run-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 14px;padding:13px 16px;border:1px solid #a66f12;border-radius:12px;background:linear-gradient(110deg,#3b2c11,#1d1a12);color:#ffe4a3;font-size:12px;line-height:1.5}.synthetic-run-banner>div{display:grid;gap:2px}.synthetic-run-banner strong{font-size:10px;letter-spacing:.12em}.synthetic-run-banner a{flex:0 0 auto;color:#ffe4a3;font-weight:850;text-decoration:underline}.synthetic-test-chip{display:inline-flex;align-items:center;margin-left:6px;padding:2px 5px;border:1px solid #8d641c;border-radius:999px;background:#35280f;color:#ffdf8c;font-size:8px;font-weight:900;letter-spacing:.08em;vertical-align:middle}@media(max-width:640px){.synthetic-run-banner{align-items:flex-start;flex-direction:column}}';document.head.append(style);}
-  const banner=document.createElement('div');banner.id='syntheticRunBanner';banner.className='synthetic-run-banner';banner.setAttribute('role','status');
-  const message=document.createElement('div');message.innerHTML='<strong>TEST GÖRÜNÜMÜ</strong><span>Bu çalıştırmadaki işlemler, kullanıcılar ve tutarlar sentetiktir. Gerçek üye bakiyesi, kasa, ekip teminatı ve zincir transferi değildir.</span>';
+  const main=document.querySelector('.admin-main');
+  if(!runId||!main||document.getElementById('syntheticRunBanner'))return;
+  if(!document.getElementById('syntheticRunBannerStyle')){const style=document.createElement('style');style.id='syntheticRunBannerStyle';style.textContent='.synthetic-run-banner{display:inline-flex;align-items:center;gap:8px;margin-left:10px;padding:4px 8px;border:1px solid #8d641c;border-radius:999px;background:#35280f;color:#ffdf8c;font-size:9px;line-height:1.3;vertical-align:middle}.synthetic-run-banner strong{font-size:9px;letter-spacing:.06em}.synthetic-run-banner a{color:#ffe4a3;font-weight:800;text-decoration:underline}.synthetic-test-chip{display:inline-flex;align-items:center;margin-left:6px;padding:2px 5px;border:1px solid #8d641c;border-radius:999px;background:#35280f;color:#ffdf8c;font-size:8px;font-weight:900;letter-spacing:.08em;vertical-align:middle}';document.head.append(style);}
+  const banner=document.createElement('span');banner.id='syntheticRunBanner';banner.className='synthetic-run-banner';banner.setAttribute('role','status');
+  const message=document.createElement('strong');message.textContent='TEST VERİSİ';message.title='Bu çalıştırmadaki işlemler ve tutarlar sentetiktir; gerçek bakiye veya zincir transferi değildir.';
   const url=new URL(location.href);url.searchParams.delete('testRunId');
   const normal=document.createElement('a');normal.href=url.pathname+url.search+url.hash;normal.textContent='Normal görünüme dön';
   normal.addEventListener('click',()=>{try{localStorage.removeItem(SYNTHETIC_RUN_STORAGE_KEY);}catch(_){}});
-  banner.append(message,normal);const main=document.querySelector('.admin-main');main.insertBefore(banner,main.firstChild);preserveTestRunInAdminLinks(runId);
+  banner.append(message,normal);const title=main.querySelector('.admin-head h1');if(title)title.append(banner);else main.insertBefore(banner,main.firstChild);preserveTestRunInAdminLinks(runId);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',showTestRunBanner,{once:true});else showTestRunBanner();
 async function adminFetch(path,opts={}){
