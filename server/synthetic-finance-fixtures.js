@@ -25,7 +25,8 @@ function makeSyntheticMembers({ runId, targetUser, passwordHash, startDate, coun
   const rand = makeRandom(`${runId}:names`), members = [targetUser];
   const existingEmails = new Set(existingUsers.map(x => String(x.email || '').toLowerCase()));
   const existingPhones = new Set(existingUsers.map(x => String(x.phone || '')));
-  const usedNames = new Set(targetUser?.firstName&&targetUser?.lastName?[`${targetUser.firstName} ${targetUser.lastName}`.toLocaleLowerCase('tr-TR')]:[]);
+  const usedNames = new Set(existingUsers.map(user=>`${user.firstName||''} ${user.lastName||''}`.trim().toLocaleLowerCase('tr-TR')).filter(Boolean));
+  if(targetUser?.firstName&&targetUser?.lastName)usedNames.add(`${targetUser.firstName} ${targetUser.lastName}`.toLocaleLowerCase('tr-TR'));
   const start = new Date(`${startDate}T00:00:00.000Z`);
   const shortRun = String(runId).replace(/[^a-z0-9]/gi, '').slice(-8).toLowerCase();
   for (let i = 0; i < count; i++) {
@@ -37,7 +38,8 @@ function makeSyntheticMembers({ runId, targetUser, passwordHash, startDate, coun
       email = `uye.${suffix}@example.invalid`;
       phone = `+990000${String(i + 1).padStart(6, '0')}${String(attempt).padStart(2, '0')}`;
       attempt++;
-    } while (existingEmails.has(email) || existingPhones.has(phone) || usedNames.has(`${firstName} ${lastName}`.toLocaleLowerCase('tr-TR')));
+    } while ((existingEmails.has(email) || existingPhones.has(phone) || usedNames.has(`${firstName} ${lastName}`.toLocaleLowerCase('tr-TR'))) && attempt<10000);
+    if(attempt>=10000&&(existingEmails.has(email)||existingPhones.has(phone)||usedNames.has(`${firstName} ${lastName}`.toLocaleLowerCase('tr-TR'))))throw new Error('synthetic_name_space_exhausted');
     existingEmails.add(email); existingPhones.add(phone);
     usedNames.add(`${firstName} ${lastName}`.toLocaleLowerCase('tr-TR'));
     members.push({
