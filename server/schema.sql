@@ -54,8 +54,10 @@ CREATE INDEX IF NOT EXISTS idx_ledger_test_run ON ledger_entries(test_run_id,cre
 CREATE TABLE IF NOT EXISTS synthetic_finance_runs (
   id TEXT PRIMARY KEY, target_user_id TEXT NOT NULL UNIQUE REFERENCES users(id),
   created_at TIMESTAMPTZ NOT NULL, start_date DATE NOT NULL, end_date DATE NOT NULL,
-  member_count INTEGER NOT NULL, transaction_count INTEGER NOT NULL, commission_rate NUMERIC(8,6) NOT NULL
+  member_count INTEGER NOT NULL, transaction_count INTEGER NOT NULL, commission_rate NUMERIC(8,6) NOT NULL,
+  team_account_id TEXT
 );
+ALTER TABLE synthetic_finance_runs ADD COLUMN IF NOT EXISTS team_account_id TEXT;
 CREATE TABLE IF NOT EXISTS team_accounts (
   id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, totp_secret TEXT,
   two_factor_enabled BOOLEAN NOT NULL DEFAULT FALSE, active BOOLEAN NOT NULL DEFAULT TRUE,
