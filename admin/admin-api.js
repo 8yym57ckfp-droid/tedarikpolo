@@ -1,7 +1,28 @@
 const ADMIN_API='/api/admin';
 const OWNER_API='/api/owner';
+const SYNTHETIC_RUN_STORAGE_KEY='safepaysActiveSyntheticFinanceRunId';
 function adminToken(){return '';}
 function activeAdminApi(){return location.pathname.includes('/owner/')?OWNER_API:ADMIN_API;}
+function restoreSyntheticRunContext(){
+  const params=new URLSearchParams(location.search),runId=params.get('testRunId');
+  try{
+    if(runId){localStorage.setItem(SYNTHETIC_RUN_STORAGE_KEY,runId);return;}
+    const page=location.pathname.match(/^\/(admin|owner)\/(team-dashboard|dashboard|requests|withdrawal-pool|history|reconciliation|reports|wallet-addresses)\.html$/);
+    if(!page)return;
+    const remembered=localStorage.getItem(SYNTHETIC_RUN_STORAGE_KEY);
+    if(!remembered)return;
+    params.set('testRunId',remembered);
+    const next=new URL(location.href);next.search=params.toString();location.replace(next.pathname+next.search+next.hash);
+  }catch(_){}
+}
+restoreSyntheticRunContext();
+function clearInvalidSyntheticRun(){
+  try{
+    localStorage.removeItem(SYNTHETIC_RUN_STORAGE_KEY);
+    const url=new URL(location.href);url.searchParams.delete('testRunId');
+    location.replace(url.pathname+url.search+url.hash);
+  }catch(_){}
+}
 function testRunApiPath(path,method='GET'){return ['/stats','/users','/user-center','/transactions','/transactions/decision','/transactions/lock','/transactions/reopen','/ledger','/finance/reconciliation'].includes(path)||(path==='/wallet-addresses'&&String(method).toUpperCase()==='GET');}
 function preserveTestRunInAdminLinks(runId){
   for(const link of document.querySelectorAll('a[href]')){
@@ -21,6 +42,7 @@ function showTestRunBanner(){
   const message=document.createElement('div');message.innerHTML='<strong>TEST GÖRÜNÜMÜ</strong><span>Bu çalıştırmadaki işlemler, kullanıcılar ve tutarlar sentetiktir. Gerçek üye bakiyesi, kasa, ekip teminatı ve zincir transferi değildir.</span>';
   const url=new URL(location.href);url.searchParams.delete('testRunId');
   const normal=document.createElement('a');normal.href=url.pathname+url.search+url.hash;normal.textContent='Normal görünüme dön';
+  normal.addEventListener('click',()=>{try{localStorage.removeItem(SYNTHETIC_RUN_STORAGE_KEY);}catch(_){}});
   banner.append(message,normal);const main=document.querySelector('.admin-main');main.insertBefore(banner,main.firstChild);preserveTestRunInAdminLinks(runId);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',showTestRunBanner,{once:true});else showTestRunBanner();
@@ -33,6 +55,7 @@ async function adminFetch(path,opts={}){
   }
   const r=await fetch(activeAdminApi()+path,opts),d=await r.json();
   if(r.status===401){location.href=ownerPortal?'/owner/login.html?denied=1':'/admin/login.html?denied=1';throw new Error('unauthorized');}
+  if(d.error==='synthetic_run_not_found'||d.error==='test_run_team_scope_denied'){clearInvalidSyntheticRun();throw new Error(d.error);}
   if(r.status===403)throw new Error(d.message||(ownerPortal?'Owner paneline erişim reddedildi.':'Ekip paneline erişim reddedildi.'));
   if(!r.ok)throw new Error(d.message||d.error||'request_failed');
   return d;
