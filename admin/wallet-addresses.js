@@ -4,6 +4,16 @@ const date=v=>v?new Date(v).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 let wallets=[],transactions=[],teamAccounts=[];
 const ownerView=location.pathname.includes('/owner/');
+const testRunId=new URLSearchParams(location.search).get('testRunId');
+if(testRunId){
+  const form=document.querySelector('.add-grid');
+  if(form){form.style.display='none';const card=form.closest('.admin-card'),heading=card?.querySelector('.section-head h3'),description=card?.querySelector('.section-head .admin-muted');if(heading)heading.textContent='Çalıştırma cüzdanları';if(description)description.textContent='Geçmiş yatırmalar bu pasif adreslere dağıtılır; adresler üyelere açık yatırma rotasyonuna girmez.';}
+  const message=$('msg');
+  if(message){message.textContent='Bu dokuz pasif örnek adres yalnızca seçili çalıştırmanın yatırma kayıtlarını sınıflandırır; üyelere gösterilmez ve gerçek yatırma adresi değildir.';message.style.color='#d5aa56';}
+  const description=document.querySelector('.admin-head>div>.admin-muted:last-child');
+  if(description)description.textContent='Batman ekip çalıştırmasındaki yatırımların TRC20 ve ERC20 örnek adreslere dağılımı.';
+  const scope=$('walletScope');if(scope)scope.textContent='● Batman · Filtreli çalışma';
+}
 
 async function loadWalletData(){
   const tasks=[
@@ -33,9 +43,10 @@ function renderWalletData(){
   $('totalOut').textContent=fmt(transactions.filter(x=>x.type==='withdrawal'&&x.status==='approved').reduce((s,x)=>s+Number(x.amount||0),0));
   $('walletRows').innerHTML=wallets.map(w=>{
     const tx=transactions.filter(x=>x.walletId===w.id),ins=tx.filter(x=>x.type==='deposit'&&x.status==='approved').reduce((s,x)=>s+Number(x.amount||0),0),outs=tx.filter(x=>x.type==='withdrawal'&&x.status==='approved').reduce((s,x)=>s+Number(x.amount||0),0),net=ins-outs;
-    const teamCell=ownerView?`<select class="wallet-team-select" aria-label="${esc(w.label)} ekibini seç" onchange="assignWalletTeam('${esc(w.id)}',this.value)"><option value="">Ortak</option>${teamAccounts.map(team=>`<option value="${esc(team.id)}" ${team.id===w.teamId?'selected':''}>${esc(team.email)}</option>`).join('')}</select>`:'';
+    const teamCell=ownerView?(w.isSynthetic?esc(teamAccounts.find(team=>team.id===w.teamId)?.email||'Batman ekip hesabı'):`<select class="wallet-team-select" aria-label="${esc(w.label)} ekibini seç" onchange="assignWalletTeam('${esc(w.id)}',this.value)"><option value="">Ortak</option>${teamAccounts.map(team=>`<option value="${esc(team.id)}" ${team.id===w.teamId?'selected':''}>${esc(team.email)}</option>`).join('')}</select>`):'';
     const limit=walletLimitText(w);
-    return `<tr><td><span class="label">${esc(w.label)}</span><span class="sub">${esc(w.id)}</span><span class="wallet-limit-note">${esc(limit)}</span></td><td><span class="network ${w.network==='TRC20'?'trc':'erc'}">${esc(w.network)}</span></td><td><div class="address">${esc(w.address)}</div></td>${ownerView?`<td>${teamCell}</td>`:''}<td><span class="badge ${w.active?'on':'off'}">● ${w.active?'Aktif':'Pasif'}</span></td><td><b>${Number(w.useCount||0)}</b></td><td class="money amount-deposit">${fmt(ins)}</td><td class="money amount-withdrawal">${fmt(outs)}</td><td class="money amount-cash ${net>=0?'netpos':'netneg'}">${fmt(net)}</td><td>${date(w.lastUsedAt)}</td><td class="actions"><button class="mini toggle" onclick="toggleWallet('${esc(w.id)}',${!w.active})">${w.active?'Pasif Yap':'Aktif Yap'}</button><button class="mini edit" onclick="editWallet('${esc(w.id)}')">Düzenle</button><button class="mini del" onclick="removeWallet('${esc(w.id)}')">Sil</button></td></tr>`;
+    const actions=w.isSynthetic?'<span class="synthetic-test-chip">Yalnızca kayıt eşlemesi</span>':`<button class="mini toggle" onclick="toggleWallet('${esc(w.id)}',${!w.active})">${w.active?'Pasif Yap':'Aktif Yap'}</button><button class="mini edit" onclick="editWallet('${esc(w.id)}')">Düzenle</button><button class="mini del" onclick="removeWallet('${esc(w.id)}')">Sil</button>`;
+    return `<tr><td><span class="label">${esc(w.label)}${w.isSynthetic?'<span class="synthetic-test-chip">ÇALIŞTIRMA</span>':''}</span><span class="sub">${esc(w.id)}</span><span class="wallet-limit-note">${esc(limit)}</span></td><td><span class="network ${w.network==='TRC20'?'trc':'erc'}">${esc(w.network)}</span></td><td><div class="address">${esc(w.address)}</div></td>${ownerView?`<td>${teamCell}</td>`:''}<td><span class="badge ${w.active?'on':'off'}">● ${w.active?'Aktif':'Pasif'}</span></td><td><b>${Number(w.useCount||0)}</b></td><td class="money amount-deposit">${fmt(ins)}</td><td class="money amount-withdrawal">${fmt(outs)}</td><td class="money amount-cash ${net>=0?'netpos':'netneg'}">${fmt(net)}</td><td>${date(w.lastUsedAt)}</td><td class="actions">${actions}</td></tr>`;
   }).join('')||`<tr><td colspan="${ownerView?11:10}" class="empty">Henüz yatırım adresi eklenmedi.</td></tr>`;
 }
 function walletLimitText(wallet){

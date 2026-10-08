@@ -2,7 +2,7 @@ const ADMIN_API='/api/admin';
 const OWNER_API='/api/owner';
 function adminToken(){return '';}
 function activeAdminApi(){return location.pathname.includes('/owner/')?OWNER_API:ADMIN_API;}
-function testRunApiPath(path){return ['/stats','/users','/user-center','/transactions','/transactions/decision','/transactions/lock','/transactions/reopen','/ledger','/finance/reconciliation'].includes(path);}
+function testRunApiPath(path,method='GET'){return ['/stats','/users','/user-center','/transactions','/transactions/decision','/transactions/lock','/transactions/reopen','/ledger','/finance/reconciliation'].includes(path)||(path==='/wallet-addresses'&&String(method).toUpperCase()==='GET');}
 function preserveTestRunInAdminLinks(runId){
   for(const link of document.querySelectorAll('a[href]')){
     if(link.closest('#syntheticRunBanner'))continue;
@@ -27,7 +27,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 async function adminFetch(path,opts={}){
   opts.credentials='include';opts.headers={...(opts.headers||{}),'Content-Type':'application/json'};
   const ownerPortal=location.pathname.includes('/owner/'),runId=new URLSearchParams(location.search).get('testRunId'),base=String(path).split('?')[0];
-  if(runId&&testRunApiPath(base)){
+  if(runId&&testRunApiPath(base,opts.method||'GET')){
     const query=new URLSearchParams(String(path).includes('?')?String(path).split('?').slice(1).join('?'):'');
     query.set('testRunId',runId);path=base+'?'+query.toString();
   }

@@ -212,10 +212,11 @@ window.addEventListener('safepays:portal-ready',setupSharedProfile);
     const renderStaffNav=profile=>{if(ownerPortal)return;document.querySelectorAll('.admin-nav').forEach(nav=>{
       const items=getItems(profile);
       const children=[];
+      const testRunId=new URLSearchParams(location.search).get('testRunId');
       staffGroups.forEach(([title,groupItems])=>{
         const visible=groupItems.filter(item=>items.includes(item));if(!visible.length)return;
         const heading=document.createElement('div');heading.className='admin-nav-group-title';heading.textContent=title;children.push(heading);
-        visible.forEach(([href,ico,label])=>{const el=document.createElement('a');el.href=href;el.innerHTML=icon(ico)+'<span>'+label+'</span>';children.push(el);});
+        visible.forEach(([href,ico,label])=>{const el=document.createElement('a'),target=new URL(href,location.href),file=target.pathname.split('/').pop();if(testRunId&&['team-dashboard.html','requests.html','history.html','reconciliation.html','reports.html','wallet-addresses.html'].includes(file))target.searchParams.set('testRunId',testRunId);el.href=target.href;el.innerHTML=icon(ico)+'<span>'+label+'</span>';children.push(el);});
       });
       nav.replaceChildren(...children);
       const path=location.pathname.split('/').pop()||'dashboard.html';

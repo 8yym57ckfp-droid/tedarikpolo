@@ -6,7 +6,7 @@ let Pool = null;
 try { ({ Pool } = require('pg')); } catch (_) { /* PostgreSQL is optional for local development. */ }
 const { getMarketUsdtTry, getMarketSnapshot, calc, makeQuote } = require('./rates');
 const { verifyUsdtTransfer } = require('./chain-verification');
-const { makeSyntheticIdentity, makeSyntheticMembers, makeSyntheticTransactions } = require('./synthetic-finance-fixtures');
+const { makeSyntheticIdentity, makeSyntheticUsername, makeSyntheticMembers, makeSyntheticTransactions, makeSyntheticWallets, walletForSyntheticDeposit } = require('./synthetic-finance-fixtures');
 
 const ROOT = path.resolve(__dirname, '..');
 const DATA_DIR = path.join(__dirname, 'data');
@@ -1099,8 +1099,9 @@ async function route(req,res){
     const runId=`SYN-${Date.now()}-${crypto.randomBytes(5).toString('hex').toUpperCase()}`;
     const shortRun=runId.replace(/[^a-z0-9]/gi,'').slice(-8).toLowerCase();
     const rootIdentity=makeSyntheticIdentity({runId,index:0,excludedNames:existingUsers.map(user=>`${user.firstName||''} ${user.lastName||''}`.trim())});
-    const rootUser={id:makeUserId(existingUsers),...rootIdentity,username:`test_${shortRun}_root`,email:`test.${shortRun}@example.invalid`,phone:`+990000${crypto.randomInt(1000000000,9999999999)}`,passwordHash:hashPassword(crypto.randomBytes(32).toString('hex')),role:'user',balance:0,referralEarnings:0,referralCode:`SYN-${shortRun.toUpperCase()}-ROOT`,referredBy:null,twoFactorEnabled:false,phoneVerified:false,emailVerified:false,createdAt:new Date(start.getTime()-86400000).toISOString(),isTestAccount:true,isSynthetic:true,testRunId:runId};
-    const members=makeSyntheticMembers({runId,targetUser:rootUser,startDate,existingUsers,count:149});
+    const usedUsernames=new Set(existingUsers.map(user=>String(user.username||'').toLowerCase()).filter(Boolean));
+    const rootUser={id:makeUserId(existingUsers),...rootIdentity,username:makeSyntheticUsername(rootIdentity.firstName,rootIdentity.lastName,usedUsernames),email:`test.${shortRun}@example.invalid`,phone:`+990000${crypto.randomInt(1000000000,9999999999)}`,passwordHash:hashPassword(crypto.randomBytes(32).toString('hex')),role:'user',balance:0,referralEarnings:0,referralCode:`SYN-${shortRun.toUpperCase()}-ROOT`,referredBy:null,twoFactorEnabled:false,phoneVerified:false,emailVerified:false,createdAt:new Date(start.getTime()-86400000).toISOString(),isTestAccount:true,isSynthetic:true,testRunId:runId};
+    const members=makeSyntheticMembers({runId,targetUser:rootUser,startDate,existingUsers,existingUsernames:usedUsernames,count:149});
     const idUsers=[...existingUsers,rootUser];
     for(const member of members.slice(1)){member.id=makeUserId(idUsers);member.passwordHash=hashPassword(crypto.randomBytes(32).toString('hex'));idUsers.push(member);}
     const transactions=makeSyntheticTransactions({runId,users:members,startDate,days:90,teamAccountId});
@@ -1228,7 +1229,23 @@ async function route(req,res){
     addAudit('user_security_'+action,admin.email,{userId:id,reason}); return json(res,200,{ok:true,security:{status,withdrawalFrozen:wf,depositFrozen:df,reason:reason||null,updatedAt:now}});
   }
   if(adminQuery.pathname==='/api/admin/transactions' && req.method==='GET'){
-    if(!admin)return json(res,401,{error:'unauthorized'}); const all=await getTransactions();let transactions=all.filter(item=>requestedTestRunId?item.testRunId===requestedTestRunId:isProductionTransaction(item));const wallets=await getWalletAddresses(),walletById=new Map(wallets.map(wallet=>[wallet.id,wallet])),teams=await getTeamAccounts(),teamById=new Map(teams.map(account=>[account.id,account])),depositSettings=await getDepositSettings();if(teamAdmin&&!owner)transactions=transactions.filter(item=>item.type==='withdrawal'&&item.status==='pending'?(!item.claimedByTeamId||String(item.claimedByTeamId)===String(teamAdmin.adminId)):transactionTeamId(item,all,walletById)===teamAdmin.adminId);return json(res,200,{transactions:transactions.map(item=>{const teamId=item.type==='withdrawal'&&item.status==='pending'?(item.claimedByTeamId||null):transactionTeamId(item,all,walletById),team=teamId?teamById.get(teamId):null,chainVerificationRequired=item.isSynthetic?false:(team?team.requireChainVerification!==false:true)&&!(item.type==='deposit'&&!item.txHash&&!depositSettings.requireTxId),safe=item=>owner&&requestedTestRunId?item:safeTransaction(item);return {...safe(item),teamAccountId:teamId||null,claimedByTeamId:item.claimedByTeamId||null,claimedAt:item.claimedAt||null,teamName:team?.email||(item.type==='withdrawal'&&item.status==='pending'?'Havuzda':null),teamEmail:team?.email||null,chainVerificationRequired,isTestData:!!item.isSynthetic};})});
+    if(!admin)return json(res,401,{error:'unauthorized'});
+    const all=await getTransactions();
+    let transactions=all.filter(item=>requestedTestRunId?item.testRunId===requestedTestRunId:isProductionTransaction(item));
+    const wallets=await getWalletAddresses();
+    const syntheticWallets=requestedTestRunId?makeSyntheticWallets({runId:requestedTestRunId,teamAccountId:requestedTestRun.teamAccountId,transactions}).wallets:[];
+    const walletById=new Map([...wallets,...syntheticWallets].map(wallet=>[wallet.id,wallet]));
+    const teams=await getTeamAccounts(),teamById=new Map(teams.map(account=>[account.id,account])),depositSettings=await getDepositSettings();
+    if(teamAdmin&&!owner)transactions=transactions.filter(item=>item.type==='withdrawal'&&item.status==='pending'?(!item.claimedByTeamId||String(item.claimedByTeamId)===String(teamAdmin.adminId)):transactionTeamId(item,all,walletById)===teamAdmin.adminId);
+    return json(res,200,{transactions:transactions.map(item=>{
+      const teamId=item.type==='withdrawal'&&item.status==='pending'?(item.claimedByTeamId||null):transactionTeamId(item,all,walletById);
+      const team=teamId?teamById.get(teamId):null;
+      const chainVerificationRequired=item.isSynthetic?false:(team?team.requireChainVerification!==false:true)&&!(item.type==='deposit'&&!item.txHash&&!depositSettings.requireTxId);
+      const syntheticWallet=item.isSynthetic&&item.type==='deposit'?walletForSyntheticDeposit(item,syntheticWallets):null;
+      const presented=syntheticWallet?{...item,walletId:syntheticWallet.id,address:syntheticWallet.address}:item;
+      const safe=value=>owner&&requestedTestRunId?value:safeTransaction(value);
+      return {...safe(presented),teamAccountId:teamId||null,claimedByTeamId:item.claimedByTeamId||null,claimedAt:item.claimedAt||null,teamName:team?.email||(item.type==='withdrawal'&&item.status==='pending'?'Havuzda':null),teamEmail:team?.email||null,chainVerificationRequired,isTestData:!!item.isSynthetic};
+    })});
   }
   if(req.url==='/api/admin/transactions/verify-chain' && req.method==='POST'){
     if(!admin)return json(res,401,{error:'unauthorized'});
@@ -1248,8 +1265,15 @@ async function route(req,res){
   if(adminQuery.pathname==='/api/admin/ledger' && req.method==='GET'){
     if(!admin)return json(res,401,{error:'unauthorized'}); const userId=adminQuery.searchParams.get('userId')||null; const ledger=await getLedger(userId); return json(res,200,{ledger:ledger.filter(item=>requestedTestRunId?item.testRunId===requestedTestRunId:!item.isSynthetic).map(safeLedgerEntry)});
   }
-  if(req.url==='/api/admin/wallet-addresses' && req.method==='GET'){
-    if(!admin)return json(res,401,{error:'unauthorized'});const all=await getWalletAddresses();return json(res,200,{wallets:teamAdmin&&!owner?all.filter(wallet=>wallet.teamId===teamAdmin.adminId):all});
+  if(adminQuery.pathname==='/api/admin/wallet-addresses' && req.method==='GET'){
+    if(!admin)return json(res,401,{error:'unauthorized'});
+    if(requestedTestRunId){
+      const transactions=(await getTransactions()).filter(item=>item.testRunId===requestedTestRunId);
+      const wallets=makeSyntheticWallets({runId:requestedTestRunId,teamAccountId:requestedTestRun.teamAccountId,transactions}).wallets;
+      return json(res,200,{wallets});
+    }
+    const all=await getWalletAddresses();
+    return json(res,200,{wallets:teamAdmin&&!owner?all.filter(wallet=>wallet.teamId===teamAdmin.adminId):all});
   }
   if(req.url==='/api/admin/wallet-addresses' && req.method==='POST'){
     if(!admin)return json(res,401,{error:'unauthorized'});

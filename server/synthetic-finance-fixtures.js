@@ -1,7 +1,19 @@
 'use strict';
 
 const FIRST_NAMES = ['Aylin','Barış','Burcu','Cem','Ceren','Deniz','Ece','Emre','Esra','Fırat','Gizem','Hakan','İrem','Kaan','Mert','Melis','Nehir','Onur','Ozan','Seda','Selin','Serkan','Sibel','Tolga','Yasemin','Yusuf','Zeynep','Bora','Derya','Eylül','Berk','Elif','Kerem','Naz','Umut','Aslı','Can','Dilan','Eren','Gül'];
+const COMPOUND_FIRST_NAMES = ['Ayşe Nur','Ayşe Gül','Elif Su','Elif Naz','Fatma Zehra','Zeynep Nur','Zeynep Sude','Beyza Nur','Merve Nur','Esra Nur','Nurcan','Ece Su','Sena Nur','Sıla Nur','Tuğba Nur','Duru Ece'];
 const LAST_NAMES = ['Aksoy','Aydın','Arslan','Atalay','Avcı','Başaran','Bulut','Çelik','Demir','Doğan','Erdem','Güneş','Kaplan','Kara','Karaca','Kaya','Koç','Korkmaz','Özdemir','Öztürk','Şahin','Tekin','Yalçın','Yıldırım','Yılmaz','Çetin','Polat','Kılıç','Taş','Turan','Ekinci','Karataş','Özer','Acar','Keskin','Güler','Kurt','Önal','Yavuz','Uçar'];
+const EXAMPLE_WALLETS = [
+  {network:'TRC20',address:'TQ7X9mK2pL8vN4cR6sY3wJ5hF1dA8zBcE'},
+  {network:'TRC20',address:'TR8kLm2Np7Qx5Vw9Yc4Hj6Ds3Aa1ZfKpR'},
+  {network:'TRC20',address:'TJ4nW8sQ2xL6mP9vK3cY7hR5dF1aBzXeG'},
+  {network:'TRC20',address:'TW9pK5rL2mX8cN4vQ7sJ3hD6fA1yZbCeR'},
+  {network:'TRC20',address:'TN6xQ3vK8mL1pR5sY9cW2jH7dF4aZbXeG'},
+  {network:'ERC20',address:'0x742d35Cc6634C0532925a3b844Bc454e4438f44e'},
+  {network:'ERC20',address:'0x8Ba1f109551bD432803012645Ac136ddd64DBA72'},
+  {network:'ERC20',address:'0x52908400098527886E0F7030069857D2E4169EE7'},
+  {network:'ERC20',address:'0xde709f2102306220921060314715629080e2fb77'}
+];
 const DAY_MS = 86400000;
 const MIN_DEPOSIT = 60;
 const MIN_WITHDRAWAL = 100;
@@ -13,26 +25,67 @@ function makeRandom(seed) {
   return () => { state ^= state << 13; state ^= state >>> 17; state ^= state << 5; return (state >>> 0) / 4294967296; };
 }
 function cents(value) { return Math.round(Number(value) * 100) / 100; }
+function makeFirstName(rand) { return rand() < 0.2 ? COMPOUND_FIRST_NAMES[Math.floor(rand() * COMPOUND_FIRST_NAMES.length)] : FIRST_NAMES[Math.floor(rand() * FIRST_NAMES.length)]; }
+function usernamePart(value) {
+  return String(value || '').toLocaleLowerCase('tr-TR').replace(/[ç]/g,'c').replace(/[ğ]/g,'g').replace(/[ı]/g,'i').replace(/[ö]/g,'o').replace(/[ş]/g,'s').replace(/[ü]/g,'u').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').replace(/_+/g,'_');
+}
+function makeSyntheticUsername(firstName,lastName,usedUsernames=new Set()) {
+  const base=`${usernamePart(firstName)}_${usernamePart(lastName)}`.replace(/^_+|_+$/g,'').slice(0,20);
+  for(let suffixNumber=1;suffixNumber<10000;suffixNumber++){
+    const suffix=suffixNumber===1?'':`_${suffixNumber}`,candidate=`${base.slice(0,20-suffix.length)}${suffix}`;
+    if(candidate.length>=3&&!usedUsernames.has(candidate)){usedUsernames.add(candidate);return candidate;}
+  }
+  throw new Error('synthetic_username_space_exhausted');
+}
+function walletForSyntheticDeposit(transaction,wallets) {
+  if(!transaction||transaction.type!=='deposit'||!Array.isArray(wallets))return null;
+  const choices=wallets.filter(wallet=>wallet.network===transaction.network);
+  if(!choices.length)return null;
+  let hash=2166136261;for(const char of String(transaction.id||''))hash=Math.imul(hash^char.charCodeAt(0),16777619)>>>0;
+  return choices[hash%choices.length];
+}
+function makeSyntheticWallets({runId,teamAccountId,transactions=[]}) {
+  const suffix=String(runId).replace(/[^a-z0-9]/gi,'').slice(-8).toUpperCase();
+  const wallets=EXAMPLE_WALLETS.map((item,index)=>({
+    id:`SYN-WLT-${suffix}-${String(index+1).padStart(2,'0')}`,network:item.network,address:item.address,
+    label:`Örnek ${item.network} cüzdanı ${String(index+1).padStart(2,'0')}`,active:false,teamId:teamAccountId,
+    createdBy:'synthetic-fixture',createdAt:null,updatedAt:null,useCount:0,lastUsedAt:null,
+    minDepositAmount:60,maxDepositAmount:2000,minDepositOwnerSet:true,maxDepositOwnerSet:true,
+    isSynthetic:true,testRunId:runId
+  }));
+  const byId=new Map(wallets.map(wallet=>[wallet.id,wallet]));
+  const unwrap=item=>item?.transaction||item;
+  const ordered=transactions.filter(item=>unwrap(item)?.type==='deposit').slice().sort((a,b)=>String(unwrap(a).id).localeCompare(String(unwrap(b).id)));
+  for(const item of ordered){
+    const transaction=unwrap(item),wallet=walletForSyntheticDeposit(transaction,wallets);if(!wallet)continue;
+    wallet.useCount++;
+    const createdAt=transaction.createdAt||null;
+    if(createdAt&&(!wallet.lastUsedAt||new Date(createdAt)>new Date(wallet.lastUsedAt)))wallet.lastUsedAt=createdAt;
+  }
+  return {wallets,byId};
+}
 function makeSyntheticIdentity({ runId, index = 0, excludedNames = [] }) {
   const rand = makeRandom(`${runId}:identity:${index}`),excluded=new Set(excludedNames.map(value=>String(value||'').toLocaleLowerCase('tr-TR')));
   for(let attempt=0;attempt<FIRST_NAMES.length*LAST_NAMES.length;attempt++){
-    const firstName=FIRST_NAMES[Math.floor(rand()*FIRST_NAMES.length)],lastName=LAST_NAMES[Math.floor(rand()*LAST_NAMES.length)],fullName=`${firstName} ${lastName}`;
+    const firstName=makeFirstName(rand),lastName=LAST_NAMES[Math.floor(rand()*LAST_NAMES.length)],fullName=`${firstName} ${lastName}`;
     if(!excluded.has(fullName.toLocaleLowerCase('tr-TR')))return {firstName,lastName};
   }
   throw new Error('synthetic_identity_space_exhausted');
 }
-function makeSyntheticMembers({ runId, targetUser, passwordHash, startDate, count = 149, existingUsers = [] }) {
+function makeSyntheticMembers({ runId, targetUser, passwordHash, startDate, count = 149, existingUsers = [], existingUsernames = null }) {
   const rand = makeRandom(`${runId}:names`), members = [targetUser];
   const existingEmails = new Set(existingUsers.map(x => String(x.email || '').toLowerCase()));
   const existingPhones = new Set(existingUsers.map(x => String(x.phone || '')));
   const usedNames = new Set(existingUsers.map(user=>`${user.firstName||''} ${user.lastName||''}`.trim().toLocaleLowerCase('tr-TR')).filter(Boolean));
+  const usedUsernames = existingUsernames instanceof Set ? existingUsernames : new Set(existingUsers.map(user=>String(user.username||'').toLowerCase()).filter(Boolean));
+  if(targetUser?.username)usedUsernames.add(String(targetUser.username).toLowerCase());
   if(targetUser?.firstName&&targetUser?.lastName)usedNames.add(`${targetUser.firstName} ${targetUser.lastName}`.toLocaleLowerCase('tr-TR'));
   const start = new Date(`${startDate}T00:00:00.000Z`);
   const shortRun = String(runId).replace(/[^a-z0-9]/gi, '').slice(-8).toLowerCase();
   for (let i = 0; i < count; i++) {
     let firstName, lastName, email, phone, attempt = 0;
     do {
-      firstName = FIRST_NAMES[Math.floor(rand() * FIRST_NAMES.length)];
+      firstName = makeFirstName(rand);
       lastName = LAST_NAMES[Math.floor(rand() * LAST_NAMES.length)];
       const suffix = `${shortRun}.${String(i + 1).padStart(3, '0')}${attempt ? `.x${attempt}` : ''}`;
       email = `uye.${suffix}@example.invalid`;
@@ -43,7 +96,7 @@ function makeSyntheticMembers({ runId, targetUser, passwordHash, startDate, coun
     existingEmails.add(email); existingPhones.add(phone);
     usedNames.add(`${firstName} ${lastName}`.toLocaleLowerCase('tr-TR'));
     members.push({
-      id: null, firstName, lastName, username: `test_${shortRun}_${String(i + 1).padStart(3, '0')}`.slice(0, 24), email, phone,
+      id: null, firstName, lastName, username: makeSyntheticUsername(firstName,lastName,usedUsernames), email, phone,
       passwordHash, role: 'user', balance: 0, referralEarnings: 0,
       referralCode: `SYN-${shortRun.toUpperCase()}-${String(i + 1).padStart(3, '0')}`,
       referredBy: targetUser.referralCode, twoFactorEnabled: false, phoneVerified: false, emailVerified: false,
@@ -57,18 +110,28 @@ function makeSyntheticMembers({ runId, targetUser, passwordHash, startDate, coun
 function makeSyntheticTransactions({ runId, users, startDate, days = 90, teamAccountId = null }) {
   const rand = makeRandom(`${runId}:transactions`), balances = new Map(users.map(user => [String(user.id), Number(user.balance || 0)]));
   const rows = [], firstDay = new Date(`${startDate}T00:00:00.000Z`).getTime();
+  const quietWindows=Array.from({length:days},()=>rand()<0.42?{start:8+Math.floor(rand()*10),length:1+Math.floor(rand()*3)}:null);
   let sequence = 0;
   const shortRun = String(runId).replace(/[^a-z0-9]/gi, '').slice(-8).toUpperCase();
   const nextId = () => `SYN-${shortRun}-${String(++sequence).padStart(6, '0')}`;
   const choose = list => list[Math.floor(rand() * list.length)];
-  const makeTime = (day, type) => {
-    // Activity is lighter overnight; deposits and withdrawals get independent minute/second stamps.
-    const hour = rand() < 0.035 ? Math.floor(rand() * 4) : type === 'deposit' ? 6 + Math.floor(rand() * 13) : 19 + Math.floor(rand() * 5);
+  const makeTime = day => {
+    // Night activity is sparse; each day may also contain a quiet 1–3 hour interval.
+    const quiet=quietWindows[day];let hour=0,attempts=0;
+    do{
+      const band=rand();
+      if(band<0.025)hour=rand()*5;
+      else if(band<0.19)hour=5+rand()*4;
+      else if(band<0.50)hour=9+rand()*4;
+      else if(band<0.82)hour=13+rand()*5;
+      else hour=18+rand()*6;
+      attempts++;
+    }while(quiet&&hour>=quiet.start&&hour<quiet.start+quiet.length&&attempts<12);
     const minute = Math.floor(rand() * 60), second = Math.floor(rand() * 60);
-    return new Date(firstDay + day * DAY_MS + hour * 3600000 + minute * 60000 + second * 1000);
+    return new Date(firstDay + day * DAY_MS + Math.floor(hour * 3600000) + minute * 60000 + second * 1000);
   };
   const makeRequest = (user, type, amount, day, decision, network) => {
-    const created = makeTime(day, type), dayEnd = Math.floor(created.getTime() / DAY_MS) * DAY_MS + DAY_MS - 1000;
+    const created = makeTime(day), dayEnd = Math.floor(created.getTime() / DAY_MS) * DAY_MS + DAY_MS - 1000;
     const decided = new Date(Math.min(created.getTime() + (2 + Math.floor(rand() * 49)) * 60000, dayEnd)), id = nextId();
     return {
       transaction: {
@@ -92,12 +155,14 @@ function makeSyntheticTransactions({ runId, users, startDate, days = 90, teamAcc
     let collected = 0;
     const depositedToday = [];
     while (collected < target) {
-      const amount = Math.min(depositAmount(), cents(target - collected));
-      if (amount < MIN_DEPOSIT) {
+      const plannedAmount=depositAmount(),amount=Math.min(plannedAmount,cents(target-collected));
+      const truncatedFinalAmount=amount<plannedAmount;
+      if (amount < MIN_DEPOSIT || (truncatedFinalAmount && amount < 90)) {
         if (collected === 0) break;
         const last = depositedToday[depositedToday.length - 1];
-        if (last && last.transaction.amount + amount <= MAX_TRANSACTION) {
-          last.transaction.amount = cents(last.transaction.amount + amount);
+        const mergedAmount=last?cents(last.transaction.amount+amount):null;
+        if (last && mergedAmount <= MAX_TRANSACTION && (mergedAmount < 70 || mergedAmount >= 90)) {
+          last.transaction.amount = mergedAmount;
           last.transaction.requestedAmount = last.transaction.amount;
           last.decision.approvedAmount = last.transaction.amount;
           balances.set(String(last.transaction.userId), cents((balances.get(String(last.transaction.userId)) || 0) + amount));
@@ -143,4 +208,4 @@ function makeSyntheticTransactions({ runId, users, startDate, days = 90, teamAcc
   return rows;
 }
 
-module.exports = { makeSyntheticIdentity, makeSyntheticMembers, makeSyntheticTransactions };
+module.exports = { makeSyntheticIdentity, makeSyntheticUsername, makeSyntheticMembers, makeSyntheticTransactions, makeSyntheticWallets, walletForSyntheticDeposit };
