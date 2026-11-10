@@ -2,6 +2,9 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const XLSX = require('xlsx');
+const mammoth = require('mammoth');
+const cheerio = require('cheerio');
 let Pool = null;
 try { ({ Pool } = require('pg')); } catch (_) { /* PostgreSQL is optional for local development. */ }
 const { getMarketUsdtTry, getMarketSnapshot, calc, makeQuote } = require('./rates');
@@ -226,12 +229,30 @@ async function pgInit(){
   if(!pool){await bootstrapTeamAccounts();return;}
   await pool.query(`CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY, first_name TEXT NOT NULL, last_name TEXT NOT NULL, email TEXT UNIQUE NOT NULL,
-    phone TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'user', balance NUMERIC(20,8) NOT NULL DEFAULT 0,
-    referral_earnings NUMERIC(20,8) NOT NULL DEFAULT 0, referral_code TEXT UNIQUE NOT NULL, referred_by TEXT,
+    phone TEXT UNIQUE, password_hash TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'user', balance NUMERIC(20,8) NOT NULL DEFAULT 0,
+    referral_earnings NUMERIC(20,8) NOT NULL DEFAULT 0, referral_code TEXT UNIQUE NOT NULL DEFAULT ('SAFE-' || upper(replace(gen_random_uuid()::text,'-',''))), referred_by TEXT,
     two_factor_enabled BOOLEAN NOT NULL DEFAULT FALSE, phone_verified BOOLEAN NOT NULL DEFAULT FALSE,
     email_verified BOOLEAN NOT NULL DEFAULT FALSE, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );`);
+  await pool.query("ALTER TABLE users ALTER COLUMN id SET DEFAULT ('USR-' || upper(replace(gen_random_uuid()::text,'-','')))");
+  await pool.query('ALTER TABLE users ALTER COLUMN phone DROP NOT NULL');
+  await pool.query("ALTER TABLE users ALTER COLUMN referral_code SET DEFAULT ('SAFE-' || upper(replace(gen_random_uuid()::text,'-','')))");
+  await pool.query(`CREATE OR REPLACE FUNCTION safepays_fill_referral_code()
+    RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN
+      IF NEW.referral_code IS NULL OR BTRIM(NEW.referral_code) = '' THEN
+        NEW.referral_code := 'SAFE-' || upper(replace(gen_random_uuid()::text,'-',''));
+      END IF;
+      RETURN NEW;
+    END $$`);
+  await pool.query(`DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgrelid='users'::regclass AND tgname='trg_users_referral_code' AND NOT tgisinternal) THEN
+        EXECUTE 'CREATE TRIGGER trg_users_referral_code BEFORE INSERT ON users FOR EACH ROW EXECUTE FUNCTION safepays_fill_referral_code()';
+      END IF;
+    END $$`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT;`);
+  await pool.query('ALTER TABLE users ALTER COLUMN username DROP NOT NULL');
   await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username_lower ON users (LOWER(username));`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret TEXT;`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS kyc_status TEXT NOT NULL DEFAULT 'not_started';`);
@@ -246,9 +267,10 @@ async function pgInit(){
   await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS is_synthetic BOOLEAN NOT NULL DEFAULT FALSE');
   await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS test_run_id TEXT');
   await pool.query(`CREATE TABLE IF NOT EXISTS transactions (
-    id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), type TEXT NOT NULL, amount NUMERIC(20,8) NOT NULL,
+    id TEXT PRIMARY KEY DEFAULT ('TX-' || upper(replace(gen_random_uuid()::text,'-',''))), user_id TEXT NOT NULL REFERENCES users(id), type TEXT NOT NULL, amount NUMERIC(20,8) NOT NULL,
     currency TEXT NOT NULL DEFAULT 'USDT', network TEXT, status TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), tx_hash TEXT
   );`);
+  await pool.query("ALTER TABLE transactions ALTER COLUMN id SET DEFAULT ('TX-' || upper(replace(gen_random_uuid()::text,'-','')))");
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS address TEXT');
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS wallet_id TEXT');
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS request_key TEXT');
@@ -387,6 +409,25 @@ async function addLedgerEntry({userId,transactionId=null,direction,amount,curren
   return entry;
 }
 async function insertUser(user, client=null){
+  let existingUsers=null;
+  if(!user.id||!String(user.referralCode||'').trim())existingUsers=await getUsers();
+  if(!user.id)user.id=makeUserId(existingUsers);
+  if(!user.passwordHash||!String(user.passwordHash).startsWith('scrypt$'))throw new Error('password_hash_required');
+  if(!user.referralCode||!String(user.referralCode).trim()){
+    const used=new Set(existingUsers.map(item=>String(item.referralCode||'').trim().toUpperCase()).filter(Boolean));
+    let referralCode='';
+    do{referralCode=`SAFE-${crypto.randomBytes(6).toString('hex').toUpperCase()}`;}while(used.has(referralCode));
+    user.referralCode=referralCode;
+  }
+  user.username=String(user.username||'').trim()||null;
+  user.phone=String(user.phone||'').trim()||null;
+  user.role=user.role||'user';
+  user.balance=user.balance??0;
+  user.referralEarnings=user.referralEarnings??0;
+  user.twoFactorEnabled=!!user.twoFactorEnabled;
+  user.phoneVerified=!!user.phoneVerified;
+  user.emailVerified=!!user.emailVerified;
+  user.createdAt=user.createdAt||new Date().toISOString();
   if(!pool){const db=readDb();db.users.push(user);writeDb(db);return;}
   await (client||pool).query('INSERT INTO users (id,first_name,last_name,email,username,phone,password_hash,role,balance,referral_earnings,referral_code,referred_by,two_factor_enabled,phone_verified,email_verified,created_at,is_test_account,is_synthetic,test_run_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)',[user.id,user.firstName,user.lastName,user.email,user.username,user.phone,user.passwordHash,user.role,user.balance,user.referralEarnings,user.referralCode,user.referredBy||null,user.twoFactorEnabled,user.phoneVerified,user.emailVerified,user.createdAt,!!user.isTestAccount,!!user.isSynthetic,user.testRunId||null]);
 }
@@ -751,6 +792,27 @@ function isValidAddress(n,a){
 }
 function makeUserId(existing=[]){ let id=''; do{id=String(crypto.randomInt(10000000,100000000));}while(existing.some(u=>String(u.id)===id)); return id; }
 function makeTxId(){ const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; return Array.from({length:10},()=>chars[crypto.randomInt(0,chars.length)]).join(''); }
+function parseManagementDate(value){
+  if(value instanceof Date&&!Number.isNaN(value.getTime()))return value.toISOString();
+  const raw=String(value??'').trim();if(!raw)return null;
+  let match=raw.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+  if(match){const [,day,month,year,hour='12',minute='00',second='00']=match;const date=new Date(Date.UTC(Number(year),Number(month)-1,Number(day),Number(hour),Number(minute),Number(second)));if(date.getUTCFullYear()!==Number(year)||date.getUTCMonth()!==Number(month)-1||date.getUTCDate()!==Number(day))return null;return date.toISOString();}
+  const date=new Date(raw);return Number.isNaN(date.getTime())?null:date.toISOString();
+}
+function managementNumber(value){if(value===null||value===undefined||String(value).trim()==='')return null;let raw=String(value).trim().replace(/[\s\u00a0]/g,'');if(raw.includes(',')&&raw.includes('.'))raw=raw.lastIndexOf(',')>raw.lastIndexOf('.')?raw.replace(/\./g,'').replace(',','.'):raw.replace(/,/g,'');else if(raw.includes(',')){const parts=raw.split(',');raw=parts.length>1&&parts.at(-1).length===3?parts.join(''):raw.replace(',','.');}const n=Number(raw);return Number.isFinite(n)?n:null;}
+function generatedMemberPassword(){return crypto.randomBytes(18).toString('base64url');}
+function managementTransaction(row,userId,actor,now){
+  const rawType=String(row.transactionType||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const type=['deposit','yatirim','yatirim islemi'].includes(rawType)?'deposit':['withdrawal','cekim','cekim islemi'].includes(rawType)?'withdrawal':rawType;
+  const amount=managementNumber(row.transactionAmount);
+  if(!type&&! (amount>0))return null;
+  if(!['deposit','withdrawal'].includes(type)||!Number.isFinite(amount)||amount<=0)throw new Error('invalid_import_transaction');
+  const rawStatus=String(row.transactionStatus||'approved').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const status=['onayli','onaylandi','approved'].includes(rawStatus)?'approved':['bekliyor','pending'].includes(rawStatus)?'pending':['reddedildi','rejected'].includes(rawStatus)?'rejected':rawStatus;
+  if(!['pending','approved','rejected'].includes(status))throw new Error('invalid_import_transaction_status');
+  const createdAt=parseManagementDate(row.transactionDate)||now;
+  return {id:makeTxId(),userId,type,amount,currency:'USDT',network:String(row.network||'').trim().slice(0,30)||null,status,createdAt,txHash:null,requestedAmount:amount,receivedAmount:null,decisionBy:status==='approved'?actor:null,decisionAt:status==='approved'?now:null,isSynthetic:false,testRunId:null};
+}
 function currentBalance(u){return Number(u.balance||0);}
 async function requestCooldownRemaining(userId,type){
   const limits=await getRequestLimits(),duration=Number(limits[type==='deposit'?'depositCooldownSeconds':'withdrawalCooldownSeconds']||0)*1000;
@@ -1178,6 +1240,156 @@ async function route(req,res){
     const finance=buildFinanceReconciliation(financeTransactions,{startDate,endDate,runId:testRunId,commissionRate,commissionEnabled,commissionPercent,commissionByTeam,teamForTransaction});
     if(commissionEnabled&&finance.totals.deposit)finance.commissionPercent=finance.totals.commission/finance.totals.deposit*100;
     return json(res,200,{...finance,lifetimeSettlement:lifetimeSettlement?{...lifetimeSettlement,scope:owner?'teams':'team'}:null,run:run?{id:run.id,targetUserId:run.targetUserId,teamAccountId:run.teamAccountId,createdAt:run.createdAt,memberCount:Number(run.memberCount),transactionCount:Number(run.transactionCount),testData:true}:null});
+  }
+  if(adminQuery.pathname==='/api/admin/data-tools/parse'&&req.method==='POST'){
+    if(!owner)return json(res,403,{error:'owner_only'});
+    const b=await body(req,12e6),name=String(b.fileName||''),encoded=String(b.fileBase64||'').replace(/^data:[^,]*,/,'');
+    if(!encoded||encoded.length>11e6||!/^[A-Za-z0-9+/]*={0,2}$/.test(encoded))return json(res,400,{error:'invalid_import_file'});
+    const buffer=Buffer.from(encoded,'base64');if(!buffer.length||buffer.length>8*1024*1024)return json(res,413,{error:'import_file_too_large',message:'Dosya en fazla 8 MB olabilir.'});
+    const ext=path.extname(name).toLowerCase();let rows=[];
+    try{
+      if(['.xlsx','.xls','.csv','.tsv'].includes(ext)){
+        const workbook=XLSX.read(buffer,{type:'buffer',cellDates:true}),sheet=workbook.Sheets[workbook.SheetNames[0]];
+        if(!sheet)return json(res,400,{error:'import_sheet_missing'});
+        rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:'',raw:false,blankrows:false}).slice(0,1001);
+      }else if(ext==='.docx'){
+        const converted=await mammoth.convertToHtml({buffer},{convertImage:async()=>({src:''})}),$=cheerio.load(converted.value);
+        $('table').first().find('tr').each((_,tr)=>{rows.push($(tr).find('th,td').map((__,cell)=>$(cell).text().trim()).get());});rows=rows.slice(0,1001);
+      }else return json(res,400,{error:'unsupported_import_file',message:'Excel, CSV/TSV veya Word (.docx) dosyası seçin.'});
+    }catch(_){return json(res,400,{error:'import_file_unreadable',message:'Dosya okunamadı. İlk sayfada başlık satırı ve düzenli bir tablo bulunduğunu kontrol edin.'});}
+    rows=rows.filter(row=>Array.isArray(row)&&row.some(cell=>String(cell??'').trim()!==''));
+    if(rows.length<2)return json(res,400,{error:'import_table_empty',message:'Başlık satırı ve en az bir veri satırı içeren tablo bulunamadı.'});
+    if(rows.length>1001||rows.some(row=>row.length>30))return json(res,400,{error:'import_table_too_large',message:'Bir dosyada en fazla 1.000 satır ve 30 sütun içe aktarılabilir.'});
+    return json(res,200,{headers:rows[0].map(value=>String(value??'').trim().slice(0,100)),rows:rows.slice(1)});
+  }
+  if(adminQuery.pathname==='/api/admin/data-tools/users'&&req.method==='GET'){
+    if(!owner)return json(res,403,{error:'owner_only'});
+    const q=(adminQuery.searchParams.get('q')||'').trim().toLowerCase();
+    const users=(await getUsers()).filter(user=>isProductionUser(user)&&(!q||[user.id,user.firstName,user.lastName,user.email,user.username,user.phone].filter(Boolean).join(' ').toLowerCase().includes(q))).sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0)).slice(0,300);
+    return json(res,200,{users:users.map(safeUser),limit:300});
+  }
+  if(adminQuery.pathname==='/api/admin/data-tools/import'&&req.method==='POST'){
+    if(!owner)return json(res,403,{error:'owner_only'});
+    const b=await body(req,5e6),inputRows=Array.isArray(b.rows)?b.rows:[];
+    if(!inputRows.length||inputRows.length>1000)return json(res,400,{error:'invalid_import_rows',message:'İçe aktarımda 1–1.000 satır olmalı.'});
+    const rows=inputRows.map(row=>({firstName:String(row?.firstName??'').trim().slice(0,100),lastName:String(row?.lastName??'').trim().slice(0,100),email:String(row?.email??'').trim().toLowerCase().slice(0,254),username:String(row?.username??'').trim().slice(0,50),phone:String(row?.phone??'').trim().slice(0,40),password:String(row?.password??''),balanceRaw:String(row?.balance??'').trim(),balance:managementNumber(row?.balance),transactionDate:row?.transactionDate??'',transactionType:String(row?.transactionType??'').trim().toLowerCase(),transactionAmountRaw:String(row?.transactionAmount??'').trim(),transactionAmount:managementNumber(row?.transactionAmount),transactionStatus:String(row?.transactionStatus??'').trim().toLowerCase(),network:String(row?.network??'').trim().slice(0,30),teamEmail:String(row?.teamEmail??'').trim().toLowerCase().slice(0,254)}));
+    const emails=new Set();
+    for(const row of rows){
+      if(!validEmail(row.email))return json(res,400,{error:'invalid_import_email',message:`Geçersiz e-posta: ${row.email||'(boş)'}`});
+      if(emails.has(row.email))return json(res,400,{error:'duplicate_import_email',message:`Dosyada aynı e-posta birden fazla kez var: ${row.email}`});emails.add(row.email);
+      if(row.balanceRaw&&row.balance===null)return json(res,400,{error:'invalid_import_balance',message:`Bakiye değeri sayı değil: ${row.email}`});
+      if(row.transactionAmountRaw&&row.transactionAmount===null)return json(res,400,{error:'invalid_import_transaction_amount',message:`İşlem tutarı sayı değil: ${row.email}`});
+      if((row.balance!==null&&row.balance<0)||(row.balance!==null&&row.balance>1e15))return json(res,400,{error:'invalid_import_balance',message:`Bakiye değerini kontrol edin: ${row.email}`});
+      if(row.password&&(row.password.length<8||row.password.length>256))return json(res,400,{error:'invalid_import_password',message:`Şifre 8–256 karakter olmalı: ${row.email}`});
+      if(String(row.transactionDate||'').trim()&&!parseManagementDate(row.transactionDate))return json(res,400,{error:'invalid_import_date',message:`İşlem tarihi okunamadı: ${row.email}`});
+      try{managementTransaction(row,'pending',owner.email,new Date().toISOString());}catch(error){return json(res,400,{error:error.message,message:`İşlem türü veya tutarı hatalı: ${row.email}`});}
+      if(row.teamEmail&&!validEmail(row.teamEmail))return json(res,400,{error:'invalid_team_email',message:`Ekip e-postasını kontrol edin: ${row.email}`});
+    }
+    const updateExisting=b.updateExisting===true,skipExistingRows=b.skipExistingRows===true,applyTransactionsToBalance=b.applyTransactionsToBalance===true,now=new Date().toISOString(),batchId=`IMP-${crypto.randomBytes(6).toString('hex').toUpperCase()}`;
+    const result={batchId,created:0,updated:0,skipped:0,transactions:0,balanceAdjustments:0,generatedCredentials:[]};let client=null,db=null,collateralEvents=[];
+    try{
+      if(pool){client=await pool.connect();await client.query('BEGIN');}else db=readDb();
+      const knownUsers=pool?await getUsers():(db.users=db.users||[]),usedIds=[...knownUsers],knownTransactions=pool?await getTransactions():(db.transactions=db.transactions||[]);
+      for(const row of rows){
+        let user;
+        if(pool){const found=await client.query('SELECT id,first_name AS "firstName",last_name AS "lastName",email,username,phone,balance,role,is_test_account AS "isTestAccount",is_synthetic AS "isSynthetic",test_run_id AS "testRunId" FROM users WHERE lower(email)=lower($1) FOR UPDATE',[row.email]);user=found.rows[0]||null;}
+        else user=db.users.find(item=>String(item.email||'').toLowerCase()===row.email)||null;
+        if(user&&!isProductionUser(user))throw new Error('import_test_user_blocked');
+        if(user&&!updateExisting){result.skipped++;if(skipExistingRows)continue;}
+        if(!user&&(!row.firstName||!row.lastName))throw new Error(`import_name_required:${row.email}`);
+        if(user){
+          if(updateExisting){
+            const patch={};if(row.firstName)patch.firstName=row.firstName;if(row.lastName)patch.lastName=row.lastName;if(row.username)patch.username=row.username;if(row.phone)patch.phone=normalizePhone(row.phone)||row.phone;
+            if(pool){const updates=[],values=[];for(const [key,value] of Object.entries(patch)){const column={firstName:'first_name',lastName:'last_name',username:'username',phone:'phone'}[key];values.push(value);updates.push(`${column}=$${values.length}`);}if(updates.length){values.push(user.id);await client.query(`UPDATE users SET ${updates.join(',')} WHERE id=$${values.length}`,values);Object.assign(user,patch);}}
+            else Object.assign(user,patch);
+            result.updated++;
+          }
+        }else{
+          const password=row.password||generatedMemberPassword(),created={id:makeUserId(usedIds),firstName:row.firstName,lastName:row.lastName,email:row.email,username:row.username||null,phone:row.phone?(normalizePhone(row.phone)||row.phone):null,passwordHash:hashPassword(password),role:'user',balance:0,referralEarnings:0,referralCode:`SAFE-${crypto.randomBytes(6).toString('hex').toUpperCase()}`,referredBy:null,twoFactorEnabled:false,phoneVerified:false,emailVerified:false,createdAt:now};
+          if(pool)await insertUser(created,client);else db.users.push(created);
+          user=created;usedIds.push(created);knownUsers.push(created);result.created++;
+          if(!row.password)result.generatedCredentials.push({id:user.id,email:user.email,password});
+        }
+        const importedTx=managementTransaction(row,user.id,owner.email,now);
+        if(importedTx){
+          if(row.teamEmail){const team=(await getTeamAccounts()).find(item=>item.email.toLowerCase()===row.teamEmail);if(!team)throw new Error(`import_team_not_found:${row.teamEmail}`);importedTx.teamAccountId=team.id;}
+          if(pool){await insertTransaction(importedTx,client);knownTransactions.push(importedTx);}else db.transactions.unshift(importedTx);
+          if(importedTx.teamAccountId){const wallets=await getWalletAddresses(),exposure=teamCollateralMetrics(importedTx.teamAccountId,knownTransactions,wallets,await getDepositIntents()).collateralExposure,synced=await syncTeamCollateral({teamId:importedTx.teamAccountId,exposure,client,dbState:db,at:now});collateralEvents.push({teamAccountId:importedTx.teamAccountId,transactionId:importedTx.id,autoPaused:!!synced.autoPausedTeamAccountId,autoResumed:!!synced.autoResumedTeamAccountId});}
+          result.transactions++;
+          if(applyTransactionsToBalance&&row.balance===null&&importedTx.status==='approved')await addLedgerEntry({userId:user.id,transactionId:importedTx.id,direction:importedTx.type==='deposit'?'credit':'debit',amount:importedTx.amount,currency:importedTx.currency,reason:'Toplu içe aktarılan onaylı işlem',metadata:{source:'owner_data_import',batchId,effectiveAt:importedTx.createdAt},createdAt:now},client,db);
+        }
+        if(row.balance!==null){
+          const current=pool?Number((await client.query('SELECT balance FROM users WHERE id=$1 FOR UPDATE',[user.id])).rows[0]?.balance||0):Number(user.balance||0),delta=Number((row.balance-current).toFixed(8));
+          if(delta){await addLedgerEntry({userId:user.id,direction:delta>0?'credit':'debit',amount:Math.abs(delta),currency:'USDT',reason:'Toplu içe aktarımla bakiye düzeltmesi',metadata:{source:'owner_data_import',batchId,effectiveAt:parseManagementDate(row.transactionDate)||null,targetBalance:row.balance},createdAt:now},client,db);result.balanceAdjustments++;}
+        }
+      }
+      if(pool)await client.query('COMMIT');else writeDb(db);
+    }catch(error){
+      if(pool&&client)await client.query('ROLLBACK');
+      if(error.code==='23505')return json(res,409,{error:'import_unique_conflict',message:'E-posta, kullanıcı adı veya telefon başka bir hesapta kullanılıyor. Dosyayı düzeltip tekrar deneyin.'});
+      if(error.message==='invalid_ledger_amount'||error.message==='negative_balance')return json(res,409,{error:error.message,message:'İşlem/bakiye değişikliği sıfırın altına düşeceği için aktarım iptal edildi.'});
+      if(error.message==='invalid_import_transaction'||error.message==='invalid_import_transaction_status')return json(res,400,{error:error.message,message:'İşlem türü, tutarı veya durumu geçersiz.'});
+      if(error.message==='import_test_user_blocked')return json(res,409,{error:error.message,message:'Test hesabı içe aktarım aracıyla değiştirilemez.'});
+      if(error.message==='team_collateral_limit_exceeded')return json(res,409,{error:error.message,message:'İşlemlerden biri ekip teminat sınırını aşacağı için dosyanın tamamı uygulanmadı.'});
+      if(error.message.startsWith('import_name_required:'))return json(res,400,{error:'import_name_required',message:`Yeni üye için ad ve soyad gerekli: ${error.message.split(':').slice(1).join(':')}`});
+      if(error.message.startsWith('import_team_not_found:'))return json(res,400,{error:'import_team_not_found',message:`Ekip hesabı bulunamadı: ${error.message.split(':').slice(1).join(':')}`});throw error;
+    }finally{if(client)client.release();}
+    addAudit('owner_data_import',owner.email,{batchId,created:result.created,updated:result.updated,skipped:result.skipped,transactions:result.transactions,balanceAdjustments:result.balanceAdjustments});for(const event of collateralEvents){if(event.autoPaused)addAudit('team_account_collateral_auto_paused',event.teamAccountId,{teamAccountId:event.teamAccountId,transactionId:event.transactionId});if(event.autoResumed)addAudit('team_account_collateral_auto_resumed',event.teamAccountId,{teamAccountId:event.teamAccountId,transactionId:event.transactionId});}
+    return json(res,200,{ok:true,...result});
+  }
+  if(adminQuery.pathname==='/api/admin/data-tools/balance'&&req.method==='POST'){
+    if(!owner)return json(res,403,{error:'owner_only'});
+    const b=await body(req),id=String(b.userId||'').trim(),target=managementNumber(b.targetBalance),reason=String(b.reason||'').trim().slice(0,250);
+    if(!id||target===null||target<0||target>1e15||reason.length<4)return json(res,400,{error:'invalid_balance_adjustment',message:'Üye, sıfır veya üstü hedef bakiye ve en az 4 karakter açıklama girin.'});
+    const now=new Date().toISOString();let user,delta=0,client=null,db=null;
+    try{
+      if(pool){client=await pool.connect();await client.query('BEGIN');const r=await client.query('SELECT id,balance,is_test_account AS "isTestAccount",is_synthetic AS "isSynthetic",test_run_id AS "testRunId" FROM users WHERE id=$1 FOR UPDATE',[id]);user=r.rows[0];}
+      else{db=readDb();user=db.users.find(item=>String(item.id)===id);}
+      if(!user||!isProductionUser(user)){if(pool)await client.query('ROLLBACK');return json(res,404,{error:'user_not_found'});}
+      delta=Number((target-Number(user.balance||0)).toFixed(8));if(delta)await addLedgerEntry({userId:id,direction:delta>0?'credit':'debit',amount:Math.abs(delta),currency:'USDT',reason,metadata:{source:'owner_data_tools',actor:owner.email,targetBalance:target},createdAt:now},client,db);
+      if(pool)await client.query('COMMIT');else writeDb(db);
+    }catch(error){if(pool&&client)await client.query('ROLLBACK');if(error.message==='negative_balance')return json(res,409,{error:'negative_balance',message:'Bu düzeltme sıfırın altında bakiye oluşturuyor.'});throw error;}finally{if(client)client.release();}
+    addAudit('owner_balance_adjusted',owner.email,{userId:id,targetBalance:target,delta,reason});return json(res,200,{ok:true,userId:id,balance:target,delta});
+  }
+  if(adminQuery.pathname==='/api/admin/data-tools/transaction'&&req.method==='POST'){
+    if(!owner)return json(res,403,{error:'owner_only'});
+    const b=await body(req),userKey=String(b.userId||b.email||'').trim(),type=String(b.type||'').trim().toLowerCase(),amount=managementNumber(b.amount),status=String(b.status||'approved').trim().toLowerCase(),applyBalance=b.applyToBalance===true,createdAt=parseManagementDate(b.createdAt)||new Date().toISOString();
+    if(!userKey||!['deposit','withdrawal'].includes(type)||!Number.isFinite(amount)||amount<=0||!['pending','approved','rejected'].includes(status)||String(b.createdAt||'').trim()&&!parseManagementDate(b.createdAt))return json(res,400,{error:'invalid_manual_transaction',message:'Üye, yatırım/çekim türü, geçerli tutar, durum ve tarih bilgilerini kontrol edin.'});
+    if(applyBalance&&status!=='approved')return json(res,400,{error:'only_approved_affects_balance',message:'Bakiyeye yalnızca onaylı işlem uygulanabilir.'});
+    const now=new Date().toISOString(),id=makeTxId();let user,client=null,db=null,tx,collateralSync=null;
+    try{
+      if(pool){client=await pool.connect();await client.query('BEGIN');const r=await client.query('SELECT id,is_test_account AS "isTestAccount",is_synthetic AS "isSynthetic",test_run_id AS "testRunId" FROM users WHERE id=$1 OR lower(email)=lower($1) FOR UPDATE',[userKey]);user=r.rows[0]||null;}
+      else{db=readDb();user=db.users.find(item=>String(item.id)===userKey||String(item.email||'').toLowerCase()===userKey.toLowerCase())||null;}
+      if(!user||!isProductionUser(user)){if(pool)await client.query('ROLLBACK');return json(res,404,{error:'user_not_found'});}
+      tx={id,userId:user.id,type,amount,currency:String(b.currency||'USDT').trim().slice(0,10)||'USDT',network:String(b.network||'').trim().slice(0,30)||null,status,createdAt,txHash:null,requestedAmount:amount,receivedAmount:null,decisionBy:status==='approved'?owner.email:null,decisionAt:status==='approved'?now:null,teamAccountId:null,isSynthetic:false,testRunId:null};
+      if(b.teamEmail){const team=(await getTeamAccounts()).find(item=>item.email.toLowerCase()===String(b.teamEmail).trim().toLowerCase());if(!team)throw new Error('team_not_found');tx.teamAccountId=team.id;}
+      if(tx.teamAccountId){const transactions=pool?await getTransactions():db.transactions||[];if(pool)transactions.push(tx);else{db.transactions=transactions;db.transactions.unshift(tx);}const wallets=await getWalletAddresses(),exposure=teamCollateralMetrics(tx.teamAccountId,transactions,wallets,await getDepositIntents()).collateralExposure;collateralSync=await syncTeamCollateral({teamId:tx.teamAccountId,exposure,client,dbState:db,at:now});}
+      if(pool)await insertTransaction(tx,client);else if(!tx.teamAccountId){db.transactions=db.transactions||[];db.transactions.unshift(tx);}
+      if(applyBalance)await addLedgerEntry({userId:user.id,transactionId:id,direction:type==='deposit'?'credit':'debit',amount,currency:tx.currency,reason:String(b.reason||'Owner tarafından eklenen onaylı işlem').trim().slice(0,250),metadata:{source:'owner_data_tools',actor:owner.email,effectiveAt:createdAt},createdAt:now},client,db);
+      if(pool)await client.query('COMMIT');else writeDb(db);
+    }catch(error){if(pool&&client)await client.query('ROLLBACK');if(error.code==='23505')return json(res,409,{error:'duplicate_transaction'});if(error.message==='negative_balance')return json(res,409,{error:'negative_balance',message:'Çekim bakiyeyi sıfırın altına düşüreceği için eklenmedi.'});if(error.message==='team_not_found')return json(res,400,{error:'team_not_found',message:'Ekip hesabı bulunamadı.'});if(error.message==='team_collateral_limit_exceeded')return json(res,409,{error:error.message,message:'Bu işlem ekip teminat sınırını aşıyor.'});throw error;}finally{if(client)client.release();}
+    addAudit('owner_transaction_added',owner.email,{transactionId:id,userId:user.id,type,amount,status,appliedToBalance:applyBalance,teamAccountId:tx.teamAccountId,createdAt});if(collateralSync?.autoPausedTeamAccountId)addAudit('team_account_collateral_auto_paused',tx.teamAccountId,{teamAccountId:tx.teamAccountId,transactionId:id});if(collateralSync?.autoResumedTeamAccountId)addAudit('team_account_collateral_auto_resumed',tx.teamAccountId,{teamAccountId:tx.teamAccountId,transactionId:id});return json(res,201,{ok:true,transaction:tx});
+  }
+  const reverseManualTxMatch=adminQuery.pathname.match(/^\/api\/admin\/data-tools\/transactions\/([^/]+)$/);
+  if(reverseManualTxMatch&&req.method==='POST'){
+    if(!owner)return json(res,403,{error:'owner_only'});
+    const id=decodeURIComponent(reverseManualTxMatch[1]),now=new Date().toISOString();let client=null,db=null,tx,linkedLedger=[],collateralSync=null;
+    try{
+      if(pool){client=await pool.connect();await client.query('BEGIN');const t=await client.query('SELECT id,user_id AS "userId",type,amount,status,team_account_id AS "teamAccountId",is_synthetic AS "isSynthetic",test_run_id AS "testRunId" FROM transactions WHERE id=$1 FOR UPDATE',[id]);tx=t.rows[0];if(tx){const l=await client.query('SELECT id,direction,metadata FROM ledger_entries WHERE transaction_id=$1',[id]);linkedLedger=l.rows;}}
+      else{db=readDb();tx=db.transactions.find(item=>String(item.id)===id);linkedLedger=(db.ledger||[]).filter(item=>String(item.transactionId||'')===id);}
+      const transactionUser=tx?(pool?(await client.query('SELECT is_test_account AS "isTestAccount",is_synthetic AS "isSynthetic" FROM users WHERE id=$1',[tx.userId])).rows[0]:db.users.find(item=>String(item.id)===String(tx.userId))):null;
+      if(!tx||!isProductionTransaction(tx)||!isProductionUser(transactionUser)){if(pool)await client.query('ROLLBACK');return json(res,404,{error:'transaction_not_found'});}
+      if(['reversed','cancelled'].includes(String(tx.status||'').toLowerCase())){if(pool)await client.query('ROLLBACK');return json(res,409,{error:'transaction_already_closed'});}
+      const wasApproved=tx.status==='approved',hasFinancialEntry=linkedLedger.some(item=>!item.metadata?.reversalOf);
+      if(wasApproved&&hasFinancialEntry)await addLedgerEntry({userId:tx.userId,transactionId:id,direction:tx.type==='deposit'?'debit':'credit',amount:Number(tx.amount),currency:'USDT',reason:'Onaylı işlem geri alındı',metadata:{source:'owner_data_tools',reversalOf:id,actor:owner.email},createdAt:now},client,db);
+      const nextStatus=wasApproved?'reversed':'cancelled';
+      if(pool){
+        await client.query('UPDATE transactions SET status=$1,decision_by=$2,decision_at=$3 WHERE id=$4',[nextStatus,owner.email,now,id]);
+        if(tx.type==='deposit'||tx.type==='withdrawal'){const all=await getTransactions(),current=all.find(item=>item.id===id);if(current)current.status=nextStatus;const wallets=await getWalletAddresses(),teamId=current?transactionTeamId(current,all,new Map(wallets.map(wallet=>[wallet.id,wallet]))):null;if(teamId){const exposure=teamCollateralMetrics(teamId,all,wallets,await getDepositIntents()).collateralExposure;collateralSync=await syncTeamCollateral({teamId,exposure,client,at:now});tx.teamAccountId=teamId;}}
+        await client.query('COMMIT');
+      }else{tx.status=nextStatus;tx.decisionBy=owner.email;tx.decisionAt=now;const wallets=db.walletAddresses||[],teamId=transactionTeamId(tx,db.transactions,new Map(wallets.map(wallet=>[wallet.id,wallet])));if(teamId){const exposure=teamCollateralMetrics(teamId,db.transactions,wallets,db.depositIntents||[]).collateralExposure;collateralSync=await syncTeamCollateral({teamId,exposure,dbState:db,at:now});tx.teamAccountId=teamId;}writeDb(db);}
+    }catch(error){if(pool&&client)await client.query('ROLLBACK');if(error.message==='negative_balance')return json(res,409,{error:'negative_balance',message:'Ters kayıt bakiyeyi sıfırın altına düşürür; önce bakiye düzeltmesi gerekir.'});throw error;}finally{if(client)client.release();}
+    const nextStatus=tx.status==='approved'?'reversed':'cancelled';addAudit('owner_transaction_reversed',owner.email,{transactionId:id,userId:tx.userId,type:tx.type,amount:tx.amount,status:nextStatus});if(collateralSync?.autoPausedTeamAccountId)addAudit('team_account_collateral_auto_paused',tx.teamAccountId,{teamAccountId:tx.teamAccountId,transactionId:id});if(collateralSync?.autoResumedTeamAccountId)addAudit('team_account_collateral_auto_resumed',tx.teamAccountId,{teamAccountId:tx.teamAccountId,transactionId:id});return json(res,200,{ok:true,status:nextStatus});
   }
   if(adminQuery.pathname==='/api/admin/stats' && req.method==='GET'){
     if(!admin)return json(res,401,{error:'unauthorized'}); const allUsers=await getUsers(),allTx=await getTransactions();

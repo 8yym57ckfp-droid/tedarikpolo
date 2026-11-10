@@ -4,13 +4,17 @@
   "private": true,
   "description": "Safepays account and transaction API with PostgreSQL persistence",
   "scripts": {
-    "start": "node server/server.js"
+    "start": "node server/server.js",
+    "hash-password": "node server/hash-password.js"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
+    "@netlify/blobs": "^10.5.0",
+    "cheerio": "1.0.0",
+    "mammoth": "1.13.0",
     "pg": "^8.16.3",
-    "@netlify/blobs": "^10.5.0"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   }
 }

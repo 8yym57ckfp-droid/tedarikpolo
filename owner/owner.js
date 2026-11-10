@@ -14,6 +14,7 @@
     users:'<circle cx="9" cy="8" r="3"/><path d="M3.5 19c.5-3.5 2.3-5 5.5-5s5 1.5 5.5 5"/><path d="M16 5.5a3 3 0 0 1 0 5.5"/><path d="M16 14c2.5.3 4 1.8 4.5 5"/>',
     news:'<path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/>',
     settings:'<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.1l2-1.5-2-3.4-2.4 1a7 7 0 0 0-1.9-1.1L14.3 3h-4.1l-.3 2.9a7 7 0 0 0-1.9 1.1l-2.4-1-2 3.4 2 1.5A7 7 0 0 0 5.5 12c0 .4 0 .7.1 1.1l-2 1.5 2 3.4 2.4-1c.6.5 1.2.9 1.9 1.1l.3 2.9h4.1l.3-2.9c.7-.2 1.3-.6 1.9-1.1l2.4 1 2-3.4-2-1.5c.1-.4.1-.7.1-1.1Z"/>',
+    database:'<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
     shield:'<path d="M12 3 19 6v5c0 4.5-2.8 7.7-7 10-4.2-2.3-7-5.5-7-10V6l7-3Z"/><path d="m9 12 2 2 4-4"/>',
     user:'<circle cx="12" cy="8" r="3.5"/><path d="M5 20c.7-4.1 3-6 7-6s6.3 1.9 7 6"/>',
     back:'<path d="M19 12H5m6-6-6 6 6 6"/>'
@@ -45,7 +46,7 @@
       ['GENEL',[['dashboard.html','home','Genel Bakış']]],
       ['İŞLEMLER',[['requests.html','clock','Beklenen İşlemler'],['requests.html?type=withdrawal','wallet','Çekim Havuzu'],['history.html?status=approved','check','Onaylanan İşlemler'],['history.html?status=rejected','x','Reddedilen İşlemler'],['reconciliation.html','handshake','Mutabakat'],['reports.html','chart','Raporlar']]],
       ['FİNANS',[['wallet-addresses.html','wallet','Cüzdan Hesapları'],['team-accounts.html','team','Ekip Hesapları'],['earnings.html','coins','Kazanç & Bonuslar']]],
-      ['KULLANICILAR',[['member-operations.html','users','Üye Operasyonları'],['support.html','news','Destek Talepleri']]],
+      ['KULLANICILAR',[['member-operations.html','users','Üye Operasyonları'],['data-management.html','database','Veri Yönetimi'],['support.html','news','Destek Talepleri']]],
       ['İÇERİK',[['content.html','news','İçerik Merkezi']]],
       ['SİSTEM',[['panel-site-management.html','settings','Panel & Site Yönetimi'],['audit.html','shield','İşlem / Audit Logları'],['settings.html','settings','Ayarlar'],['profile.html','user','Profilim']]]
     ];
