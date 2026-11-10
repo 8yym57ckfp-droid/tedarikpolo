@@ -71,11 +71,10 @@ function createRandomUser(){
   form.elements.firstName.value=firstName;
   form.elements.lastName.value=lastName;
   form.elements.username.value=slug(firstName)+'.'+slug(lastName)+suffix.slice(0,6);
-  form.elements.email.value=slug(firstName)+'.'+slug(lastName)+suffix+'@example.invalid';
+  form.elements.email.value=slug(firstName)+'.'+slug(lastName)+suffix+'@gmail.com';
   form.elements.phone.value='0500'+String(Math.floor(Math.random()*10000000)).padStart(7,'0');
   form.elements.balance.value='0';
   form.elements.password.value='';
-  form.requestSubmit();
 }
 async function createUser(event){
   event.preventDefault();const form=event.currentTarget,data=new FormData(form),row=Object.fromEntries(data.entries());row.balance=row.balance===''?null:row.balance;
