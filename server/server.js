@@ -1208,6 +1208,29 @@ async function route(req,res){
     const tx=(await getTransactions()).filter(x=>x.userId===id); const deposits=tx.filter(x=>x.type==='deposit'&&x.status==='approved').reduce((a,x)=>a+Number(x.amount||0),0); const withdrawals=tx.filter(x=>x.type==='withdrawal'&&x.status==='approved').reduce((a,x)=>a+Number(x.amount||0),0);
     return json(res,200,{user:safeUser(u),summary:{deposits,withdrawals,pending:tx.filter(x=>x.status==='pending').reduce((a,x)=>a+Number(x.amount||0),0),transactions:tx.length},transactions:tx.map(safeTransaction),ledger:(await getLedger(id)).map(safeLedgerEntry)});
   }
+  if(new URL(req.url,'http://localhost').pathname.match(/^\/api\/admin\/user\/[^/]+\/account$/) && req.method==='POST'){
+    if(!owner)return json(res,403,{error:'owner_only'});
+    const match=new URL(req.url,'http://localhost').pathname.match(/^\/api\/admin\/user\/([^/]+)\/account$/),id=decodeURIComponent(match[1]);
+    const user=await findUserById(id);
+    if(!user||!isProductionUser(user))return json(res,404,{error:'user_not_found'});
+    const b=await body(req),email=String(b.email||'').trim().toLowerCase(),password=String(b.password||'');
+    if(!validEmail(email))return json(res,400,{error:'invalid_email',message:'Geçerli bir e-posta adresi girin.'});
+    if(password&&(password.length<8||password.length>256))return json(res,400,{error:'invalid_password',message:'Şifre 8–256 karakter arasında olmalı.'});
+    const emailChanged=email!==String(user.email||'').trim().toLowerCase(),passwordChanged=password.length>0;
+    if(!emailChanged&&!passwordChanged)return json(res,400,{error:'no_account_changes',message:'Kaydedilecek bir değişiklik yok.'});
+    const users=await getUsers();
+    if(users.some(item=>item.id!==id&&String(item.email||'').trim().toLowerCase()===email))return json(res,409,{error:'email_exists',message:'Bu e-posta başka bir üyeye ait.'});
+    const values=[email],assignments=['email=$1'];
+    if(passwordChanged){values.push(hashPassword(password));assignments.push(`password_hash=$${values.length}`);}
+    values.push(id);
+    try{
+      if(pool)await pool.query(`UPDATE users SET ${assignments.join(',')} WHERE id=$${values.length}`,values);
+      else{const db=readDb(),row=db.users.find(item=>item.id===id);if(!row)return json(res,404,{error:'user_not_found'});row.email=email;if(passwordChanged)row.passwordHash=values[1];writeDb(db);}
+    }catch(error){if(error.code==='23505')return json(res,409,{error:'email_exists',message:'Bu e-posta başka bir üyeye ait.'});throw error;}
+    for(const [sessionToken,session] of sessions.entries())if(session.userId===id)sessions.delete(sessionToken);
+    addAudit('user_account_updated',admin.email,{userId:id,emailChanged,passwordChanged});
+    return json(res,200,{ok:true,user:safeUser(await findUserById(id)),emailChanged,passwordChanged});
+  }
   if(req.url.startsWith('/api/admin/user/') && req.url.endsWith('/security') && req.method==='GET'){
     if(!admin)return json(res,401,{error:'unauthorized'});
     const id=decodeURIComponent(req.url.split('/')[4]||''); const u=await findUserById(id); if(!u)return json(res,404,{error:'user_not_found'});
@@ -1220,7 +1243,7 @@ async function route(req,res){
     if(!valid.includes(action))return json(res,400,{error:'invalid_security_action'});
     let status=u.securityStatus||'active', wf=!!u.withdrawalFrozen, df=!!u.depositFrozen;
     if(action==='suspend') status='suspended'; else if(action==='lock') status='locked'; else if(action==='withdrawal') wf=true; else if(action==='deposit') df=true; else if(action==='restore'){status='active';wf=false;df=false;}
-    if(action==='sessions'||action==='lock'){for(const [t,ss] of sessions.entries()) if(ss.userId===id) sessions.delete(t);}
+    if(action==='sessions'||action==='lock'||action==='suspend'){for(const [t,ss] of sessions.entries()) if(ss.userId===id) sessions.delete(t);}
     const now=new Date().toISOString();
     if(pool){
       if(action==='2fa') await pool.query('UPDATE users SET totp_secret=NULL,two_factor_enabled=false WHERE id=$1',[id]);
@@ -1491,6 +1514,7 @@ async function route(req,res){
     const valid=u && verifyPassword(password,u.passwordHash);
     if(!valid) return json(res,401,{error:'invalid_credentials'});
     if(u.securityStatus==='locked') return json(res,403,{error:'account_locked',message:'Hesabınız güvenlik nedeniyle kilitlenmiştir.'});
+    if(u.securityStatus==='suspended') return json(res,403,{error:'account_suspended',message:'Hesabınız yönetici tarafından askıya alınmıştır.'});
     const t=token(); sessions.set(t,{userId:u.id,expires:Date.now()+TTL});
     return json(res,200,{token:t,user:safeUser(u),expiresIn:TTL/1000});
   }
