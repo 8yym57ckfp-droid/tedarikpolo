@@ -591,7 +591,7 @@ async function applyTransactionDecision({tx,decision,approvedAmount,actor,decisi
   const requestedAmount=Number(tx.requestedAmount??tx.amount);
   const amountChanged=Math.abs(Number(approvedAmount)-requestedAmount)>1e-8;
   let autoPausedTeamAccountId=null,autoResumedTeamAccountId=null;
-  if(decision==='approved'&&tx.type==='deposit'&&tx.walletId){
+  if(decision==='approved'&&tx.type==='deposit'&&(tx.walletId||tx.teamAccountId)){
     let depositTeamId=tx.teamAccountId||null;
     if(!depositTeamId&&client){const wallet=await client.query('SELECT team_id AS "teamId" FROM wallet_addresses WHERE id=$1',[tx.walletId]);depositTeamId=wallet.rows[0]?.teamId||null;}
     else if(!depositTeamId)depositTeamId=(dbState?.walletAddresses||[]).find(wallet=>wallet.id===tx.walletId)?.teamId||null;
