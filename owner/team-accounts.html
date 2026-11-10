@@ -64,9 +64,9 @@
             <label for="teamTotpSecret">Paylaşılacak 2FA anahtarı<input id="teamTotpSecret" type="text" inputmode="latin" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Boş bırak: otomatik oluşturulur"><small>Base32 anahtarını gir; aynı anahtarı ekiple paylaş. Boş bırakırsan sistem üretir.</small></label>
             <label for="teamWalletLimit">Cüzdan sınırı<input id="teamWalletLimit" type="number" min="0" max="5000" step="1" value="0"><small>0 = sınırsız</small></label>
             <label class="team-paid-check-capacity"><input id="teamPaidChecksCapacity" type="checkbox" checked> Kullanıcı yalnızca ekibin ödediği çek tutarı kadar yatırım alsın</label><div class="team-collateral-settings" id="teamCollateralSettings" hidden><label for="teamCollateralTotal">Toplam teminat (USDT)<input id="teamCollateralTotal" type="number" min="0" step="0.01" value="0"></label>
-            <label for="teamCommissionPercent">Yatırım komisyonu (%)<input id="teamCommissionPercent" type="number" min="0" max="100" step="0.01" value="3"><small>Onaylanan yatırımlardan hesaplanır.</small></label>
             <label for="teamCollateralBalance">Kullanılmış teminat (USDT)<input id="teamCollateralBalance" type="number" min="0" step="0.01" value="0" readonly><small>Sunucu işlemlerden otomatik hesaplar.</small></label>
             <label for="teamCollateralPausePercent">Otomatik pasife düşme eşiği (%)<input id="teamCollateralPausePercent" type="number" min="0" max="100" step="1" value="80"></label></div>
+            <label for="teamCommissionPercent">Yatırım komisyonu (%)<input id="teamCommissionPercent" type="number" min="0" max="100" step="0.01" value="3"><small>Onaylanan yatırımlardan hesaplanır.</small></label>
           </div>
           <div class="team-permissions">
             <label><input id="teamAllowSelfDisable" type="checkbox"> Ekibin kendi hesabını pasife alma düğmesine izin ver</label>
