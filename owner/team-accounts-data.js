@@ -90,7 +90,7 @@
   window.recordTeamRepayment=async id=>{
     const account=accounts.find(item=>item.id===id);if(!account)return;
     const raw=prompt(`${account.email} için merkeze fiilen alınan geri ödeme tutarı (USDT):`);if(raw===null)return;
-    const amount=Number(String(raw).replace(/\\s/g,'').replace(',','.'));if(!Number.isFinite(amount)||amount<=0){alert('Geçerli ve sıfırdan büyük bir tutar gir.');return;}
+    const amount=Number(String(raw).replace(/\s/g,'').replace(',','.'));if(!Number.isFinite(amount)||amount<=0){alert('Geçerli ve sıfırdan büyük bir tutar gir.');return;}
     const reason=prompt('Geri ödeme açıklaması:','Merkez kasaya alınan geri ödeme');if(reason===null)return;
     const ownerTotpCode=prompt('Kaydetmek için Owner Google Authenticator kodunu gir:');if(!ownerTotpCode)return;
     try{await request('/'+encodeURIComponent(id)+'/repayment',{amount,reason,ownerTotpCode});await load();$('teamAccountMessage').textContent='Geri ödeme kaydedildi; yatırım kapasitesi artırıldı.';}
