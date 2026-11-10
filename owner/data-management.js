@@ -66,7 +66,7 @@ function createRandomUser(){
   const firstNames=['Ahmet','Mehmet','Mustafa','Emre','Burak','Kerem','Can','Mert','Onur','Eren','Yusuf','Ömer','Ali','Deniz','Arda','Ece','Elif','Zeynep','Ayşe','Büşra','Esra','Ceren','Derya','Merve','Selin','Melis','Sude','İrem','Defne','Aslı'];
   const lastNames=['Yılmaz','Kaya','Demir','Çelik','Şahin','Yıldız','Yıldırım','Öztürk','Aydın','Özdemir','Arslan','Doğan','Kılıç','Aslan','Çetin','Kara','Koç','Kurt','Polat','Acar','Aksoy','Bulut','Keskin','Güneş','Tekin'];
   const firstName=randomItem(firstNames),lastName=randomItem(lastNames),suffix=randomHex(10);
-  const slug=value=>value.toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/ı/g,'i').replace(/[^a-z0-9]+/g,'');
+  const slug=value=>value.toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i').replace(/[^a-z0-9]+/g,'');
   const form=$('createUserForm');
   form.elements.firstName.value=firstName;
   form.elements.lastName.value=lastName;
