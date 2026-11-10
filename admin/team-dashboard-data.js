@@ -10,9 +10,9 @@
     const manuallyPaused=!!admin.depositsPaused,collateralPaused=!!admin.collateralPaused,accountActive=admin.active!==false;
     const accepting=admin.acceptingDeposits===undefined?accountActive&&!manuallyPaused&&!collateralPaused:!!admin.acceptingDeposits;
     status.dataset.state=accepting?'active':'paused';
-    statusText.textContent=accepting?'Yatırım alımı aktif':!accountActive?'Yatırım alımı pasif · yöneticiye başvur':collateralPaused?'Yatırım pasif · teminat sınırı':manuallyPaused?'Yatırım duraklatıldı · yeniden açılabilir':'Yatırım alımı pasif';
+    statusText.textContent=accepting?'Yatırım alımı aktif':!accountActive?'Yatırım alımı pasif · yöneticiye başvur':collateralPaused?'Yatırım pasif · teminat sınırı':admin.investmentCapacityPaused?'Yatırım pasif · kapasite tükendi':manuallyPaused?'Yatırım duraklatıldı · yeniden açılabilir':'Yatırım alımı pasif';
     const total=Number(admin.collateralTotal||0),note=byId('teamCashNote');
-    if(note)note.textContent=total>0?`Toplam teminat ${amount(total)}${accepting?' · çekim ödemeleriyle güncellenir':' · yeni yatırımlar duraklatıldı'}`:accepting?'Teminat sınırı tanımlanmamış':'Yeni yatırım yönlendirmesi duraklatıldı';
+    if(note)note.textContent=total>0?`Toplam teminat ${amount(total)}${accepting?' · çekim ödemeleriyle güncellenir':' · yeni yatırımlar duraklatıldı'}`:`Ödenen çekimler ${amount(admin.paidChecks)} · Alınan geri ödemeler ${amount(admin.repayments)} · Onaylı yatırımlar ${amount(admin.investmentsReceived)} · Kapasite yalnızca gerçek para hareketleriyle artar`;
     const toggle=byId('selfDisableTeam'),label=byId('teamActiveLabel');
     if(toggle){toggle.setAttribute('aria-checked',accepting?'true':'false');toggle.setAttribute('aria-label',accepting?'Yeni yatırım yönlendirmesini durdur':!accountActive?'Yatırım alımını açmak için yöneticinizle iletişime geçin':collateralPaused?'Teminat kapasitesi açılana kadar bekleyin':manuallyPaused?'Yeni yatırım yönlendirmesini yeniden aç':'Yatırım durumu pasif');}
     if(label)label.textContent='Yatırım alımı';
@@ -21,8 +21,8 @@
     const indicator=byId('teamCashIndicator');if(!indicator)return;
     updateTeamDepositState(admin);
     const total=Number(admin.collateralTotal||0);
-    byId('teamCashUsed').textContent=amount(admin.collateralExposure);
-    byId('teamCashAvailable').textContent=total>0?amount(admin.collateralAvailable):'Sınırsız';
+    byId('teamCashUsed').textContent=total>0?amount(admin.collateralExposure):amount(Number(admin.investmentsReceived||0)+Number(admin.pendingInvestments||0));
+    byId('teamCashAvailable').textContent=total>0?amount(admin.collateralAvailable):amount(admin.investmentCapacityAvailable||0);
     byId('teamCashUpdated').textContent='Güncel · '+cashUpdateTime();
     indicator.dataset.state='live';indicator.setAttribute('aria-busy','false');
   }
@@ -80,7 +80,7 @@
             }
             if(!accepting&&!manuallyPaused){
               const ownerPaused=latestAdmin.active===false;
-              const message=ownerPaused?'Owner hesabı pasife aldığı için yeni yatırımı yalnızca Owner açabilir. Lütfen yöneticinizle iletişime geçin.':'Teminat kullanım sınırına ulaşıldığı için yeni yatırım alımı beklemede. Çekim ödemeleri kapasiteyi açınca tekrar deneyebilirsiniz.';
+              const message=ownerPaused?'Owner hesabı pasife aldığı için yeni yatırımı yalnızca Owner açabilir. Lütfen yöneticinizle iletişime geçin.':latestAdmin.investmentCapacityPaused?'Kullanılabilir yatırım kapasitesi tükendi. Yeni kapasite ancak çekim ödemesi veya merkeze fiilen alınan geri ödeme kaydedildiğinde açılır.':'Teminat kullanım sınırına ulaşıldığı için yeni yatırım alımı beklemede. Çekim ödemeleri kapasiteyi açınca tekrar deneyebilirsiniz.';
               await showTeamDialog({title:'Yatırım alımı pasif',message,kicker:ownerPaused?'YÖNETİCİ ONAYI GEREKİYOR':'TEMİNAT SINIRI',confirmText:'Anladım',icon:'!'});
               return;
             }

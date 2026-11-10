@@ -129,3 +129,15 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   meta JSONB NOT NULL DEFAULT '{}'::jsonb, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at DESC);
+
+
+-- Owner-recorded repayments actually received into central cash for zero-collateral team capacity.
+CREATE TABLE IF NOT EXISTS team_capacity_adjustments (
+  id TEXT PRIMARY KEY,
+  team_account_id TEXT NOT NULL REFERENCES team_accounts(id),
+  amount NUMERIC(20,8) NOT NULL CHECK (amount > 0),
+  reason TEXT NOT NULL,
+  created_by TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_team_capacity_adjustments_team_created ON team_capacity_adjustments(team_account_id, created_at DESC);
