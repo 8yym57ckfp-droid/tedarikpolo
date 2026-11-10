@@ -161,10 +161,14 @@ async function getDepositSettings(){
   let stored={};
   if(pool){const result=await pool.query('SELECT content FROM site_content WHERE id=$1',['deposit-settings']);stored=result.rows[0]?.content||{};}
   else stored=readDb().depositSettings||{};
-  return {requireTxId:stored.requireTxId!==false};
+  return {requireTxId:stored.requireTxId!==false,requireWithdrawalTxHash:stored.requireWithdrawalTxHash!==false};
 }
 async function saveDepositSettings(value){
-  const settings={requireTxId:value?.requireTxId!==false};
+  const current=await getDepositSettings(),provided=value&&typeof value==='object'?value:{};
+  const settings={
+    requireTxId:Object.prototype.hasOwnProperty.call(provided,'requireTxId')?provided.requireTxId!==false:current.requireTxId,
+    requireWithdrawalTxHash:Object.prototype.hasOwnProperty.call(provided,'requireWithdrawalTxHash')?provided.requireWithdrawalTxHash!==false:current.requireWithdrawalTxHash
+  };
   if(pool)await pool.query('INSERT INTO site_content (id,content,updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (id) DO UPDATE SET content=EXCLUDED.content,updated_at=NOW()',['deposit-settings',JSON.stringify(settings)]);
   else{const db=readDb();db.depositSettings=settings;writeDb(db);}
   return settings;
@@ -978,7 +982,7 @@ async function route(req,res){
   if(adminPath==='/api/admin/deposit-settings'&&req.method==='POST'){
     if(!owner)return json(res,403,{error:'owner_only'});
     const settings=await saveDepositSettings(await body(req));
-    addAudit('deposit_settings_updated',owner.email,{requireTxId:settings.requireTxId});
+    addAudit('deposit_settings_updated',owner.email,{requireTxId:settings.requireTxId,requireWithdrawalTxHash:settings.requireWithdrawalTxHash});
     return json(res,200,{ok:true,settings});
   }
   const adminUrl=new URL(req.url,'http://localhost');
@@ -1263,11 +1267,11 @@ async function route(req,res){
     return json(res,200,{transactions:transactions.map(item=>{
       const teamId=item.type==='withdrawal'&&item.status==='pending'?(item.claimedByTeamId||null):transactionTeamId(item,all,walletById);
       const team=teamId?teamById.get(teamId):null;
-      const chainVerificationRequired=item.isSynthetic?false:(team?team.requireChainVerification!==false:true)&&!(item.type==='deposit'&&!item.txHash&&!depositSettings.requireTxId);
+      const chainVerificationRequired=item.isSynthetic?false:(team?team.requireChainVerification!==false:true)&&!(item.type==='deposit'&&!item.txHash&&!depositSettings.requireTxId);const payoutTxHashRequired=!item.isSynthetic&&item.type==='withdrawal'&&(teamId?depositSettings.requireWithdrawalTxHash!==false:chainVerificationRequired);
       const syntheticWallet=item.isSynthetic&&item.type==='deposit'?walletForSyntheticDeposit(item,syntheticWallets):null;
       const presented=syntheticWallet?{...item,walletId:syntheticWallet.id,address:syntheticWallet.address}:item;
       const safe=value=>owner&&requestedTestRunId?value:safeTransaction(value);
-      return {...safe(presented),teamAccountId:teamId||null,claimedByTeamId:item.claimedByTeamId||null,claimedAt:item.claimedAt||null,teamName:team?.email||(item.type==='withdrawal'&&item.status==='pending'?'Havuzda':null),teamEmail:team?.email||null,chainVerificationRequired,isTestData:!!item.isSynthetic};
+      return {...safe(presented),teamAccountId:teamId||null,claimedByTeamId:item.claimedByTeamId||null,claimedAt:item.claimedAt||null,teamName:team?.email||(item.type==='withdrawal'&&item.status==='pending'?'Havuzda':null),teamEmail:team?.email||null,chainVerificationRequired,payoutTxHashRequired,isTestData:!!item.isSynthetic};
     })});
   }
   if(req.url==='/api/admin/transactions/verify-chain' && req.method==='POST'){
@@ -1454,8 +1458,8 @@ async function route(req,res){
       const all=await getTransactions(); const tx=all.find(x=>x.id===id); if(!tx||teamAdmin&&!owner&&!(await teamOwnsTransaction(teamAdmin.adminId,tx,all)))return json(res,404,{error:'transaction_not_found'}); if(tx.isSynthetic&&(!requestedTestRunId||tx.testRunId!==requestedTestRunId))return json(res,404,{error:'transaction_not_found'}); if(tx.status!=='pending')return json(res,409,{error:'already_processed',status:tx.status}); if(teamAdmin&&!owner&&tx.type==='withdrawal'&&decision==='rejected')return json(res,403,{error:'withdrawal_release_required',message:'Çekimi reddetmek yerine havuza bırakın.'});
     if(isLocked(tx) && tx.lockedBy!==admin.email)return json(res,409,{error:'transaction_locked',lockedBy:tx.lockedBy});
     const requestedAmount=Number(tx.requestedAmount??tx.requested_amount??tx.amount); const rawApproved=b.approvedAmount; const approvedAmount=decision==='approved' && rawApproved!==undefined && rawApproved!==null && rawApproved!==''?Number(rawApproved):Number(tx.amount); if(decision==='approved'&&(!Number.isFinite(approvedAmount)||approvedAmount<=0))return json(res,400,{error:'invalid_approved_amount'});
-    const approvalWallets=await getWalletAddresses(),approvalWalletById=new Map(approvalWallets.map(wallet=>[wallet.id,wallet])),resolvedTeamAccountId=transactionTeamId(tx,all,approvalWalletById)||(teamAdmin&&!owner?teamAdmin.adminId:null),approvalTeam=resolvedTeamAccountId?(await getTeamAccounts()).find(account=>account.id===resolvedTeamAccountId):null,depositSettings=await getDepositSettings(),chainVerificationRequired=(approvalTeam?approvalTeam.requireChainVerification!==false:true)&&!(tx.type==='deposit'&&!tx.txHash&&!depositSettings.requireTxId);
-    const payoutTxHash=tx.type==='withdrawal'&&decision==='approved'&&!tx.isSynthetic?(String(b.payoutTxHash||'').trim()||null):null;
+    const approvalWallets=await getWalletAddresses(),approvalWalletById=new Map(approvalWallets.map(wallet=>[wallet.id,wallet])),resolvedTeamAccountId=transactionTeamId(tx,all,approvalWalletById)||(teamAdmin&&!owner?teamAdmin.adminId:null),approvalTeam=resolvedTeamAccountId?(await getTeamAccounts()).find(account=>account.id===resolvedTeamAccountId):null,depositSettings=await getDepositSettings(),payoutTxHash=tx.type==='withdrawal'&&decision==='approved'&&!tx.isSynthetic?(String(b.payoutTxHash||'').trim()||null):null,payoutTxHashRequired=tx.type==='withdrawal'&&!tx.isSynthetic&&!!resolvedTeamAccountId&&depositSettings.requireWithdrawalTxHash!==false,chainVerificationRequired=(approvalTeam?approvalTeam.requireChainVerification!==false:true)&&!(tx.type==='deposit'&&!tx.txHash&&!depositSettings.requireTxId)&&!(tx.type==='withdrawal'&&!payoutTxHash&&!!resolvedTeamAccountId&&!payoutTxHashRequired);
+    if(payoutTxHashRequired&&!payoutTxHash)return json(res,400,{error:'payout_tx_hash_required',message:'Çekim onayı için gönderim TX hash zorunludur.'});
     if(payoutTxHash&&payoutTxHash.length<16)return json(res,400,{error:'payout_tx_hash_required',message:'Gönderim işlem kimliğini kontrol edin.'});
     const chainCheckApplies=decision==='approved'&&!tx.isSynthetic&&['deposit','withdrawal'].includes(tx.type);
     if(chainCheckApplies){
@@ -1477,7 +1481,7 @@ async function route(req,res){
     if(decisionResult?.autoPausedTeamAccountId)addAudit('team_account_collateral_auto_paused',decisionResult.autoPausedTeamAccountId,{teamAccountId:decisionResult.autoPausedTeamAccountId,transactionId:id,approvedAmount});
     if(decisionResult?.autoResumedTeamAccountId)addAudit('team_account_collateral_auto_resumed',decisionResult.autoResumedTeamAccountId,{teamAccountId:decisionResult.autoResumedTeamAccountId,transactionId:id,approvedAmount});
     const chainVerificationBypassed=chainCheckApplies&&!chainVerificationRequired;if(chainVerificationBypassed)addAudit('transaction_chain_verification_bypassed',admin.email,{transactionId:id,teamAccountId:resolvedTeamAccountId,type:tx.type,network:tx.network,txHash:payoutTxHash||tx.txHash||null});
-    addAudit('transaction_decision',admin.email,{transactionId:id,userId:tx.userId,type:tx.type,decision,requestedAmount,approvedAmount,amountChanged,payoutTxHash,teamAccountId:resolvedTeamAccountId,chainVerificationRequired:chainCheckApplies?chainVerificationRequired:null,chainVerificationBypassed}); return json(res,200,{ok:true,status:decision,decisionBy:admin.email,decisionAt,requestedAmount,approvedAmount,amountChanged,payoutTxHash,teamAccountId:resolvedTeamAccountId,chainVerificationRequired:chainCheckApplies?chainVerificationRequired:null,chainVerificationBypassed});
+    addAudit('transaction_decision',admin.email,{transactionId:id,userId:tx.userId,type:tx.type,decision,requestedAmount,approvedAmount,amountChanged,payoutTxHash,payoutTxHashRequired:chainCheckApplies?tx.type==='withdrawal'&&payoutTxHashRequired:null,teamAccountId:resolvedTeamAccountId,chainVerificationRequired:chainCheckApplies?chainVerificationRequired:null,chainVerificationBypassed}); return json(res,200,{ok:true,status:decision,decisionBy:admin.email,decisionAt,requestedAmount,approvedAmount,amountChanged,payoutTxHash,payoutTxHashRequired:chainCheckApplies?tx.type==='withdrawal'&&payoutTxHashRequired:null,teamAccountId:resolvedTeamAccountId,chainVerificationRequired:chainCheckApplies?chainVerificationRequired:null,chainVerificationBypassed});
   }
   if(req.url==='/api/admin/audit' && req.method==='GET'){
     if(!admin)return json(res,401,{error:'unauthorized'}); return json(res,200,{audit:await getAuditLog()});

@@ -50,16 +50,27 @@
     updatePolicy(document.getElementById('backdrop')?.dataset.chainVerificationRequired!=='false');
   }
 
-  function updatePolicy(required){
+  function updatePolicy(required,payoutHashRequired){
     const policy=document.getElementById('chainCheckPolicy');if(!policy)return;
-    policy.classList.toggle('is-optional',!required);
+    const isWithdrawal=document.getElementById('dType')?.textContent==='Çekim';
+    policy.classList.toggle('is-optional',!required||(isWithdrawal&&payoutHashRequired===false));
+    if(isWithdrawal&&payoutHashRequired===false){
+      policy.textContent=required
+        ?'Çekim TX hash alanı isteğe bağlıdır. Hash girilirse mevcut ekip zincir doğrulama kuralı uygulanır.'
+        :'Çekim TX hash alanı isteğe bağlıdır; bu ekip için otomatik zincir doğrulaması kapalıdır.';
+      return;
+    }
+    if(isWithdrawal&&payoutHashRequired===true&&!required){
+      policy.textContent='Çekim onayında TX hash zorunludur; bu ekip için otomatik zincir doğrulaması kapalıdır.';
+      return;
+    }
     policy.textContent=required
       ?'Bu ekibin işlemlerinde zincir doğrulaması zorunludur. Onaydan önce sunucu transferi kontrol eder.'
       :'Owner bu ekip için zorunlu zincir doğrulamasını kapattı. Onay öncesi kontrol isteğe bağlıdır; bu panelden yine de kontrol edebilirsiniz.';
   }
-  window.updateChainCheckPolicy=required=>{
+  window.updateChainCheckPolicy=(required,payoutHashRequired)=>{
     const backdrop=document.getElementById('backdrop');if(backdrop)backdrop.dataset.chainVerificationRequired=required?'true':'false';
-    updatePolicy(required);
+    updatePolicy(required,payoutHashRequired);
   };
 
   function reasonMessage(reason,network){
