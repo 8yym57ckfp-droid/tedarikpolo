@@ -114,11 +114,11 @@ function esc(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;
 function money(n){return Number(n||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+' USDT'}
 function date(v){return new Date(v).toLocaleString('tr-TR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'})}
 function status(s){if(s==='pending')return '<span class="status s-pending">Bekliyor</span>';if(s==='approved')return '<span class="status s-approved">Onaylandı</span>';if(s==='auto-rejected')return '<span class="status s-auto">Oto-Reddedildi</span>';return '<span class="status s-rejected">Reddedildi</span>'}
-function remainingMs(x){if(!x.expiresAt) return 0; return new Date(x.expiresAt).getTime()-Date.now();}
+function elapsedSeconds(x){const created=Date.parse(x.createdAt||'');if(!Number.isFinite(created))return 0;return Math.max(0,Math.floor((Date.now()-created)/1000));}
 function countdownHtml(x){
   if(x.status!=='pending') return '<span class="countdown done">—</span>';
-  const ms=remainingMs(x), sec=Math.max(0,Math.ceil(ms/1000)), m=Math.floor(sec/60), s=sec%60;
-  const cls=sec<=300?'red':sec<=600?'yellow':'green';
+  const sec=elapsedSeconds(x),m=Math.floor(sec/60),s=sec%60;
+  const cls=sec>=1500?'red':sec>=900?'yellow':'green';
   return `<span class="countdown ${cls}" data-countdown-id="${x.id}">${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</span>`;
 }
 function currentAdmin(){return (window.SafeAdmin&&SafeAdmin.current)?SafeAdmin.current():null}
@@ -185,7 +185,7 @@ async function confirmDecision(){
 function quickDecision(id,decision){const x=all.find(t=>String(t.id)===String(id));if(!x)return;current=x;if(x.status!=='pending'||x.type!==requestType){alert('Bu işlem artık bekleyen durumda değil.');current=null;return}if(x.type==='withdrawal'&&decision==='approved'){alert('Ödemeyi önce cüzdanından gönder, ardından işlem ayrıntısından onayla.');openDrawer(id);return}$('decisionAmount').value=Number(x.receivedAmount??x.amount);openDecisionConfirm(decision)}
 function decideCurrent(decision){if(!current)return;if(current.status!=='pending'||current.type!==requestType){alert('Bu işlem artık bekleyen durumda değil.');return}openDecisionConfirm(decision)}
 let refreshSeconds=10;function markRefreshed(){const el=$('refreshUpdated');if(el)el.textContent='Az önce';}
-function tick(){all.forEach(x=>{if(x.status==='pending'){const ms=remainingMs(x),el=document.querySelector(`[data-countdown-id="${x.id}"]`);if(el){const sec=Math.max(0,Math.ceil(ms/1000)),m=Math.floor(sec/60),s=sec%60;el.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;el.className='countdown '+(sec<=300?'red':sec<=600?'yellow':'green');}}});if(--refreshSeconds<=0){refreshTableOnly();refreshSeconds=10;markRefreshed();}}
+function tick(){all.forEach(x=>{if(x.status==='pending'){const el=document.querySelector(`[data-countdown-id="${x.id}"]`);if(el){const sec=elapsedSeconds(x),m=Math.floor(sec/60),s=sec%60;el.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;el.className='countdown '+(sec>=1500?'red':sec>=900?'yellow':'green');}}});if(--refreshSeconds<=0){refreshTableOnly();refreshSeconds=10;markRefreshed();}}
 function manualRefresh(){refreshTableOnly();refreshSeconds=10;markRefreshed();}
 $('decisionAmount').addEventListener('input',()=>{if(!current)return;const base=Number(current.requestedAmount??current.amount);const v=Number($('decisionAmount').value);const changed=Number.isFinite(v)&&Math.abs(v-base)>1e-8;$('amountEdit').classList.toggle('changed',changed);$('amountHint').textContent=changed?'Dikkat: Onaylanan tutar talep edilen tutardan farklı. Bu değişiklik audit kaydına işlenecek.':'Talep edilen miktar ile gelen miktar farklıysa burada gerçek gelen tutarı girin. Onay bu tutar üzerinden bakiyeye işlenir.';$('dReceivedAmount').textContent=Number.isFinite(v)?money(v):'—';});$('search').addEventListener('input',render);$('network').addEventListener('change',render);$('backdrop').addEventListener('click',e=>{if(e.target.id==='backdrop')closeDrawer()});$('manualRefresh').addEventListener('click',manualRefresh);
 load();markRefreshed();setInterval(tick,1000);const initial=new URLSearchParams(location.search).get('open');if(initial)setTimeout(()=>openDrawer(initial),50);
