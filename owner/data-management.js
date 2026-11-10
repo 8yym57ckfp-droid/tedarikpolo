@@ -60,6 +60,23 @@ async function applyPreview(){
   try{const result=await submitImport(rows,$('updateExisting').checked,$('applyHistory').checked);setMessage('importMessage',`Tamamlandı: ${result.created} yeni üye, ${result.updated} profil güncellemesi, ${result.skipped} mevcut üyede profil korundu, ${result.transactions} işlem ve ${result.balanceAdjustments} bakiye düzeltmesi.`);await loadUsers();}
   catch(error){setMessage('importMessage',error.message||'Aktarım tamamlanamadı.',true);}finally{$('applyImport').disabled=false;}
 }
+function randomHex(length=8){const bytes=new Uint8Array(Math.ceil(length/2));crypto.getRandomValues(bytes);return Array.from(bytes,byte=>byte.toString(16).padStart(2,'0')).join('').slice(0,length);}
+function randomItem(items){return items[Math.floor(Math.random()*items.length)];}
+function createRandomUser(){
+  const firstNames=['Ahmet','Mehmet','Mustafa','Emre','Burak','Kerem','Can','Mert','Onur','Eren','Yusuf','Ömer','Ali','Deniz','Arda','Ece','Elif','Zeynep','Ayşe','Büşra','Esra','Ceren','Derya','Merve','Selin','Melis','Sude','İrem','Defne','Aslı'];
+  const lastNames=['Yılmaz','Kaya','Demir','Çelik','Şahin','Yıldız','Yıldırım','Öztürk','Aydın','Özdemir','Arslan','Doğan','Kılıç','Aslan','Çetin','Kara','Koç','Kurt','Polat','Acar','Aksoy','Bulut','Keskin','Güneş','Tekin'];
+  const firstName=randomItem(firstNames),lastName=randomItem(lastNames),suffix=randomHex(10);
+  const slug=value=>value.toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/ı/g,'i').replace(/[^a-z0-9]+/g,'');
+  const form=$('createUserForm');
+  form.elements.firstName.value=firstName;
+  form.elements.lastName.value=lastName;
+  form.elements.username.value=slug(firstName)+'.'+slug(lastName)+suffix.slice(0,6);
+  form.elements.email.value=slug(firstName)+'.'+slug(lastName)+suffix+'@example.invalid';
+  form.elements.phone.value='0500'+String(Math.floor(Math.random()*10000000)).padStart(7,'0');
+  form.elements.balance.value='0';
+  form.elements.password.value='';
+  form.requestSubmit();
+}
 async function createUser(event){
   event.preventDefault();const form=event.currentTarget,data=new FormData(form),row=Object.fromEntries(data.entries());row.balance=row.balance===''?null:row.balance;
   $('createUserForm').querySelector('button[type="submit"]').disabled=true;setMessage('createMessage','Üye oluşturuluyor...');
@@ -97,7 +114,7 @@ async function closeTransaction(id){
 }
 document.addEventListener('DOMContentLoaded',()=>{
   $('importFile').addEventListener('change',()=>{$('fileName').textContent=$('importFile').files[0]?.name||'Dosya seçilmedi';});
-  $('parseFile').addEventListener('click',readFile);$('applyImport').addEventListener('click',applyPreview);$('createUserForm').addEventListener('submit',createUser);$('balanceForm').addEventListener('submit',adjustBalance);$('transactionForm').addEventListener('submit',addTransaction);
+  $('parseFile').addEventListener('click',readFile);$('applyImport').addEventListener('click',applyPreview);$('createUserForm').addEventListener('submit',createUser);$('createRandomUser').addEventListener('click',createRandomUser);$('balanceForm').addEventListener('submit',adjustBalance);$('transactionForm').addEventListener('submit',addTransaction);
   $('searchUsers').addEventListener('click',loadUsers);$('userSearch').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();loadUsers();}});$('closeMember').addEventListener('click',()=>$('memberPanel').classList.add('dm-hidden'));
   $('downloadCredentials').addEventListener('click',()=>{if(!credentialUrl)return;const anchor=document.createElement('a');anchor.href=credentialUrl;anchor.download='yeni-uye-giris-bilgileri.csv';anchor.click();});
   $('userRows').addEventListener('click',event=>{const button=event.target.closest('[data-open-user]');if(button)openUser(button.dataset.openUser);});
