@@ -25,6 +25,14 @@ function updateSecurityView(security) {
   $('securityReason').value = currentSecurity.reason || '';
   $('securityAction').textContent = currentSecurity.status === 'active' ? 'Üyeyi Askıya Al' : 'Hesabı Yeniden Etkinleştir';
   $('securityAction').classList.toggle('danger', currentSecurity.status === 'active');
+  $('depositStatus').textContent = currentSecurity.depositFrozen ? 'Yatırım işlemleri donduruldu' : 'Yatırım işlemleri açık';
+  $('depositStatus').className = `member-status ${currentSecurity.depositFrozen ? 'suspended' : 'active'}`;
+  $('depositAction').textContent = currentSecurity.depositFrozen ? 'Yatırımı Yeniden Aç' : 'Yatırımı Dondur';
+  $('depositAction').classList.toggle('danger', !!currentSecurity.depositFrozen);
+  $('withdrawalStatus').textContent = currentSecurity.withdrawalFrozen ? 'Çekim işlemleri donduruldu' : 'Çekim işlemleri açık';
+  $('withdrawalStatus').className = `member-status ${currentSecurity.withdrawalFrozen ? 'suspended' : 'active'}`;
+  $('withdrawalAction').textContent = currentSecurity.withdrawalFrozen ? 'Çekimi Yeniden Aç' : 'Çekimi Dondur';
+  $('withdrawalAction').classList.toggle('danger', !!currentSecurity.withdrawalFrozen);
 }
 
 async function load() {
@@ -34,7 +42,7 @@ async function load() {
       const status = accountStatus(user.securityStatus || 'active');
       const kycClass = user.kycStatus === 'pending' ? 's-pending' : user.kycStatus === 'approved' ? 's-approved' : 's-auto';
       return `<tr>
-        <td><span class="user-name">${esc(user.firstName || '')} ${esc(user.lastName || '')}</span><span class="sub">${esc(user.email)} · ${esc(user.id)}</span></td>
+        <td><span class="user-name">${esc(user.firstName || '')} ${esc(user.lastName || '')}</span><span class="sub">@${esc(user.username || 'kullanıcı adı yok')}</span><span class="sub">${esc(user.email)} · ${esc(user.id)}</span></td>
         <td class="amount">${money(user.balance)}</td><td>${money(user.totalDeposits)}</td><td>${money(user.totalWithdrawals)}</td>
         <td>${Number(user.pendingCount || 0)}</td><td><span class="status ${kycClass}">${esc(user.kycStatus || 'not_started')}</span></td>
         <td><span class="member-status ${status.className}">${status.label}</span></td>
@@ -62,6 +70,7 @@ async function openUser(id) {
     const user = data.user;
     currentUserId = user.id;
     $('name').textContent = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Üye';
+    $('username').textContent = user.username ? '@' + user.username : 'Kullanıcı adı belirtilmemiş';
     $('email').textContent = `${user.email} · ${user.id}`;
     $('bal').textContent = money(user.balance);
     $('dep').textContent = money(data.summary.deposits);
@@ -69,6 +78,7 @@ async function openUser(id) {
     $('accountEmail').value = user.email || '';
     $('accountPassword').value = '';
     $('accountSaveMsg').textContent = '';
+    $('securitySaveMsg').textContent = '';
     updateSecurityView(securityData.security);
     $('txs').innerHTML = data.transactions.map(transaction => `<div class="tx"><b>${esc(transaction.id)} · ${transaction.type === 'deposit' ? 'Yatırım' : 'Çekim'} · ${esc(transaction.status)}</b><small>${money(transaction.amount)} · ${esc(transaction.network || '—')} · ${esc(dateTime(transaction.createdAt))}</small><small>${esc(transaction.txHash || 'TX hash yok')}</small></div>`).join('') || '<div class="admin-muted">İşlem yok.</div>';
     $('panel').classList.add('open');
@@ -126,6 +136,30 @@ async function toggleSuspension() {
   }
 }
 
+async function toggleFlowRestriction(flow) {
+  if (!currentUserId || !currentSecurity) return;
+  const isDeposit = flow === 'deposit';
+  const frozen = isDeposit ? !!currentSecurity.depositFrozen : !!currentSecurity.withdrawalFrozen;
+  const label = isDeposit ? 'Yatırım' : 'Çekim';
+  const action = isDeposit ? (frozen ? 'deposit_restore' : 'deposit') : (frozen ? 'withdrawal_restore' : 'withdrawal');
+  const prompt = frozen ? `${label} işlemlerini yeniden açmak istiyor musunuz?` : `${label} işlemlerini bu üye için dondurmak istiyor musunuz?`;
+  if (!window.confirm(prompt)) return;
+  const button = $(isDeposit ? 'depositAction' : 'withdrawalAction');
+  button.disabled = true;
+  try {
+    const result = await adminFetch('/user/' + encodeURIComponent(currentUserId) + '/security', {
+      method:'POST', body:JSON.stringify({action, reason:$('securityReason').value.trim()})
+    });
+    updateSecurityView(result.security);
+    setMessage('securitySaveMsg', `${label} işlemleri ${frozen ? 'yeniden açıldı' : 'donduruldu'}.`);
+    await load();
+  } catch (error) {
+    setMessage('securitySaveMsg', error.message || `${label} kısıtı güncellenemedi.`, true);
+  } finally {
+    button.disabled = false;
+  }
+}
+
 async function decideKyc(userId, decision) {
   const prompt = decision === 'approved' ? 'KYC başvurusunu onayla?' : 'KYC başvurusunu reddet?';
   if (!window.confirm(prompt)) return;
@@ -155,6 +189,8 @@ $('kyc').addEventListener('click', event => {
 $('q').addEventListener('keydown', event => { if (event.key === 'Enter') load(); });
 $('accountForm').addEventListener('submit', saveAccount);
 $('securityAction').addEventListener('click', toggleSuspension);
+$('depositAction').addEventListener('click', () => toggleFlowRestriction('deposit'));
+$('withdrawalAction').addEventListener('click', () => toggleFlowRestriction('withdrawal'));
 $('closePanel').addEventListener('click', closePanel);
 $('panel').addEventListener('click', event => { if (event.target === $('panel')) closePanel(); });
 document.addEventListener('keydown', event => { if (event.key === 'Escape' && $('panel').classList.contains('open')) closePanel(); });

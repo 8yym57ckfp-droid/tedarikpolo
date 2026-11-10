@@ -9,7 +9,7 @@
 
 ## Owner member operations
 - `GET /api/owner/user-center?q=...` — search production members for the Owner panel.
-- `GET /api/owner/user/:id/security` and `POST /api/owner/user/:id/security` — read or update account security; supported actions include `suspend` and `restore`.
+- `GET /api/owner/user/:id/security` and `POST /api/owner/user/:id/security` — read or update account security; supported actions include `suspend`, `restore`, `deposit`, `deposit_restore`, `withdrawal`, and `withdrawal_restore`.
 - `POST /api/owner/user/:id/account` — update a member email and optionally set a new password. Passwords are stored as hashes, duplicate email addresses are rejected, and a credential update closes the member's active sessions. Synthetic and test accounts cannot be changed through this endpoint.
 
 ## Ledger

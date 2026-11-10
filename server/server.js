@@ -1197,7 +1197,7 @@ async function route(req,res){
     if(!admin)return json(res,401,{error:'unauthorized'});
     const urlObj=new URL(req.url,'http://localhost'); const q=(urlObj.searchParams.get('q')||'').trim().toLowerCase();
     const users=(await getUsers()).filter(user=>requestedTestRunId?user.testRunId===requestedTestRunId:isProductionUser(user)); const tx=(await getTransactions()).filter(item=>requestedTestRunId?item.testRunId===requestedTestRunId:isProductionTransaction(item));
-    const filtered=users.filter(u=>!q || [u.id,u.firstName,u.lastName,u.email,u.phone,u.referralCode].filter(Boolean).join(' ').toLowerCase().includes(q));
+    const filtered=users.filter(u=>!q || [u.id,u.username,u.firstName,u.lastName,u.email,u.phone,u.referralCode].filter(Boolean).join(' ').toLowerCase().includes(q));
     const rows=filtered.map(u=>{const ut=tx.filter(x=>x.userId===u.id);return {...safeUser(u), totalDeposits:ut.filter(x=>x.type==='deposit'&&x.status==='approved').reduce((a,x)=>a+Number(x.amount||0),0), totalWithdrawals:ut.filter(x=>x.type==='withdrawal'&&x.status==='approved').reduce((a,x)=>a+Number(x.amount||0),0), pendingCount:ut.filter(x=>x.status==='pending').length, transactions:ut.length};});
     const kyc=users.filter(u=>u.kycStatus==='pending').map(u=>({userId:u.id,name:u.kycName,email:u.email,submittedAt:u.kycSubmittedAt,status:u.kycStatus}));
     return json(res,200,{users:rows,kycPending:kyc,totalUsers:users.length,pendingKyc:kyc.length});
@@ -1239,10 +1239,10 @@ async function route(req,res){
   if(req.url.startsWith('/api/admin/user/') && req.url.endsWith('/security') && req.method==='POST'){
     if(!admin)return json(res,401,{error:'unauthorized'});
     const id=decodeURIComponent(req.url.split('/')[4]||''); const u=await findUserById(id); if(!u)return json(res,404,{error:'user_not_found'});
-    const b=await body(req), action=String(b.action||''), reason=String(b.reason||'').trim().slice(0,500); const valid=['suspend','lock','withdrawal','deposit','sessions','2fa','restore'];
+    const b=await body(req), action=String(b.action||''), reason=String(b.reason||'').trim().slice(0,500); const valid=['suspend','lock','withdrawal','withdrawal_restore','deposit','deposit_restore','sessions','2fa','restore'];
     if(!valid.includes(action))return json(res,400,{error:'invalid_security_action'});
     let status=u.securityStatus||'active', wf=!!u.withdrawalFrozen, df=!!u.depositFrozen;
-    if(action==='suspend') status='suspended'; else if(action==='lock') status='locked'; else if(action==='withdrawal') wf=true; else if(action==='deposit') df=true; else if(action==='restore'){status='active';wf=false;df=false;}
+    if(action==='suspend') status='suspended'; else if(action==='lock') status='locked'; else if(action==='withdrawal') wf=true; else if(action==='withdrawal_restore') wf=false; else if(action==='deposit') df=true; else if(action==='deposit_restore') df=false; else if(action==='restore'){status='active';wf=false;df=false;}
     if(action==='sessions'||action==='lock'||action==='suspend'){for(const [t,ss] of sessions.entries()) if(ss.userId===id) sessions.delete(t);}
     const now=new Date().toISOString();
     if(pool){

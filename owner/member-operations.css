@@ -27,12 +27,19 @@ body.admin-body.owner-page .drawer .close {
 body.admin-body.owner-page .sum { background: #160923; border-color: #47206d; }
 body.admin-body.owner-page .sum small { color: #b7a4c8; }
 body.admin-body.owner-page .sum strong { color: #fff; }
+.member-username { display: block; margin-top: 3px; color: #d7adff; font-size: 12px; font-weight: 800; }
 .member-ops { margin: 16px 0; }
 .member-ops-intro { margin: 0 0 14px; color: #b7a4c8; font-size: 12px; line-height: 1.55; }
 .member-status { display: inline-flex; align-items: center; border: 1px solid transparent; border-radius: 999px; padding: 5px 9px; font-size: 10px; font-weight: 850; white-space: nowrap; }
 .member-status.active { background: rgba(53, 224, 160, .1); border-color: #26765a; color: #62efbb; }
 .member-status.suspended, .member-status.locked { background: rgba(255, 104, 116, .1); border-color: #78334a; color: #ff9aa8; }
 .member-ops-status { display: flex; align-items: center; gap: 9px; margin: 0 0 12px; }
+.member-flow-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0 16px; }
+.member-flow-control { display: grid; gap: 12px; padding: 12px; border: 1px solid #47206d; border-radius: 11px; background: rgba(18, 7, 31, .7); }
+.member-flow-heading { display: grid; gap: 7px; }
+.member-flow-heading strong { color: #f8f3ff; font-size: 12px; }
+.member-flow-control .flow-btn { min-height: 36px; padding: 8px 10px; font-size: 11px; }
+.member-flow-control .flow-btn.danger { background: linear-gradient(90deg, #9d273e, #d74754) !important; border-color: #d74754 !important; }
 .member-ops-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .member-ops .field { margin: 10px 0; }
 .member-ops .field label { display: block; margin: 0 0 6px; font-size: 11px; font-weight: 750; color: #d9c7e8 !important; }
@@ -54,6 +61,7 @@ body.admin-body.owner-page .team-profile-chip { background: linear-gradient(145d
 body.admin-body.owner-page .team-profile-chip:hover { border-color: #a43cff !important; }
 
 @media (max-width: 600px) {
+  .member-flow-controls { grid-template-columns: 1fr; }
   .member-ops-grid { grid-template-columns: 1fr; gap: 0; }
   body.admin-body.owner-page .drawer { padding: 18px 14px; }
 }
