@@ -1,24 +1,42 @@
 -- Safepays v20 PostgreSQL schema
 -- Set DATABASE_URL before starting. Production refuses file-based storage.
 CREATE TABLE IF NOT EXISTS users (
-  id TEXT PRIMARY KEY, first_name TEXT NOT NULL, last_name TEXT NOT NULL,
-  email TEXT UNIQUE NOT NULL, username TEXT UNIQUE NOT NULL, phone TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL,
+  id TEXT PRIMARY KEY DEFAULT ('USR-' || upper(replace(gen_random_uuid()::text,'-',''))), first_name TEXT NOT NULL, last_name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL, username TEXT UNIQUE, phone TEXT UNIQUE, password_hash TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'user', balance NUMERIC(20,8) NOT NULL DEFAULT 0,
-  referral_earnings NUMERIC(20,8) NOT NULL DEFAULT 0, referral_code TEXT UNIQUE NOT NULL,
+  referral_earnings NUMERIC(20,8) NOT NULL DEFAULT 0,
+  referral_code TEXT UNIQUE NOT NULL DEFAULT ('SAFE-' || upper(replace(gen_random_uuid()::text,'-',''))),
   referred_by TEXT, two_factor_enabled BOOLEAN NOT NULL DEFAULT FALSE,
   phone_verified BOOLEAN NOT NULL DEFAULT FALSE, email_verified BOOLEAN NOT NULL DEFAULT FALSE,
   is_test_account BOOLEAN NOT NULL DEFAULT FALSE, is_synthetic BOOLEAN NOT NULL DEFAULT FALSE, test_run_id TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+ALTER TABLE users ALTER COLUMN id SET DEFAULT ('USR-' || upper(replace(gen_random_uuid()::text,'-','')));
+ALTER TABLE users ALTER COLUMN username DROP NOT NULL;
+ALTER TABLE users ALTER COLUMN phone DROP NOT NULL;
+ALTER TABLE users ALTER COLUMN referral_code SET DEFAULT ('SAFE-' || upper(replace(gen_random_uuid()::text,'-','')));
+CREATE OR REPLACE FUNCTION safepays_fill_referral_code()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.referral_code IS NULL OR BTRIM(NEW.referral_code) = '' THEN
+    NEW.referral_code := 'SAFE-' || upper(replace(gen_random_uuid()::text,'-',''));
+  END IF;
+  RETURN NEW;
+END $$;
+DROP TRIGGER IF EXISTS trg_users_referral_code ON users;
+CREATE TRIGGER trg_users_referral_code
+BEFORE INSERT ON users
+FOR EACH ROW EXECUTE FUNCTION safepays_fill_referral_code();
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_synthetic BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS test_run_id TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_test_account BOOLEAN NOT NULL DEFAULT FALSE;
 CREATE TABLE IF NOT EXISTS transactions (
-  id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), type TEXT NOT NULL,
+  id TEXT PRIMARY KEY DEFAULT ('TX-' || upper(replace(gen_random_uuid()::text,'-',''))), user_id TEXT NOT NULL REFERENCES users(id), type TEXT NOT NULL,
   amount NUMERIC(20,8) NOT NULL, currency TEXT NOT NULL DEFAULT 'USDT', network TEXT,
   status TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), tx_hash TEXT,
   is_synthetic BOOLEAN NOT NULL DEFAULT FALSE, test_run_id TEXT
 );
+ALTER TABLE transactions ALTER COLUMN id SET DEFAULT ('TX-' || upper(replace(gen_random_uuid()::text,'-','')));
 ALTER TABLE transactions ADD COLUMN IF NOT EXISTS address TEXT;
 ALTER TABLE transactions ADD COLUMN IF NOT EXISTS wallet_id TEXT;
 ALTER TABLE transactions ADD COLUMN IF NOT EXISTS request_key TEXT;

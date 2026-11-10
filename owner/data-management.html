@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SafePays Owner — Veri Yönetimi</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+  <link rel="stylesheet" href="../admin/admin.css?v=20261006.1">
+  <link rel="stylesheet" href="../assets/dark-theme.css">
+  <link rel="stylesheet" href="../assets/owner.css?v=20261005.7">
+  <link rel="stylesheet" href="data-management.css?v=20261110.1">
+  <script src="../admin/admin.js?v=20261006.1"></script>
+  <script src="../admin/admin-api.js?v=20261009.2"></script>
+  <script src="../assets/app.js"></script>
+  <script src="../admin/admin-store.js?v=20261005.5"></script>
+  <script src="../assets/maintenance.js"></script>
+  <script src="owner.js?v=20261110.1"></script>
+</head>
+<body class="admin-body owner-page dark-theme">
+  <div class="admin-layout">
+    <aside class="admin-side">
+      <a class="logo" href="dashboard.html"><img class="owner-brand-mark" src="../assets/safepays-mark.png?v=2" alt=""><span class="owner-brand-wordmark">Safe<span>Pays</span></span><small>OWNER PANEL</small></a>
+      <nav class="admin-nav" aria-label="Owner yönetim menüsü"></nav>
+    </aside>
+    <main class="admin-main">
+      <div class="admin-head"><div><div class="admin-muted">OWNER ARAÇLARI</div><h1>Veri Yönetimi</h1><div class="admin-muted">Üye, bakiye ve yatırım/çekim geçmişini tek ekrandan yönetin.</div></div><div class="admin-user">Yönetici · Sunucu oturumu</div></div>
+      <div class="dm-notice"><strong>Finans kayıtları korunur.</strong> Bakiye hedefi deftere fark kaydı ekler. İşlem iptali kayıt satırını silmez; onaylı işlemin etkisini ters defter kaydıyla geri alır.</div>
+
+      <section class="admin-card dm-section">
+        <div class="dm-section-head"><div><h2>Toplu dosya yükleme</h2><p>İlk satıra sütun başlıklarını koyun. İlk Excel sayfası veya Word dosyasındaki ilk tablo okunur. Bakiye sütunu hedef/son bakiye sayılır. İşlem türü ve tutarı eşlenirse tarih geçmiş işlem kaydına yazılır; bakiye boşsa onaylı işlemleri bakiyeye uygulamayı seçebilirsiniz.</p></div></div>
+        <div class="dm-file-row"><label class="dm-file"><span>Tablo dosyası seç</span><input id="importFile" type="file" accept=".xlsx,.xls,.csv,.tsv,.docx"></label><span id="fileName" class="dm-muted">Dosya seçilmedi</span><button class="admin-btn" id="parseFile" type="button">Dosyayı oku</button></div>
+        <div id="mappingPanel" class="dm-hidden">
+          <div class="dm-map-grid" id="mappingGrid"></div>
+          <div class="dm-options">
+            <label><input id="updateExisting" type="checkbox"> Eşleşen üyelerin ad, soyad ve iletişim bilgilerini de güncelle</label>
+            <label><input id="applyHistory" type="checkbox"> Onaylı geçmiş işlemleri bakiyeye de uygula</label>
+          </div>
+          <p>Dosyada e-postası zaten kayıtlı bir üye varsa profil bilgileri korunur; eşleşen satırın bakiye ve işlem alanları yine uygulanır.</p>
+          <div id="importSummary" class="dm-muted"></div>
+          <div class="dm-table-scroll"><table class="dm-table"><thead><tr><th>Ad soyad</th><th>E-posta</th><th>Kullanıcı adı</th><th>Telefon</th><th>Hedef bakiye</th><th>İşlem türü/tutarı</th><th>Tarih</th></tr></thead><tbody id="previewRows"></tbody></table></div>
+          <div class="dm-actions"><button class="admin-btn primary" id="applyImport" type="button">Önizlemeyi uygula</button><span id="importMessage" class="dm-message" role="status"></span></div>
+        </div>
+        <div id="credentialsPanel" class="dm-credentials dm-hidden"><strong>Yeni üyeler için tek seferlik oluşturulan giriş bilgileri</strong><p>Şifreler veritabanında yalnızca güvenli özet olarak saklanır. Bu dosyayı güvenli biçimde saklayıp üyelerle paylaşın.</p><pre id="credentialsText"></pre><button class="admin-btn" id="downloadCredentials" type="button">Giriş bilgilerini indir</button></div>
+      </section>
+
+      <div class="dm-columns">
+        <section class="admin-card dm-section">
+          <h2>Yeni üye ekle</h2><p>Şifreyi boş bırakırsanız sistem güçlü, rastgele bir giriş şifresi üretir.</p>
+          <form id="createUserForm" class="dm-form">
+            <div class="dm-form-grid"><label>Ad<input name="firstName" required maxlength="100"></label><label>Soyad<input name="lastName" required maxlength="100"></label><label>E-posta<input name="email" type="email" required maxlength="254"></label><label>Kullanıcı adı<input name="username" maxlength="50"></label><label>Telefon<input name="phone" maxlength="40"></label><label>İlk bakiye (USDT)<input name="balance" type="number" min="0" step="0.00000001" value="0"></label><label class="dm-wide">Şifre (boşsa sistem oluşturur)<input name="password" type="password" minlength="8" autocomplete="new-password"></label></div>
+            <button class="admin-btn primary" type="submit">Üyeyi oluştur</button><span id="createMessage" class="dm-message" role="status"></span>
+          </form>
+        </section>
+        <section class="admin-card dm-section">
+          <h2>İşlem geçmişi ekle</h2><p>Geçmiş kayıt varsayılan olarak mevcut bakiyeyi değiştirmez.</p>
+          <form id="transactionForm" class="dm-form">
+            <label>Üye e-postası veya ID<input name="userKey" required></label>
+            <div class="dm-form-grid"><label>Tür<select name="type"><option value="deposit">Yatırım</option><option value="withdrawal">Çekim</option></select></label><label>Tutar (USDT)<input name="amount" type="number" min="0.00000001" step="0.00000001" required></label><label>Durum<select name="status"><option value="approved">Onaylı</option><option value="pending">Bekliyor</option><option value="rejected">Reddedildi</option></select></label><label>Tarih<input name="createdAt" type="datetime-local"></label><label class="dm-wide">Ekip e-postası (isteğe bağlı)<input name="teamEmail" type="email"></label></div>
+            <label class="dm-check"><input name="applyToBalance" type="checkbox"> Onaylı işlemi üye bakiyesine uygula</label>
+            <button class="admin-btn primary" type="submit">Geçmiş işlemi ekle</button><span id="transactionMessage" class="dm-message" role="status"></span>
+          </form>
+        </section>
+      </div>
+
+      <section class="admin-card dm-section">
+        <div class="dm-section-head"><div><h2>Üyeler ve bakiye düzeltme</h2><p>Hedef bakiye kaydı mevcut bakiyeyle farkı deftere yazar.</p></div></div>
+        <div class="dm-search"><input id="userSearch" placeholder="Ad, e-posta, telefon veya ID ara"><button class="admin-btn" id="searchUsers" type="button">Ara</button></div>
+        <div class="dm-table-scroll"><table class="dm-table dm-user-table"><thead><tr><th>Üye</th><th>Kullanıcı adı</th><th>Telefon</th><th>Bakiye</th><th></th></tr></thead><tbody id="userRows"><tr><td colspan="5">Yükleniyor...</td></tr></tbody></table></div>
+        <div id="memberPanel" class="dm-member-panel dm-hidden">
+          <div class="dm-section-head"><div><h3 id="selectedName">Üye</h3><div id="selectedIdentity" class="dm-muted"></div></div><button id="closeMember" class="dm-close" type="button">Kapat</button></div>
+          <form id="balanceForm" class="dm-inline-form"><label>Yeni hedef bakiye (USDT)<input name="targetBalance" type="number" min="0" step="0.00000001" required></label><label>Açıklama<input name="reason" required minlength="4" maxlength="250" placeholder="Örn. mutabakat düzeltmesi"></label><button class="admin-btn primary" type="submit">Bakiyeyi düzelt</button></form>
+          <h3>İşlem geçmişi</h3><p>Hatalı bir kaydı geri alıp doğru bilgileriyle yeniden ekleyebilirsiniz.</p><div id="memberTransactions" class="dm-history">Üye seçin.</div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="data-management.js?v=20261110.1"></script>
+</body>
+</html>
