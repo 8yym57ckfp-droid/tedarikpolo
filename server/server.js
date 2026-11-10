@@ -765,7 +765,7 @@ function teamCollateralMetrics(teamId,transactions,wallets,intents=[],capacityAd
   const approvedDeposits=transactions.filter(tx=>!tx.isSynthetic&&tx.type==='deposit'&&tx.status==='approved'&&belongs(tx)).reduce((sum,tx)=>sum+Number(tx.amount||0),0);
   const pendingDeposits=transactions.filter(tx=>!tx.isSynthetic&&tx.type==='deposit'&&tx.status==='pending'&&belongs(tx)).reduce((sum,tx)=>sum+Number(tx.amount||0),0);
   const repayments=capacityAdjustments.filter(item=>item.teamAccountId===teamId).reduce((sum,item)=>sum+Number(item.amount||0),0);
-  return {collateralExposure:Math.max(0,exposureDeposits-paidWithdrawals+activeReservations),commissionEarned:approvedDeposits,paidChecks:paidWithdrawals,investmentsReceived:approvedDeposits,pendingInvestments:pendingDeposits,repayments,investmentCapacityAvailable:Math.max(0,paidWithdrawals+repayments-approvedDeposits-pendingDeposits)};
+  return {collateralExposure:Math.max(0,exposureDeposits-paidWithdrawals+activeReservations),commissionEarned:approvedDeposits,paidChecks:paidWithdrawals,investmentsReceived:approvedDeposits,pendingInvestments:pendingDeposits,repayments,investmentCapacityAvailable:Math.max(0,paidWithdrawals+repayments-approvedDeposits-pendingDeposits-activeReservations)};
 }
 async function getTeamCapacityAdjustments(){
   if(!pool)return readDb().teamCapacityAdjustments||[];
@@ -776,7 +776,7 @@ async function getTeamMetrics(accounts){
   return new Map(accounts.map(account=>[account.id,teamCollateralMetrics(account.id,transactions,wallets,intents,adjustments)]));
 }
 async function getTeamInvestmentCapacity(client,teamId,excludeTransactionId=null){
-  const result=await client.query(`SELECT COALESCE(SUM(t.amount) FILTER (WHERE t.type='withdrawal' AND t.status='approved'),0) AS paid, COALESCE(SUM(t.amount) FILTER (WHERE t.type='deposit' AND t.status IN ('approved','pending') AND t.id<>$2),0) AS allocated, COALESCE((SELECT SUM(amount) FROM team_capacity_adjustments WHERE team_account_id=$1),0) AS repayments FROM transactions t LEFT JOIN wallet_addresses w ON w.id=t.wallet_id WHERE t.is_synthetic=FALSE AND (CASE WHEN t.type='deposit' THEN COALESCE(t.team_account_id,w.team_id) WHEN t.type='withdrawal' THEN COALESCE(t.claimed_by_team_id,t.team_account_id,(SELECT wd.team_id FROM transactions d JOIN wallet_addresses wd ON wd.id=d.wallet_id WHERE d.user_id=t.user_id AND d.type='deposit' AND d.status='approved' AND d.is_synthetic=FALSE AND d.created_at<=t.created_at ORDER BY d.created_at DESC LIMIT 1)) ELSE NULL END)=$1`,[teamId,excludeTransactionId||'']);
+  const result=await client.query(`SELECT COALESCE(SUM(t.amount) FILTER (WHERE t.type='withdrawal' AND t.status='approved'),0) AS paid, COALESCE(SUM(t.amount) FILTER (WHERE t.type='deposit' AND t.status IN ('approved','pending') AND t.id<>$2),0)+COALESCE((SELECT SUM(di.amount) FROM deposit_intents di JOIN wallet_addresses wi ON wi.id=di.wallet_id WHERE wi.team_id=$1 AND di.used_at IS NULL AND di.expires_at>NOW()),0) AS allocated, COALESCE((SELECT SUM(amount) FROM team_capacity_adjustments WHERE team_account_id=$1),0) AS repayments FROM transactions t LEFT JOIN wallet_addresses w ON w.id=t.wallet_id WHERE t.is_synthetic=FALSE AND (CASE WHEN t.type='deposit' THEN COALESCE(t.team_account_id,w.team_id) WHEN t.type='withdrawal' THEN COALESCE(t.claimed_by_team_id,t.team_account_id,(SELECT wd.team_id FROM transactions d JOIN wallet_addresses wd ON wd.id=d.wallet_id WHERE d.user_id=t.user_id AND d.type='deposit' AND d.status='approved' AND d.is_synthetic=FALSE AND d.created_at<=t.created_at ORDER BY d.created_at DESC LIMIT 1)) ELSE NULL END)=$1`,[teamId,excludeTransactionId||'']);
   const row=result.rows[0]||{};const paid=Number(row.paid||0),allocated=Number(row.allocated||0),repayments=Number(row.repayments||0);return {paidChecks:paid,investmentsAllocated:allocated,repayments,available:Math.max(0,paid+repayments-allocated)};
 }
 async function getTeamCollateralExposure(client,teamId){
@@ -1943,11 +1943,13 @@ async function route(req,res){
             if(team.active===false||team.depositsPaused)continue;
             if(team.collateralPaused){capacityBlocked=true;continue;}
             if(total>0&&exposure+amount>total+1e-8){capacityBlocked=true;continue;}
+          if(total<=0){const capacity=teamCollateralMetrics(candidate.teamId,db.transactions||[],db.walletAddresses||[],db.depositIntents||[],db.teamCapacityAdjustments||[]).investmentCapacityAvailable;if(amount>capacity+1e-8){capacityBlocked=true;continue;}}
+            if(total<=0){const investmentCapacity=await getTeamInvestmentCapacity(client,candidate.teamId);if(amount>investmentCapacity.available+1e-8){capacityBlocked=true;continue;}}
             if(total>0&&team.collateralAutoPause&&exposure>=threshold-1e-8){await syncTeamCollateral({teamId:candidate.teamId,exposure,client,at:now.toISOString()});capacityBlocked=true;continue;}
           }
           wallet=candidate;break;
         }
-        if(!wallet){await client.query('COMMIT');return json(res,409,capacityBlocked?{error:'team_collateral_limit_exceeded',message:'Ekip teminat kapasitesi dolu; ekip çekimleri ödedikten sonra yeniden yatırım kabul edebilir.'}:amountLimitBlocked?{error:'deposit_amount_limits',message:'Girdiğiniz tutar bu ağdaki yatırım cüzdanlarının alt/üst limitlerine uymuyor.'}:{error:'wallet_unavailable'});}
+        if(!wallet){await client.query('COMMIT');return json(res,409,capacityBlocked?{error:'team_collateral_limit_exceeded',message:'Ekip yatırım kapasitesi dolu; önce çekim ödemesi veya merkeze alınmış geri ödeme gerekir.'}:amountLimitBlocked?{error:'deposit_amount_limits',message:'Girdiğiniz tutar bu ağdaki yatırım cüzdanlarının alt/üst limitlerine uymuyor.'}:{error:'wallet_unavailable'});}
         await client.query('UPDATE wallet_addresses SET use_count=use_count+1,last_used_at=$1,updated_at=$1 WHERE id=$2',[now.toISOString(),wallet.id]);
         intent={id:`DPI-${crypto.randomBytes(12).toString('hex').toUpperCase()}`,userId:uid,walletId:wallet.id,amount,network,createdAt:now.toISOString(),expiresAt};
         await client.query('INSERT INTO deposit_intents (id,user_id,wallet_id,amount,network,created_at,expires_at) VALUES ($1,$2,$3,$4,$5,$6,$7)',[intent.id,uid,wallet.id,amount,network,intent.createdAt,intent.expiresAt]);
