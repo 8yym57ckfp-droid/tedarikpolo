@@ -46,6 +46,8 @@
       <div class="dm-columns">
         <section class="admin-card dm-section">
           <h2>Yeni üye ekle</h2><p>Şifreyi boş bırakırsanız sistem güçlü, rastgele bir giriş şifresi üretir.</p>
+          <button class="admin-btn" id="createRandomUser" type="button">Rastgele üye oluştur</button>
+          <p class="dm-muted">Otomatik oluşturulan e-posta adresleri .invalid alan adını, telefonlar ise sentetik test numaralarını kullanır; gerçek iletişim için uygun değildir.</p>
           <form id="createUserForm" class="dm-form">
             <div class="dm-form-grid"><label>Ad<input name="firstName" required maxlength="100"></label><label>Soyad<input name="lastName" required maxlength="100"></label><label>E-posta<input name="email" type="email" required maxlength="254"></label><label>Kullanıcı adı<input name="username" maxlength="50"></label><label>Telefon<input name="phone" maxlength="40"></label><label>İlk bakiye (USDT)<input name="balance" type="number" min="0" step="0.00000001" value="0"></label><label class="dm-wide">Şifre (boşsa sistem oluşturur)<input name="password" type="password" minlength="8" autocomplete="new-password"></label></div>
             <button class="admin-btn primary" type="submit">Üyeyi oluştur</button><span id="createMessage" class="dm-message" role="status"></span>
