@@ -160,6 +160,18 @@ async function saveRequestLimits(value){
   else{const db=readDb();db.requestLimits=limits;writeDb(db);}
   return limits;
 }
+async function getWithdrawalCompanies(){
+  let stored=[];
+  if(pool){const result=await pool.query('SELECT content FROM site_content WHERE id=$1',['withdrawal-companies']);stored=result.rows[0]?.content?.companies||[];}
+  else{const db=readDb();stored=db.withdrawalCompanies||[];}
+  return Array.isArray(stored)?[...new Set(stored.map(value=>String(value||'').trim().slice(0,80)).filter(Boolean))].slice(0,30):[];
+}
+async function saveWithdrawalCompanies(input){
+  const companies=Array.isArray(input)?[...new Set(input.map(value=>String(value||'').trim().replace(/\s+/g,' ').slice(0,80)).filter(Boolean))].slice(0,30):[];
+  if(pool)await pool.query('INSERT INTO site_content (id,content,updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (id) DO UPDATE SET content=EXCLUDED.content,updated_at=NOW()',['withdrawal-companies',JSON.stringify({companies})]);
+  else{const db=readDb();db.withdrawalCompanies=companies;writeDb(db);}
+  return companies;
+}
 async function getDepositSettings(){
   let stored={};
   if(pool){const result=await pool.query('SELECT content FROM site_content WHERE id=$1',['deposit-settings']);stored=result.rows[0]?.content||{};}
@@ -1266,6 +1278,16 @@ async function route(req,res){
     if(commissionEnabled&&finance.totals.deposit)finance.commissionPercent=finance.totals.commission/finance.totals.deposit*100;
     return json(res,200,{...finance,lifetimeSettlement:lifetimeSettlement?{...lifetimeSettlement,scope:owner?'teams':'team'}:null,run:run?{id:run.id,targetUserId:run.targetUserId,teamAccountId:run.teamAccountId,createdAt:run.createdAt,memberCount:Number(run.memberCount),transactionCount:Number(run.transactionCount),testData:true}:null});
   }
+  if(adminQuery.pathname==='/api/admin/data-tools/withdrawal-companies'&&req.method==='GET'){
+    if(!owner)return json(res,403,{error:'owner_only'});
+    return json(res,200,{companies:await getWithdrawalCompanies()});
+  }
+  if(adminQuery.pathname==='/api/admin/data-tools/withdrawal-companies'&&req.method==='POST'){
+    if(!owner)return json(res,403,{error:'owner_only'});
+    const b=await body(req),companies=await saveWithdrawalCompanies(b.companies);
+    addAudit('withdrawal_companies_updated',owner.email,{count:companies.length});
+    return json(res,200,{ok:true,companies});
+  }
   if(adminQuery.pathname==='/api/admin/data-tools/parse'&&req.method==='POST'){
     if(!owner)return json(res,403,{error:'owner_only'});
     const b=await body(req,12e6),name=String(b.fileName||''),encoded=String(b.fileBase64||'').replace(/^data:[^,]*,/,'');
@@ -1378,9 +1400,10 @@ async function route(req,res){
   }
   if(adminQuery.pathname==='/api/admin/data-tools/transaction'&&req.method==='POST'){
     if(!owner)return json(res,403,{error:'owner_only'});
-    const b=await body(req),userKey=String(b.userId||b.email||'').trim(),type=String(b.type||'').trim().toLowerCase(),amount=managementNumber(b.amount),status=String(b.status||'approved').trim().toLowerCase(),applyBalance=b.applyToBalance===true,requestKey=String(b.requestKey||'').trim().slice(0,128),createdAt=parseManagementDate(b.createdAt)||new Date().toISOString(),network=String(b.network||'').trim().toUpperCase(),address=String(b.address||'').trim();
+    const b=await body(req),userKey=String(b.userId||b.email||'').trim(),type=String(b.type||'').trim().toLowerCase(),amount=managementNumber(b.amount),status=String(b.status||'approved').trim().toLowerCase(),applyBalance=b.applyToBalance===true,requestKey=String(b.requestKey||'').trim().slice(0,128),createdAt=parseManagementDate(b.createdAt)||new Date().toISOString(),network=String(b.network||'').trim().toUpperCase(),address=String(b.address||'').trim(),companyName=String(b.companyName||'').trim().slice(0,80);
     if(!userKey||!['deposit','withdrawal'].includes(type)||!Number.isFinite(amount)||amount<=0||!['pending','approved','rejected'].includes(status)||String(b.createdAt||'').trim()&&!parseManagementDate(b.createdAt))return json(res,400,{error:'invalid_manual_transaction',message:'Üye, yatırım/çekim türü, geçerli tutar, durum ve tarih bilgilerini kontrol edin.'});
     if(type==='withdrawal'&&(!isValidNetwork(network)||!isValidAddress(network,address)))return json(res,400,{error:'invalid_withdrawal_destination',message:'Çekim için TRC20 veya ERC20 ağını ve seçilen ağla uyumlu cüzdan adresini girin.'});
+    const configuredCompanies=await getWithdrawalCompanies();if(type==='withdrawal'&&configuredCompanies.length&&!configuredCompanies.includes(companyName))return json(res,400,{error:'invalid_withdrawal_company',message:'Çekim için listeden geçerli bir firma seçin.'});
     if(applyBalance&&status!=='approved')return json(res,400,{error:'only_approved_affects_balance',message:'Bakiyeye yalnızca onaylı işlem uygulanabilir.'});
     const now=new Date().toISOString(),id=makeTxId();let user,client=null,db=null,tx,collateralSync=null;
     try{
@@ -1388,7 +1411,7 @@ async function route(req,res){
       else{db=readDb();user=db.users.find(item=>String(item.id)===userKey||String(item.email||'').toLowerCase()===userKey.toLowerCase())||null;}
       if(!user||!isProductionUser(user)){if(pool)await client.query('ROLLBACK');return json(res,404,{error:'user_not_found'});}
       if(requestKey){const duplicate=pool?(await client.query('SELECT id FROM transactions WHERE request_key=$1 AND user_id=$2 LIMIT 1',[requestKey,user.id])).rows[0]:(db.transactions||[]).find(item=>item.requestKey===requestKey&&String(item.userId)===String(user.id));if(duplicate){if(pool)await client.query('ROLLBACK');return json(res,200,{ok:true,idempotent:true,transactionId:duplicate.id});}}
-      tx={id,userId:user.id,type,amount,currency:String(b.currency||'USDT').trim().slice(0,10)||'USDT',network:type==='withdrawal'?network:(String(b.network||'').trim().slice(0,30)||null),address:type==='withdrawal'?address:null,status,createdAt,expiresAt:status==='pending'?new Date(new Date(createdAt).getTime()+TX_CONTROL.autoRejectMinutes*60000).toISOString():null,txHash:null,requestedAmount:amount,receivedAmount:null,decisionBy:status==='approved'?owner.email:null,decisionAt:status==='approved'?now:null,teamAccountId:null,requestKey:requestKey||null,isSynthetic:false,testRunId:null};
+      tx={id,userId:user.id,type,amount,currency:String(b.currency||'USDT').trim().slice(0,10)||'USDT',network:type==='withdrawal'?network:(String(b.network||'').trim().slice(0,30)||null),address:type==='withdrawal'?address:null,companyName:type==='withdrawal'?(companyName||null):null,status,createdAt,expiresAt:status==='pending'?new Date(new Date(createdAt).getTime()+TX_CONTROL.autoRejectMinutes*60000).toISOString():null,txHash:null,requestedAmount:amount,receivedAmount:null,decisionBy:status==='approved'?owner.email:null,decisionAt:status==='approved'?now:null,teamAccountId:null,requestKey:requestKey||null,isSynthetic:false,testRunId:null};
       if(b.teamEmail){const team=(await getTeamAccounts()).find(item=>item.email.toLowerCase()===String(b.teamEmail).trim().toLowerCase());if(!team)throw new Error('team_not_found');tx.teamAccountId=team.id;}
       if(tx.teamAccountId&&type==='deposit'&&status==='approved'){
         if(pool){const lockedTeam=await client.query('SELECT collateral_total AS "collateralTotal" FROM team_accounts WHERE id=$1 FOR UPDATE',[tx.teamAccountId]);if(lockedTeam.rows[0]&&Number(lockedTeam.rows[0].collateralTotal||0)<=0){const capacity=await getTeamInvestmentCapacity(client,tx.teamAccountId);if(amount>capacity.available+1e-8)throw new Error('team_investment_capacity_exceeded');}}
@@ -2017,21 +2040,26 @@ async function route(req,res){
     await startRequestCooldown(uid,'deposit'); addAudit('deposit_request',uid,{transactionId:tx.id,amount,network});
     return json(res,201,{ok:true,transaction:tx,requestKey,message:'Yatırım talebi alındı. Yeni talep oluşturabilirsiniz; her talep ayrı işlem ID ile kaydedilir.'});
   }
+  if(req.url==='/api/withdrawal-companies' && req.method==='GET'){
+    if(!uid)return json(res,401,{error:'unauthorized'});
+    return json(res,200,{companies:await getWithdrawalCompanies()});
+  }
   if(req.url==='/api/withdrawals' && req.method==='POST'){
     if(!uid)return json(res,401,{error:'unauthorized'});
-    const b=await body(req); const amount=Number(b.amount); const network=String(b.network||'').toUpperCase(); const address=String(b.address||'').trim(); const u=await findUserById(uid); if(u?.securityStatus==='locked'||u?.securityStatus==='suspended'||u?.withdrawalFrozen) return json(res,403,{error:'withdrawals_blocked',message:'Çekim talepleri güvenlik nedeniyle geçici olarak dondurulmuştur.'}); const requestKey=getRequestKey(req,b) || `AUTO-${crypto.randomUUID()}`;
+    const b=await body(req); const amount=Number(b.amount); const network=String(b.network||'').toUpperCase(); const address=String(b.address||'').trim(); const companyName=String(b.companyName||'').trim().slice(0,80); const u=await findUserById(uid); if(u?.securityStatus==='locked'||u?.securityStatus==='suspended'||u?.withdrawalFrozen) return json(res,403,{error:'withdrawals_blocked',message:'Çekim talepleri güvenlik nedeniyle geçici olarak dondurulmuştur.'}); const requestKey=getRequestKey(req,b) || `AUTO-${crypto.randomUUID()}`;
     if(requestKey){const existingKey=(await getTransactions()).find(x=>x.requestKey===requestKey && x.userId===uid); if(existingKey)return json(res,200,{ok:true,idempotent:true,transaction:existingKey});}
     if(!Number.isFinite(amount)||amount<10)return json(res,400,{error:'invalid_amount',message:'Minimum çekim 10 USDT.'});
     if(!isValidNetwork(network))return json(res,400,{error:'invalid_network'});
     if(!isValidAddress(network,address))return json(res,400,{error:'invalid_address',message:'Cüzdan adresi seçilen ağ ile uyumlu değil.'});
+    const configuredCompanies=await getWithdrawalCompanies();if(configuredCompanies.length&&!configuredCompanies.includes(companyName))return json(res,400,{error:'invalid_withdrawal_company',message:'Çekim talebi için listeden bir firma seçin.'});
     if(amount>currentBalance(u))return json(res,400,{error:'insufficient_balance'});
     const pending=(await getTransactions()).filter(x=>x.userId===uid&&x.type==='withdrawal'&&x.status==='pending').reduce((a,x)=>a+Number(x.amount||0),0);
     if(amount+pending>currentBalance(u))return json(res,400,{error:'insufficient_available_balance'});
     const cooldown=await requestCooldownRemaining(uid,'withdrawal');
     if(cooldown>0)return json(res,429,{error:'request_cooldown',cooldownSeconds:Math.ceil(cooldown/1000),message:'Yeni çekim talebi için '+Math.ceil(cooldown/1000)+' saniye beklemelisiniz.'});
     await startRequestCooldown(uid,'withdrawal');
-    const createdAt=new Date(); const tx={id:makeTxId(),userId:uid,type:'withdrawal',amount,requestedAmount:amount,receivedAmount:null,currency:'USDT',network,status:'pending',createdAt:createdAt.toISOString(),txHash:null,address,requestKey,expiresAt:new Date(createdAt.getTime()+TX_CONTROL.autoRejectMinutes*60000).toISOString()};
-    await insertTransaction(tx); addAudit('withdrawal_request',uid,{transactionId:tx.id,amount,network});
+    const createdAt=new Date(); const tx={id:makeTxId(),userId:uid,type:'withdrawal',amount,requestedAmount:amount,receivedAmount:null,currency:'USDT',network,status:'pending',createdAt:createdAt.toISOString(),txHash:null,address,companyName:companyName||null,requestKey,expiresAt:new Date(createdAt.getTime()+TX_CONTROL.autoRejectMinutes*60000).toISOString()};
+    await insertTransaction(tx); addAudit('withdrawal_request',uid,{transactionId:tx.id,amount,network,companyName:companyName||null});
     return json(res,201,{ok:true,transaction:tx,requestKey,message:'Çekim talebi alındı. Yeni talep oluşturabilirsiniz; her talep ayrı işlem ID ile kaydedilir.'});
   }
 
