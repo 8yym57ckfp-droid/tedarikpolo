@@ -164,7 +164,7 @@ function parseRequestTimestamp(raw){
   if(raw instanceof Date){const value=raw.getTime();return Number.isFinite(value)?value:null;}
   if(typeof raw==='number'&&Number.isFinite(raw))return raw<1e12?raw*1000:raw;
   const value=String(raw??'').trim();if(!value)return null;
-  if(/^\\d{10,13}$/.test(value)){const numeric=Number(value);return numeric<1e12?numeric*1000:numeric;}
+  if(/^\d{10,13}$/.test(value)){const numeric=Number(value);return numeric<1e12?numeric*1000:numeric;}
   const parsed=Date.parse(value);return Number.isFinite(parsed)?parsed:null;
 }
 function expiryTimestamp(x){
