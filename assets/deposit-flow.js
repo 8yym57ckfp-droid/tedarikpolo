@@ -21,7 +21,18 @@ function showPaymentAddress(){
   document.getElementById('confirmNetwork').textContent=selectedNetwork;
   const modal=document.getElementById('depositConfirmModal');if(!modal){alert('Onay penceresi yüklenemedi.');return;}modal.classList.add('open');modal.setAttribute('aria-hidden','false');
 }
-async function loadInvestmentCompanies(){try{const response=await fetch('/api/investment-companies',{headers:apiHeaders(),cache:'no-store'});if(!response.ok)throw new Error();const data=await response.json();investmentCompanies=Array.isArray(data.companies)?data.companies:[];const field=document.getElementById('investmentCompanyField'),select=document.getElementById('investmentCompany');if(!field||!select)return;const safe=value=>String(value).replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[ch]));select.innerHTML='<option value="">Firma seçin</option>'+investmentCompanies.map(name=>'<option value="'+safe(name)+'">'+safe(name)+'</option>').join('');field.hidden=!investmentCompanies.length;}catch(_){const field=document.getElementById('investmentCompanyField');if(field)field.hidden=true;}}
+async function loadInvestmentCompanies(){
+  try{
+    const response=await fetch('/api/investment-companies',{headers:apiHeaders(),cache:'no-store'});
+    if(!response.ok)throw new Error('Firmalar yüklenemedi');
+    const data=await response.json();investmentCompanies=Array.isArray(data.companies)?data.companies:[];
+    const field=document.getElementById('investmentCompanyField'),select=document.getElementById('investmentCompany');
+    if(!field||!select)return;
+    select.replaceChildren(new Option('Firma seçin',''));
+    investmentCompanies.forEach(name=>{const option=document.createElement('option');option.value=name;option.textContent=name;select.appendChild(option);});
+    field.hidden=!investmentCompanies.length;
+  }catch(_){const field=document.getElementById('investmentCompanyField');if(field)field.hidden=true;}
+}
 async function confirmDepositStart(){
   closeDepositConfirm();const amount=Number(document.getElementById('amount').value);if(!(amount>=10)){alert('Minimum yatırım 10 USDT.');return;}const companyName=document.getElementById('investmentCompany')?.value.trim()||'';if(investmentCompanies.length&&!companyName){alert('İlgili birim / firma seçin.');return;}
   try{
