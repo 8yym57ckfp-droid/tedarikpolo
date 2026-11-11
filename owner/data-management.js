@@ -65,13 +65,27 @@ function randomItem(items){return items[Math.floor(Math.random()*items.length)];
 function createRandomUser(){
   const firstNames=['Ahmet','Mehmet','Mustafa','Emre','Burak','Kerem','Can','Mert','Onur','Eren','Yusuf','Ömer','Ali','Deniz','Arda','Ece','Elif','Zeynep','Ayşe','Büşra','Esra','Ceren','Derya','Merve','Selin','Melis','Sude','İrem','Defne','Aslı'];
   const lastNames=['Yılmaz','Kaya','Demir','Çelik','Şahin','Yıldız','Yıldırım','Öztürk','Aydın','Özdemir','Arslan','Doğan','Kılıç','Aslan','Çetin','Kara','Koç','Kurt','Polat','Acar','Aksoy','Bulut','Keskin','Güneş','Tekin'];
-  const firstName=randomItem(firstNames),lastName=randomItem(lastNames),suffix=randomHex(10);
-  const slug=value=>value.toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i').replace(/[^a-z0-9]+/g,'');
+  const firstName=randomItem(firstNames),lastName=randomItem(lastNames);
+  const slug=value=>value.toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/ı/g,'i').replace(/[^a-z0-9]+/g,'');
+  const first=slug(firstName),last=slug(lastName);
+  const digits=length=>String(Math.floor(Math.random()*Math.pow(10,length))).padStart(length,'0');
+  const firstPart=first.slice(0,Math.min(first.length,randomItem([3,4,5,6])));
+  const lastPart=last.slice(0,Math.min(last.length,randomItem([3,4,5,6])));
+  const usernameFormats=[
+    () => first+last+digits(2),
+    () => first+'.'+last+digits(3),
+    () => firstPart+'.'+last+digits(2),
+    () => first+digits(2)+last,
+    () => firstPart+digits(2),
+    () => firstPart+'.'+lastPart+digits(2),
+    () => first+lastPart+digits(2),
+    () => firstPart+digits(2)+lastPart
+  ];
   const form=$('createUserForm');
   form.elements.firstName.value=firstName;
   form.elements.lastName.value=lastName;
-  form.elements.username.value=slug(firstName)+slug(lastName)+String(Math.floor(Math.random()*100)).padStart(2,'0');
-  form.elements.email.value=slug(firstName)+'.'+slug(lastName)+Math.floor(Math.random()*10)+'@gmail.com';
+  form.elements.username.value=randomItem(usernameFormats)();
+  form.elements.email.value=first+'.'+last+Math.floor(Math.random()*10)+'@gmail.com';
   form.elements.phone.value='0500'+String(Math.floor(Math.random()*10000000)).padStart(7,'0');
   form.elements.balance.value='0';
   form.elements.password.value='';
