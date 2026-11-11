@@ -170,7 +170,7 @@ function parseRequestTimestamp(raw){
 function transactionCreatedTimestamp(x){
   const raw=x?.createdAt??x?.created_at??x?.created??null;
   if(raw===null||raw===undefined||raw==='')return null;
-  const numeric=typeof raw==='number'?raw:(/^\\d+(?:\\.\\d+)?$/.test(String(raw).trim())?Number(raw):NaN);
+  const numeric=typeof raw==='number'?raw:(/^[0-9]+(?:[.][0-9]+)?$/.test(String(raw).trim())?Number(raw):NaN);
   const parsed=Number.isFinite(numeric)?(numeric<1e12?numeric*1000:numeric):Date.parse(String(raw));
   return Number.isFinite(parsed)&&parsed>0?parsed:null;
 }
