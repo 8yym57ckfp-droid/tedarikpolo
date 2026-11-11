@@ -160,12 +160,20 @@ function esc(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;
 function money(n){return Number(n||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+' USDT'}
 function date(v){return new Date(v).toLocaleString('tr-TR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'})}
 function status(s){if(s==='pending')return '<span class="status s-pending">Bekliyor</span>';if(s==='approved')return '<span class="status s-approved">Onaylandı</span>';if(s==='auto-rejected')return '<span class="status s-auto">Oto-Reddedildi</span>';return '<span class="status s-rejected">Reddedildi</span>'}
-function remainingMs(x){if(!x.expiresAt) return 0; return new Date(x.expiresAt).getTime()-Date.now();}
+function expiryTimestamp(x){
+  const raw=x.expiresAt??x.expires_at;
+  const parsed=raw==null||raw===''?NaN:(typeof raw==='number'?(raw<1e12?raw*1000:raw):Date.parse(raw));
+  if(Number.isFinite(parsed))return parsed;
+  const createdRaw=x.createdAt??x.created_at??x.created;
+  const created=typeof createdRaw==='number'?(createdRaw<1e12?createdRaw*1000:createdRaw):Date.parse(createdRaw||'');
+  return Number.isFinite(created)?created+30*60*1000:null;
+}
+function remainingMs(x){const expiry=expiryTimestamp(x);return expiry===null?null:expiry-Date.now();}
 function countdownHtml(x){
   if(x.status!=='pending') return '<span class="countdown done">—</span>';
-  const ms=remainingMs(x), sec=Math.max(0,Math.ceil(ms/1000)), m=Math.floor(sec/60), s=sec%60;
-  const cls=sec<=300?'red':sec<=600?'yellow':'green';
-  return `<span class="countdown ${cls}" data-countdown-id="${esc(x.id)}" data-expires-at="${esc(x.expiresAt||'')}">${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</span>`;
+  const ms=remainingMs(x);if(ms===null)return '<span class="countdown done" title="Talep zamanı okunamadı">—</span>';
+  const sec=Math.max(0,Math.ceil(ms/1000)),m=Math.floor(sec/60),s=sec%60,cls=sec<=300?'red':sec<=600?'yellow':'green';
+  return `<span class="countdown ${cls}" data-countdown-id="${esc(x.id)}" data-expires-at="${expiryTimestamp(x)}">${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</span>`;
 }
 function currentAdmin(){return (window.SafeAdmin&&SafeAdmin.current)?SafeAdmin.current():null}
 function copyRequestInfo(id){const x=all.find(t=>String(t.id)===String(id));if(!x)return;const u=userCache[x.userId]||{};return window.copySupportTransactionDetails?.(x,u,staffProfile||currentAdmin()||{});}
@@ -302,7 +310,7 @@ async function confirmDecision(){
 function quickDecision(id,decision){const x=all.find(t=>String(t.id)===String(id));if(!x)return;current=x;if(x.status!=='pending'||x.type!==requestType){alert('Bu işlem artık bekleyen durumda değil.');current=null;return}if(x.type==='withdrawal'&&decision==='approved'){openDrawer(id);return}$('decisionAmount').value=Number(x.receivedAmount??x.amount);openDecisionConfirm(decision)}
 function decideCurrent(decision){if(!current)return;if(current.status!=='pending'||current.type!==requestType){alert('Bu işlem artık bekleyen durumda değil.');return}openDecisionConfirm(decision)}
 const refreshIntervalSeconds=testRunMode?30:10;let refreshSeconds=refreshIntervalSeconds;function markRefreshed(){const el=$('refreshUpdated');if(el)el.textContent='Az önce';}
-function tick(){document.querySelectorAll('[data-countdown-id][data-expires-at]').forEach(el=>{const ms=new Date(el.dataset.expiresAt).getTime()-Date.now(),sec=Math.max(0,Math.ceil(ms/1000)),m=Math.floor(sec/60),s=sec%60;el.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;el.className='countdown '+(sec<=300?'red':sec<=600?'yellow':'green');});if(--refreshSeconds<=0){refreshTableOnly();refreshSeconds=refreshIntervalSeconds;markRefreshed();}}
+function tick(){document.querySelectorAll('[data-countdown-id][data-expires-at]').forEach(el=>{const expiry=Number(el.dataset.expiresAt);if(!Number.isFinite(expiry)){el.textContent='—';el.className='countdown done';return;}const sec=Math.max(0,Math.ceil((expiry-Date.now())/1000)),m=Math.floor(sec/60),s=sec%60;el.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;el.className='countdown '+(sec<=300?'red':sec<=600?'yellow':'green');});if(--refreshSeconds<=0){refreshTableOnly();refreshSeconds=refreshIntervalSeconds;markRefreshed();}}
 function manualRefresh(){refreshTableOnly();refreshSeconds=refreshIntervalSeconds;markRefreshed();}
 $('decisionAmount').addEventListener('input',()=>{if(!current)return;const base=Number(current.requestedAmount??current.amount);const v=Number($('decisionAmount').value);const changed=Number.isFinite(v)&&Math.abs(v-base)>1e-8;$('amountEdit').classList.toggle('changed',changed);$('amountHint').textContent=changed?'Dikkat: Onaylanan tutar talep edilen tutardan farklı. Bu değişiklik audit kaydına işlenecek.':'Talep edilen miktar ile gelen miktar farklıysa burada gerçek gelen tutarı girin. Onay bu tutar üzerinden bakiyeye işlenir.';$('dReceivedAmount').textContent=Number.isFinite(v)?money(v):'—';});$('search').addEventListener('input',()=>{resetRequestPages();render()});$('network').addEventListener('change',()=>{resetRequestPages();render()});$('backdrop').addEventListener('click',e=>{if(e.target.id==='backdrop')closeDrawer()});$('manualRefresh').addEventListener('click',manualRefresh);
 load();markRefreshed();setInterval(tick,1000);const initial=new URLSearchParams(location.search).get('open');if(initial)setTimeout(()=>openDrawer(initial),50);
