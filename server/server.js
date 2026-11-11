@@ -284,6 +284,7 @@ async function pgInit(){
   );`);
   await pool.query("ALTER TABLE transactions ALTER COLUMN id SET DEFAULT ('TX-' || upper(replace(gen_random_uuid()::text,'-','')))");
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS address TEXT');
+  await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS company_name TEXT');
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS wallet_id TEXT');
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS request_key TEXT');
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS locked_by TEXT');
@@ -402,7 +403,7 @@ async function getUsers(){
 }
 async function getTransactions(){
   if(!pool) return readDb().transactions;
-  const r=await pool.query('SELECT id, user_id AS "userId", type, amount, requested_amount AS "requestedAmount", received_amount AS "receivedAmount", currency, network, status, created_at AS "createdAt", tx_hash AS "txHash", address, wallet_id AS "walletId", team_account_id AS "teamAccountId", claimed_by_team_id AS "claimedByTeamId", claimed_at AS "claimedAt", request_key AS "requestKey", locked_by AS "lockedBy", locked_at AS "lockedAt", decision_by AS "decisionBy", decision_at AS "decisionAt", expires_at AS "expiresAt", is_synthetic AS "isSynthetic", test_run_id AS "testRunId" FROM transactions ORDER BY created_at DESC');
+  const r=await pool.query('SELECT id, user_id AS "userId", type, amount, requested_amount AS "requestedAmount", received_amount AS "receivedAmount", currency, network, status, created_at AS "createdAt", tx_hash AS "txHash", address, company_name AS "companyName", wallet_id AS "walletId", team_account_id AS "teamAccountId", claimed_by_team_id AS "claimedByTeamId", claimed_at AS "claimedAt", request_key AS "requestKey", locked_by AS "lockedBy", locked_at AS "lockedAt", decision_by AS "decisionBy", decision_at AS "decisionAt", expires_at AS "expiresAt", is_synthetic AS "isSynthetic", test_run_id AS "testRunId" FROM transactions ORDER BY created_at DESC');
   return r.rows;
 }
 async function getLedger(userId){
@@ -578,7 +579,7 @@ function redirect(res,location){res.writeHead(302,{'Location':location,'Cache-Co
 
 async function insertTransaction(tx, client=null){
   if(!pool){const db=readDb();db.transactions.unshift(tx);writeDb(db);return;}
-  await (client||pool).query('INSERT INTO transactions (id,user_id,type,amount,requested_amount,received_amount,currency,network,status,created_at,tx_hash,address,wallet_id,team_account_id,claimed_by_team_id,claimed_at,request_key,locked_by,locked_at,decision_by,decision_at,expires_at,is_synthetic,test_run_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)',[tx.id,tx.userId,tx.type,tx.amount,tx.requestedAmount??tx.amount,tx.receivedAmount??null,tx.currency,tx.network,tx.status,tx.createdAt,tx.txHash||null,tx.address||null,tx.walletId||null,tx.teamAccountId||null,tx.claimedByTeamId||null,tx.claimedAt||null,tx.requestKey||null,tx.lockedBy||null,tx.lockedAt||null,tx.decisionBy||null,tx.decisionAt||null,tx.expiresAt||null,!!tx.isSynthetic,tx.testRunId||null]);
+  await (client||pool).query('INSERT INTO transactions (id,user_id,type,amount,requested_amount,received_amount,currency,network,status,created_at,tx_hash,address,company_name,wallet_id,team_account_id,claimed_by_team_id,claimed_at,request_key,locked_by,locked_at,decision_by,decision_at,expires_at,is_synthetic,test_run_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25)',[tx.id,tx.userId,tx.type,tx.amount,tx.requestedAmount??tx.amount,tx.receivedAmount??null,tx.currency,tx.network,tx.status,tx.createdAt,tx.txHash||null,tx.address||null,tx.companyName||null,tx.walletId||null,tx.teamAccountId||null,tx.claimedByTeamId||null,tx.claimedAt||null,tx.requestKey||null,tx.lockedBy||null,tx.lockedAt||null,tx.decisionBy||null,tx.decisionAt||null,tx.expiresAt||null,!!tx.isSynthetic,tx.testRunId||null]);
 }
 async function syncTeamCollateral({teamId,exposure,client=null,dbState=null,at}){
   let account;
