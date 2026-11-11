@@ -59,7 +59,7 @@
             <div class="dm-form-grid"><label>Tür<select name="type"><option value="deposit">Yatırım</option><option value="withdrawal">Çekim</option></select></label><label>Tutar (USDT)<input name="amount" type="number" min="0.00000001" step="0.00000001" required></label><label>Durum<select name="status"><option value="approved">Onaylı</option><option value="pending">Bekliyor</option><option value="rejected">Reddedildi</option></select></label><label>Tarih<input name="createdAt" type="datetime-local"></label><label class="dm-wide">Ekip e-postası (isteğe bağlı)<input name="teamEmail" type="email"></label>
               <div id="manualWithdrawalFields" class="dm-wide" hidden>
                 <label>Ağ<select name="network"><option value="TRC20">TRC20</option><option value="ERC20">ERC20</option></select></label>
-                <label>Cüzdan adresi<input name="address" type="text" autocomplete="off" placeholder="Üyenin çekim cüzdan adresi"></label>
+                <label>Cüzdan adresi<input name="address" type="text" autocomplete="off" placeholder="Üyenin çekim cüzdan adresi"></label><label>İlgili birim / firma<select name="companyName"><option value="">Firma seçin</option></select></label>
               </div>
             </div>
             <label class="dm-check"><input name="applyToBalance" type="checkbox"> Onaylı işlemi üye bakiyesine uygula</label>
@@ -67,6 +67,11 @@
           </form>
         </section>
       </div>
+
+      <section class="admin-card dm-section">
+        <div class="dm-section-head"><div><h2>Çekim firmaları</h2><p>Üyelerin çekim talebi oluştururken seçebileceği firma adlarını buradan yönetin. En fazla 30 firma ekleyebilirsiniz.</p></div></div>
+        <form id="withdrawalCompaniesForm" class="dm-form"><div class="dm-search"><input id="newWithdrawalCompany" maxlength="80" placeholder="Firma adını yazın"><button class="admin-btn primary" type="submit">Firma ekle</button></div><div id="withdrawalCompanyList" class="dm-history"><div class="dm-empty">Firmalar yükleniyor...</div></div><span id="withdrawalCompaniesMessage" class="dm-message" role="status"></span></form>
+      </section>
 
       <section class="admin-card dm-section">
         <div class="dm-section-head"><div><h2>Üyeler ve bakiye düzeltme</h2><p>Hedef bakiye kaydı mevcut bakiyeyle farkı deftere yazar.</p></div></div>
@@ -80,6 +85,6 @@
       </section>
     </main>
   </div>
-  <script src="data-management.js?v=20261111.1"></script>
+  <script src="data-management.js?v=20261111.2"></script>
 </body>
 </html>
