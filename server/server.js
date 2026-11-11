@@ -172,6 +172,8 @@ async function saveWithdrawalCompanies(input){
   else{const db=readDb();db.withdrawalCompanies=companies;writeDb(db);}
   return companies;
 }
+async function getInvestmentCompanies(){let stored=[];if(pool){const q=await pool.query('SELECT content FROM site_content WHERE id=$1',['investment-companies']);stored=q.rows[0]?.content?.companies||[];}else stored=readDb().investmentCompanies||[];return Array.isArray(stored)?[...new Set(stored.map(x=>String(x||'').trim().slice(0,80)).filter(Boolean))].slice(0,30):[];}
+async function saveInvestmentCompanies(input){const companies=Array.isArray(input)?[...new Set(input.map(x=>String(x||'').trim().slice(0,80)).filter(Boolean))].slice(0,30):[];if(pool)await pool.query('INSERT INTO site_content (id,content,updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (id) DO UPDATE SET content=EXCLUDED.content,updated_at=NOW()',['investment-companies',JSON.stringify({companies})]);else{const db=readDb();db.investmentCompanies=companies;writeDb(db);}return companies;}
 async function getDepositSettings(){
   let stored={};
   if(pool){const result=await pool.query('SELECT content FROM site_content WHERE id=$1',['deposit-settings']);stored=result.rows[0]?.content||{};}
@@ -285,6 +287,7 @@ async function pgInit(){
   await pool.query("ALTER TABLE transactions ALTER COLUMN id SET DEFAULT ('TX-' || upper(replace(gen_random_uuid()::text,'-','')))");
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS address TEXT');
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS company_name TEXT');
+
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS wallet_id TEXT');
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS request_key TEXT');
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS locked_by TEXT');
@@ -346,6 +349,7 @@ async function pgInit(){
     amount NUMERIC(20,8) NOT NULL, network TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     expires_at TIMESTAMPTZ NOT NULL, used_at TIMESTAMPTZ
   )`);
+  await pool.query('ALTER TABLE deposit_intents ADD COLUMN IF NOT EXISTS company_name TEXT');
   await pool.query(`CREATE TABLE IF NOT EXISTS support_tickets (
     id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), subject TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'open', created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -763,7 +767,7 @@ async function saveWalletAddress(wallet){
 }
 async function getDepositIntent(id,userId){
   if(!pool)return (readDb().depositIntents||[]).find(x=>x.id===id&&x.userId===userId)||null;
-  const r=await pool.query('SELECT id,user_id AS "userId",wallet_id AS "walletId",amount,network,created_at AS "createdAt",expires_at AS "expiresAt",used_at AS "usedAt" FROM deposit_intents WHERE id=$1 AND user_id=$2',[id,userId]);return r.rows[0]||null;
+  const r=await pool.query('SELECT id,user_id AS "userId",wallet_id AS "walletId",amount,network,company_name AS "companyName",created_at AS "createdAt",expires_at AS "expiresAt",used_at AS "usedAt" FROM deposit_intents WHERE id=$1 AND user_id=$2',[id,userId]);return r.rows[0]||null;
 }
 async function getDepositIntents(){
   if(!pool)return readDb().depositIntents||[];
@@ -1289,6 +1293,8 @@ async function route(req,res){
     addAudit('withdrawal_companies_updated',owner.email,{count:companies.length});
     return json(res,200,{ok:true,companies});
   }
+  if(adminQuery.pathname==='/api/admin/data-tools/investment-companies'&&req.method==='GET'){if(!owner)return json(res,403,{error:'owner_only'});return json(res,200,{companies:await getInvestmentCompanies()});}
+  if(adminQuery.pathname==='/api/admin/data-tools/investment-companies'&&req.method==='POST'){if(!owner)return json(res,403,{error:'owner_only'});const b=await body(req),companies=await saveInvestmentCompanies(b.companies);addAudit('investment_companies_updated',owner.email,{count:companies.length});return json(res,200,{ok:true,companies});}
   if(adminQuery.pathname==='/api/admin/data-tools/parse'&&req.method==='POST'){
     if(!owner)return json(res,403,{error:'owner_only'});
     const b=await body(req,12e6),name=String(b.fileName||''),encoded=String(b.fileBase64||'').replace(/^data:[^,]*,/,'');
@@ -1947,9 +1953,9 @@ async function route(req,res){
   }
   if(req.url==='/api/deposits/prepare' && req.method==='POST'){
     if(!uid)return json(res,401,{error:'unauthorized'});
-    const b=await body(req),amount=Number(b.amount),network=String(b.network||'').toUpperCase(),user=await findUserById(uid);
+    const b=await body(req),amount=Number(b.amount),network=String(b.network||'').toUpperCase(),companyName=String(b.companyName||'').trim().slice(0,80),user=await findUserById(uid);
     if(user?.securityStatus==='locked'||user?.securityStatus==='suspended'||user?.depositFrozen)return json(res,403,{error:'deposits_blocked'});
-    if(!Number.isFinite(amount)||amount<10)return json(res,400,{error:'invalid_amount'});if(!isValidNetwork(network))return json(res,400,{error:'invalid_network'});
+    if(!Number.isFinite(amount)||amount<10)return json(res,400,{error:'invalid_amount'});if(!isValidNetwork(network))return json(res,400,{error:'invalid_network'});const companies=await getInvestmentCompanies();if(companies.length&&!companies.includes(companyName))return json(res,400,{error:'invalid_investment_company',message:'Yatırım için listeden geçerli bir firma seçin.'});
     const allWallets=await getWalletAddresses(),teamById=new Map((await getTeamAccounts()).map(team=>[team.id,team])),available=allWallets.filter(w=>w.network===network&&w.active!==false&&(!w.teamId||(!!teamById.get(w.teamId)&&teamById.get(w.teamId).active!==false&&!teamById.get(w.teamId).depositsPaused)));if(!available.length)return json(res,409,{error:'wallet_unavailable',message:'Bu ağ için aktif yatırım adresi henüz yapılandırılmadı.'});
     const now=new Date(),expiresAt=new Date(now.getTime()+20*60*1000).toISOString();let wallet,intent;
     if(pool){
@@ -1977,8 +1983,8 @@ async function route(req,res){
         }
         if(!wallet){await client.query('COMMIT');return json(res,409,capacityBlocked?{error:'team_collateral_limit_exceeded',message:'Ekip yatırım kapasitesi dolu; önce çekim ödemesi veya merkeze alınmış geri ödeme gerekir.'}:amountLimitBlocked?{error:'deposit_amount_limits',message:'Girdiğiniz tutar bu ağdaki yatırım cüzdanlarının alt/üst limitlerine uymuyor.'}:{error:'wallet_unavailable'});}
         await client.query('UPDATE wallet_addresses SET use_count=use_count+1,last_used_at=$1,updated_at=$1 WHERE id=$2',[now.toISOString(),wallet.id]);
-        intent={id:`DPI-${crypto.randomBytes(12).toString('hex').toUpperCase()}`,userId:uid,walletId:wallet.id,amount,network,createdAt:now.toISOString(),expiresAt};
-        await client.query('INSERT INTO deposit_intents (id,user_id,wallet_id,amount,network,created_at,expires_at) VALUES ($1,$2,$3,$4,$5,$6,$7)',[intent.id,uid,wallet.id,amount,network,intent.createdAt,intent.expiresAt]);
+        intent={id:`DPI-${crypto.randomBytes(12).toString('hex').toUpperCase()}`,userId:uid,walletId:wallet.id,amount,network,companyName:companyName||null,createdAt:now.toISOString(),expiresAt};
+        await client.query('INSERT INTO deposit_intents (id,user_id,wallet_id,amount,network,company_name,created_at,expires_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',[intent.id,uid,wallet.id,amount,network,intent.companyName,intent.createdAt,intent.expiresAt]);
         if(wallet.teamId){const team=await client.query('SELECT id FROM team_accounts WHERE id=$1 FOR UPDATE',[wallet.teamId]);if(team.rows[0]){const exposure=await getTeamCollateralExposure(client,wallet.teamId);await syncTeamCollateral({teamId:wallet.teamId,exposure,client,at:now.toISOString()});}}
         await client.query('COMMIT');
       }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
@@ -2003,11 +2009,11 @@ async function route(req,res){
       }
       if(!wallet){if(capacityBlocked)writeDb(db);return json(res,409,capacityBlocked?{error:'team_collateral_limit_exceeded',message:'Ekip teminat kapasitesi dolu; ekip çekimleri ödedikten sonra yeniden yatırım kabul edebilir.'}:amountLimitBlocked?{error:'deposit_amount_limits',message:'Girdiğiniz tutar bu ağdaki yatırım cüzdanlarının alt/üst limitlerine uymuyor.'}:{error:'wallet_unavailable'});}
       const saved=walletById.get(wallet.id);saved.useCount=Number(saved.useCount||0)+1;saved.lastUsedAt=now.toISOString();saved.updatedAt=now.toISOString();
-      intent={id:`DPI-${crypto.randomBytes(12).toString('hex').toUpperCase()}`,userId:uid,walletId:wallet.id,amount,network,createdAt:now.toISOString(),expiresAt,usedAt:null};db.depositIntents=db.depositIntents||[];db.depositIntents.unshift(intent);
+      intent={id:`DPI-${crypto.randomBytes(12).toString('hex').toUpperCase()}`,userId:uid,walletId:wallet.id,amount,network,companyName:companyName||null,createdAt:now.toISOString(),expiresAt,usedAt:null};db.depositIntents=db.depositIntents||[];db.depositIntents.unshift(intent);
       if(wallet.teamId){const team=(db.teamAccounts||[]).find(item=>item.id===wallet.teamId);if(team){const exposure=teamCollateralMetrics(wallet.teamId,db.transactions||[],db.walletAddresses||[],db.depositIntents).collateralExposure;await syncTeamCollateral({teamId:wallet.teamId,exposure,dbState:db,at:now.toISOString()});}}
       writeDb(db);
     }
-    const depositSettings=await getDepositSettings();return json(res,201,{ok:true,intentId:intent.id,amount,network,address:wallet.address,label:wallet.label,walletId:wallet.id,createdAt:intent.createdAt,expiresAt:intent.expiresAt,requireTxId:depositSettings.requireTxId});
+    const depositSettings=await getDepositSettings();return json(res,201,{ok:true,intentId:intent.id,amount,network,companyName:intent.companyName||null,address:wallet.address,label:wallet.label,walletId:wallet.id,createdAt:intent.createdAt,expiresAt:intent.expiresAt,requireTxId:depositSettings.requireTxId});
   }
   if(req.url==='/api/deposits' && req.method==='POST'){
     if(!uid)return json(res,401,{error:'unauthorized'});
@@ -2023,7 +2029,7 @@ async function route(req,res){
     if(existing)return json(res,409,{error:'duplicate_tx_hash',transactionId:existing.id});
     const cooldown=await requestCooldownRemaining(uid,'deposit');
     if(cooldown>0)return json(res,429,{error:'request_cooldown',cooldownSeconds:Math.ceil(cooldown/1000),message:'Yeni yatırım talebi için '+Math.ceil(cooldown/1000)+' saniye beklemelisiniz.'});
-    const createdAt=new Date(); const tx={id:makeTxId(),userId:uid,type:'deposit',amount,requestedAmount:amount,receivedAmount:null,currency:'USDT',network,status:'pending',createdAt:createdAt.toISOString(),txHash:txHash||null,address:wallet.address,walletId:wallet.id,teamAccountId:wallet.teamId||null,requestKey,expiresAt:new Date(createdAt.getTime()+TX_CONTROL.autoRejectMinutes*60000).toISOString()};
+    const createdAt=new Date(); const tx={id:makeTxId(),userId:uid,type:'deposit',amount,requestedAmount:amount,receivedAmount:null,currency:'USDT',network,companyName:intent.companyName||null,status:'pending',createdAt:createdAt.toISOString(),txHash:txHash||null,address:wallet.address,walletId:wallet.id,teamAccountId:wallet.teamId||null,requestKey,expiresAt:new Date(createdAt.getTime()+TX_CONTROL.autoRejectMinutes*60000).toISOString()};
     if(pool){
       const client=await pool.connect();
       try{
@@ -2041,6 +2047,7 @@ async function route(req,res){
     await startRequestCooldown(uid,'deposit'); addAudit('deposit_request',uid,{transactionId:tx.id,amount,network});
     return json(res,201,{ok:true,transaction:tx,requestKey,message:'Yatırım talebi alındı. Yeni talep oluşturabilirsiniz; her talep ayrı işlem ID ile kaydedilir.'});
   }
+  if(req.url==='/api/investment-companies' && req.method==='GET'){if(!uid)return json(res,401,{error:'unauthorized'});return json(res,200,{companies:await getInvestmentCompanies()});}
   if(req.url==='/api/withdrawal-companies' && req.method==='GET'){
     if(!uid)return json(res,401,{error:'unauthorized'});
     return json(res,200,{companies:await getWithdrawalCompanies()});

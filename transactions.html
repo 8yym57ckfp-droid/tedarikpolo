@@ -1744,7 +1744,7 @@ function renderPending(){
   el.innerHTML = tx.map(x=>`
 <div class="pending-item">
 <div class="pending-info">
-<b>${x.type==='deposit'?'Yatırım':'Çekim'}<span class="dot-separator">·</span><span class="network-inline ${x.network==='TRC20'?'trc':'erc'}">${x.network}</span></b>
+<b>${x.type==='deposit'?'Yatırım':'Çekim'}<span class="dot-separator">·</span><span class="network-inline ${/^TRC20$/.test(String(x.network||'').trim().toUpperCase())?'trc':'erc'}">${x.network}</span></b>
 <span class="pending-meta">${x.id} · ${money(x.amount)}</span>
 </div>
 <div class="pending-right">${countdown(x)}<small>İnceleme süresi</small></div>
@@ -1778,7 +1778,7 @@ function renderTx(){
 <td><b>${x.id}</b></td>
 <td>${date}</td>
 <td>${type}</td>
-<td><span class="network-inline ${x.network==='TRC20'?'trc':'erc'}">${escHtml(x.network)}</span></td>
+<td><span class="network-inline ${/^TRC20$/.test(String(x.network||'').trim().toUpperCase())?'trc':'erc'}">${escHtml(x.network)}</span></td>
 <td class="amount-cell">${sign}${Number(x.amount).toLocaleString('tr-TR',{maximumFractionDigits:8})}</td>
 <td class="address">${escHtml(x.txHash||x.address||'Bekleniyor')}</td>
 <td>${timer}</td>
