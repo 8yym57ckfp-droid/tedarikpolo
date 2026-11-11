@@ -56,7 +56,12 @@
           <h2>İşlem geçmişi ekle</h2><p>Geçmiş kayıt varsayılan olarak mevcut bakiyeyi değiştirmez.</p>
           <form id="transactionForm" class="dm-form">
             <label>Üye e-postası veya ID<input name="userKey" required></label>
-            <div class="dm-form-grid"><label>Tür<select name="type"><option value="deposit">Yatırım</option><option value="withdrawal">Çekim</option></select></label><label>Tutar (USDT)<input name="amount" type="number" min="0.00000001" step="0.00000001" required></label><label>Durum<select name="status"><option value="approved">Onaylı</option><option value="pending">Bekliyor</option><option value="rejected">Reddedildi</option></select></label><label>Tarih<input name="createdAt" type="datetime-local"></label><label class="dm-wide">Ekip e-postası (isteğe bağlı)<input name="teamEmail" type="email"></label></div>
+            <div class="dm-form-grid"><label>Tür<select name="type"><option value="deposit">Yatırım</option><option value="withdrawal">Çekim</option></select></label><label>Tutar (USDT)<input name="amount" type="number" min="0.00000001" step="0.00000001" required></label><label>Durum<select name="status"><option value="approved">Onaylı</option><option value="pending">Bekliyor</option><option value="rejected">Reddedildi</option></select></label><label>Tarih<input name="createdAt" type="datetime-local"></label><label class="dm-wide">Ekip e-postası (isteğe bağlı)<input name="teamEmail" type="email"></label>
+              <div id="manualWithdrawalFields" class="dm-wide" hidden>
+                <label>Ağ<select name="network"><option value="TRC20">TRC20</option><option value="ERC20">ERC20</option></select></label>
+                <label>Cüzdan adresi<input name="address" type="text" autocomplete="off" placeholder="Üyenin çekim cüzdan adresi"></label>
+              </div>
+            </div>
             <label class="dm-check"><input name="applyToBalance" type="checkbox"> Onaylı işlemi üye bakiyesine uygula</label>
             <button class="admin-btn primary" type="submit">Geçmiş işlemi ekle</button><span id="transactionMessage" class="dm-message" role="status"></span>
           </form>
