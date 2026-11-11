@@ -1,4 +1,5 @@
 let selectedNetwork='TRC20';
+let investmentCompanies=[];
 let depositUserId=null;
 let timerHandle=null;
 let visibilityPollHandle=null;
@@ -20,10 +21,11 @@ function showPaymentAddress(){
   document.getElementById('confirmNetwork').textContent=selectedNetwork;
   const modal=document.getElementById('depositConfirmModal');if(!modal){alert('Onay penceresi yüklenemedi.');return;}modal.classList.add('open');modal.setAttribute('aria-hidden','false');
 }
+async function loadInvestmentCompanies(){try{const response=await fetch('/api/investment-companies',{headers:apiHeaders(),cache:'no-store'});if(!response.ok)throw new Error();const data=await response.json();investmentCompanies=Array.isArray(data.companies)?data.companies:[];const field=document.getElementById('investmentCompanyField'),select=document.getElementById('investmentCompany');if(!field||!select)return;const safe=value=>String(value).replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[ch]));select.innerHTML='<option value="">Firma seçin</option>'+investmentCompanies.map(name=>'<option value="'+safe(name)+'">'+safe(name)+'</option>').join('');field.hidden=!investmentCompanies.length;}catch(_){const field=document.getElementById('investmentCompanyField');if(field)field.hidden=true;}}
 async function confirmDepositStart(){
-  closeDepositConfirm();const amount=Number(document.getElementById('amount').value);if(!(amount>=10)){alert('Minimum yatırım 10 USDT.');return;}
+  closeDepositConfirm();const amount=Number(document.getElementById('amount').value);if(!(amount>=10)){alert('Minimum yatırım 10 USDT.');return;}const companyName=document.getElementById('investmentCompany')?.value.trim()||'';if(investmentCompanies.length&&!companyName){alert('İlgili birim / firma seçin.');return;}
   try{
-    const response=await fetch('/api/deposits/prepare',{method:'POST',headers:apiHeaders(),body:JSON.stringify({amount,network:selectedNetwork})});
+    const response=await fetch('/api/deposits/prepare',{method:'POST',headers:apiHeaders(),body:JSON.stringify({amount,network:selectedNetwork,companyName})});
     const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.message||({unauthorized:'Oturumunuz sona ermiş. Tekrar giriş yapın.',wallet_unavailable:'Bu ağ için kullanılabilir ödeme adresi yok.',deposits_blocked:'Yatırım işlemleri hesabınız için durdurulmuş.'}[data.error]||'Yatırım adresi alınamadı.'));
     const state={userId:depositUserId,intentId:data.intentId,amount:data.amount,network:data.network,address:data.address,walletId:data.walletId,requireTxId:data.requireTxId!==false,createdAt:Date.parse(data.createdAt),expiresAt:Date.parse(data.expiresAt)};saveSession(state);showPreparedDeposit(state);
   }catch(e){openNoWalletModal(e.message);}
@@ -59,7 +61,7 @@ async function cancelPreparedDeposit(){
   if(!confirm('Henüz transfer göndermediyseniz bu adresi kapatıp yatırım akışını iptal edin. Transfer gönderdiyseniz iptal etmeyin. Vazgeçmek istiyor musunuz?'))return;
   try{const response=await fetch('/api/deposits/intent/cancel',{method:'POST',headers:apiHeaders(),body:JSON.stringify({intentId:state.intentId})});if(!response.ok)throw new Error('Yatırım adresi iptal edilemedi.');clearSession();document.getElementById('paymentCard').style.display='none';document.getElementById('setupCard').style.display='block';document.getElementById('txHashInput').value='';document.getElementById('step2dot').classList.remove('active');}catch(e){alert(e.message);}
 }
-async function initializeDepositPage(){
+async function initializeDepositPage(){loadInvestmentCompanies();
   const token=apiToken();if(!token){location.replace('login.html');return;}
   try{
     const response=await fetch('/api/auth/me',{headers:apiHeaders(),cache:'no-store'});if(!response.ok)throw new Error('unauthorized');const data=await response.json();depositUserId=String(data.user.id);SESSION_KEY='safepays_deposit_session_'+depositUserId;
