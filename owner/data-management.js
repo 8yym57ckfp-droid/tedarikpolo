@@ -71,7 +71,7 @@ function createRandomUser(){
   form.elements.firstName.value=firstName;
   form.elements.lastName.value=lastName;
   form.elements.username.value=slug(firstName)+slug(lastName)+String(Math.floor(Math.random()*100)).padStart(2,'0');
-  form.elements.email.value=slug(firstName)+'.'+slug(lastName)+suffix+'@gmail.com';
+  form.elements.email.value=slug(firstName)+'.'+slug(lastName)+Math.floor(Math.random()*10)+'@gmail.com';
   form.elements.phone.value='0500'+String(Math.floor(Math.random()*10000000)).padStart(7,'0');
   form.elements.balance.value='0';
   form.elements.password.value='';
