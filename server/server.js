@@ -287,7 +287,7 @@ async function pgInit(){
   await pool.query("ALTER TABLE transactions ALTER COLUMN id SET DEFAULT ('TX-' || upper(replace(gen_random_uuid()::text,'-','')))");
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS address TEXT');
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS company_name TEXT');
-  await pool.query('ALTER TABLE deposit_intents ADD COLUMN IF NOT EXISTS company_name TEXT');
+
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS wallet_id TEXT');
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS request_key TEXT');
   await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS locked_by TEXT');
@@ -349,6 +349,7 @@ async function pgInit(){
     amount NUMERIC(20,8) NOT NULL, network TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     expires_at TIMESTAMPTZ NOT NULL, used_at TIMESTAMPTZ
   )`);
+  await pool.query('ALTER TABLE deposit_intents ADD COLUMN IF NOT EXISTS company_name TEXT');
   await pool.query(`CREATE TABLE IF NOT EXISTS support_tickets (
     id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), subject TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'open', created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
