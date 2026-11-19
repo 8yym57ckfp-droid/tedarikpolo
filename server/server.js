@@ -792,6 +792,10 @@ async function getTeamCapacityAdjustments(){
   if(!pool)return readDb().teamCapacityAdjustments||[];
   const result=await pool.query('SELECT id,team_account_id AS "teamAccountId",amount,reason,created_by AS "createdBy",created_at AS "createdAt" FROM team_capacity_adjustments ORDER BY created_at');return result.rows.map(item=>({...item,amount:Number(item.amount||0)}));
 }
+async function getTeamMetrics(accounts){
+  const [transactions,wallets,intents,adjustments]=await Promise.all([getTransactions(),getWalletAddresses(),getDepositIntents(),getTeamCapacityAdjustments()]);
+  return new Map(accounts.map(account=>[account.id,teamCollateralMetrics(account.id,transactions,wallets,intents,adjustments)]));
+}
 async function getTeamInvestmentCapacity(client,teamId,excludeTransactionId=null){
   const result=await client.query(`SELECT COALESCE(SUM(t.amount) FILTER (WHERE t.type='withdrawal' AND t.status='approved'),0) AS paid, COALESCE(SUM(t.amount) FILTER (WHERE t.type='deposit' AND t.status IN ('approved','pending') AND t.id<>$2),0)+COALESCE((SELECT SUM(di.amount) FROM deposit_intents di JOIN wallet_addresses wi ON wi.id=di.wallet_id WHERE wi.team_id=$1 AND di.used_at IS NULL AND di.expires_at>NOW()),0) AS allocated, COALESCE((SELECT SUM(amount) FROM team_capacity_adjustments WHERE team_account_id=$1),0) AS repayments FROM transactions t LEFT JOIN wallet_addresses w ON w.id=t.wallet_id WHERE t.is_synthetic=FALSE AND (CASE WHEN t.type='deposit' THEN COALESCE(t.team_account_id,w.team_id) WHEN t.type='withdrawal' THEN COALESCE(t.claimed_by_team_id,t.team_account_id,(SELECT wd.team_id FROM transactions d JOIN wallet_addresses wd ON wd.id=d.wallet_id WHERE d.user_id=t.user_id AND d.type='deposit' AND d.status='approved' AND d.is_synthetic=FALSE AND d.created_at<=t.created_at ORDER BY d.created_at DESC LIMIT 1)) ELSE NULL END)=$1`,[teamId,excludeTransactionId||'']);
   const row=result.rows[0]||{};const paid=Number(row.paid||0),allocated=Number(row.allocated||0),repayments=Number(row.repayments||0);return {paidChecks:paid,investmentsAllocated:allocated,repayments,available:Math.max(0,paid+repayments-allocated)};
