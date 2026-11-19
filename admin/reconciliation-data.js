@@ -1,9 +1,7 @@
 (function(){
   const el=id=>document.getElementById(id);
   const money=value=>Number(value||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+' USDT';
-  const pad=value=>String(value).padStart(2,'0');
-  const dayKey=date=>date.getFullYear()+'-'+pad(date.getMonth()+1)+'-'+pad(date.getDate());
-  const parseLocal=value=>{const [year,month,day]=value.split('-').map(Number);return new Date(year,month-1,day);};
+  const dayKey=date=>{const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Istanbul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date),part=type=>parts.find(item=>item.type===type)?.value||'';return part('year')+'-'+part('month')+'-'+part('day');};
   const fmtDate=value=>new Date(value+'T00:00:00Z').toLocaleDateString('tr-TR',{timeZone:'UTC'});
   const startEl=el('startDate'),endEl=el('endDate'),rowsEl=el('rows'),barsEl=el('bars');
   const testRunId=new URLSearchParams(location.search).get('testRunId');
@@ -32,14 +30,15 @@
     catch(_){rowsEl.innerHTML='<tr><td class="empty-row" colspan="7">Mutabakat verileri alınamadı.</td></tr>';}
   }
   function setRange(value){
-    const end=new Date(),start=new Date(end);
-    if(value==='today')start.setHours(0,0,0,0);else if(value==='all')start.setFullYear(2020,0,1);else{start.setDate(start.getDate()-Number(value)+1);start.setHours(0,0,0,0);}
-    startEl.value=dayKey(start);endEl.value=dayKey(end);
+    const endKey=dayKey(new Date()),end=new Date(endKey+'T00:00:00Z');
+    let startKey;
+    if(value==='all')startKey='2020-01-01';else{const days=value==='today'?1:Number(value),start=new Date(end.getTime()-(days-1)*86400000);startKey=start.toISOString().slice(0,10);}
+    startEl.value=startKey;endEl.value=endKey;
     document.querySelectorAll('[data-range]').forEach(button=>button.classList.toggle('active',button.dataset.range===String(value)));
     refresh();
   }
   el('applyBtn').onclick=refresh;
   document.querySelectorAll('[data-range]').forEach(button=>button.onclick=()=>setRange(button.dataset.range));
-  const today=new Date();endEl.value=dayKey(today);const start=new Date(today);start.setDate(start.getDate()-89);startEl.value=dayKey(start);
+  const endKey=dayKey(new Date()),end=new Date(endKey+'T00:00:00Z');endEl.value=endKey;startEl.value=new Date(end.getTime()-89*86400000).toISOString().slice(0,10);
   refresh();
 })();

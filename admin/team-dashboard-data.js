@@ -3,6 +3,7 @@
   const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const number=value=>Number(value||0).toLocaleString('tr-TR');
   const amount=value=>Number(value||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:4})+' USDT';
+  const istanbulDay=value=>{const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Istanbul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(value)),part=type=>parts.find(item=>item.type===type)?.value||'';return part('year')+'-'+part('month')+'-'+part('day');};
   const cashUpdateTime=()=>new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   function updateTeamDepositState(admin={}){
     const status=byId('teamDepositStatus'),statusText=byId('teamDepositStatusText');
@@ -101,15 +102,16 @@
         };
       }
       byId('teamLifetimeCommission').textContent=amount(admin.commissionEarned);
-      byId('teamCommissionRate').textContent=`Onaylı yatırımlar · ekip payı %${Number(admin.commissionPercent||0).toLocaleString('tr-TR')}`;
+      byId('teamCommissionRate').textContent=`Bugün onaylanan yatırımlar · ekip payı %${Number(admin.commissionPercent||0).toLocaleString('tr-TR')}`;
       byId('teamCollateralTotal').textContent=amount(admin.collateralTotal);
       byId('teamCollateralNote').textContent=Number(admin.collateralTotal||0)>0?`${amount(admin.collateralExposure)} kullanım · ${amount(admin.collateralAvailable)} kapasite${admin.collateralPaused?' · yeni yatırımlar duraklatıldı':''}`:'Teminat sınırı ayarlanmamış';
       const tx=overviewTransactions;
       const pending=tx.filter(x=>x.status==='pending');
       byId('pendingCount').textContent=number(stats.pending);
       byId('pendingNote').textContent=`${pending.filter(x=>x.type==='deposit').length} yatırım · ${pending.filter(x=>x.type==='withdrawal').length} çekim`;
-      byId('approvedCount').textContent=number(stats.approved);
       const recent=tx.slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0)).slice(0,8);
+      const today=istanbulDay(new Date()),approvedToday=tx.filter(item=>item.status==='approved'&&istanbulDay(item.decisionAt||item.createdAt)===today).length;
+      byId('approvedCount').textContent=number(approvedToday);
       rows.innerHTML=recent.map(x=>{
         const type=x.type==='deposit'?'Yatırım':x.type==='withdrawal'?'Çekim':x.type||'—';
         const status=statusLabel[x.status]||escapeHtml(x.status||'—');

@@ -5,15 +5,15 @@
   const money=value=>Number(value||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
   const compact=value=>Number(value||0).toLocaleString('tr-TR',{notation:'compact',maximumFractionDigits:1});
   const amount=value=>money(value)+' USDT';
-  const dateKey=date=>date.toISOString().slice(0,10);
+  const dateKey=date=>{const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Istanbul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date),part=type=>parts.find(item=>item.type===type)?.value||'';return part('year')+'-'+part('month')+'-'+part('day');};
   const owner=location.pathname.includes('/owner/');
   const statusText={pending:'Bekliyor',approved:'Onaylandı',rejected:'Reddedildi','auto-rejected':'Reddedildi'};
   let transactionCache=[],memberCache=new Map(),supportTeam={};
 
   function makeRange(){
-    const end=new Date();end.setUTCHours(0,0,0,0);
+    const endKey=dateKey(new Date()),end=new Date(endKey+'T00:00:00Z');
     const start=new Date(end.getTime()-6*86400000);
-    return {startDate:dateKey(start),endDate:dateKey(end)};
+    return {startDate:start.toISOString().slice(0,10),endDate:endKey};
   }
   function renderChart(days,commissionEnabled){
     const svg=byId('financeTrend');if(!svg)return;
@@ -57,7 +57,7 @@
     if(commissionEnabled)byId('financeCommissionPct').textContent=`%${total?(values[2]/total*100).toFixed(1):'0,0'}`;
   }
   function renderTables(transactions,range){
-    const inPeriod=transactions.filter(tx=>tx.status==='approved'&&String(tx.decisionAt||tx.approvedAt||tx.createdAt||'').slice(0,10)>=range.startDate&&String(tx.decisionAt||tx.approvedAt||tx.createdAt||'').slice(0,10)<=range.endDate);
+    const inPeriod=transactions.filter(tx=>{const timestamp=tx.decisionAt||tx.approvedAt||tx.createdAt;const day=timestamp?dateKey(new Date(timestamp)):'';return tx.status==='approved'&&day>=range.startDate&&day<=range.endDate;});
     const sorted=(type)=>inPeriod.filter(tx=>tx.type===type).sort((a,b)=>new Date(b.decisionAt||b.approvedAt||b.createdAt||0)-new Date(a.decisionAt||a.approvedAt||a.createdAt||0)).slice(0,5);
     for(const [type,id] of [['deposit','financeDepositRows'],['withdrawal','financeWithdrawalRows']]){
       const rows=byId(id);if(!rows)continue;

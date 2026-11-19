@@ -1,9 +1,7 @@
 (function(){
   const el=id=>document.getElementById(id);
   const money=value=>Number(value||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+' USDT';
-  const pad=value=>String(value).padStart(2,'0');
-  const dayKey=date=>date.getFullYear()+'-'+pad(date.getMonth()+1)+'-'+pad(date.getDate());
-  function localDate(date){return new Date(date.getFullYear(),date.getMonth(),date.getDate());}
+  const dayKey=date=>{const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Istanbul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date),part=type=>parts.find(item=>item.type===type)?.value||'';return part('year')+'-'+part('month')+'-'+part('day');};
   function updateChart(rows){
     const bars=el('reportBars');if(!bars)return;
     const max=Math.max(1,...rows.flatMap(day=>[day.deposit,day.withdrawal]));
@@ -18,8 +16,8 @@
     body.innerHTML=rows.length?rows.map(day=>`<tr><td>${new Date(day.date+'T00:00:00Z').toLocaleDateString('tr-TR',{timeZone:'UTC'})}</td><td class="amount-deposit">${money(day.deposit)}</td><td class="amount-withdrawal">${money(day.withdrawal)}</td><td class="amount-commission">${commissionEnabled?money(day.commission):'—'}</td><td class="amount-cash">${money(day.cash)}</td><td>${day.count}</td></tr>`).join(''):'<tr><td colspan="6">Seçilen dönemde kayıt yok.</td></tr>';
   }
   async function refreshReports(){
-    const range=Number(el('range')?.value||90),end=localDate(new Date()),start=new Date(end);start.setDate(start.getDate()-range+1);
-    const params=new URLSearchParams({startDate:dayKey(start),endDate:dayKey(end)}),testRunId=new URLSearchParams(location.search).get('testRunId');
+    const range=Number(el('range')?.value||90),endKey=dayKey(new Date()),end=new Date(endKey+'T00:00:00Z'),start=new Date(end.getTime()-(range-1)*86400000);
+    const params=new URLSearchParams({startDate:dayKey(start),endDate:endKey}),testRunId=new URLSearchParams(location.search).get('testRunId');
     if(testRunId)params.set('testRunId',testRunId);
     try{
       const data=await adminFetch('/finance/reconciliation?'+params.toString()),totals=data.totals||{},rows=data.days||[];
