@@ -108,11 +108,11 @@
     <form class="team-action-dialog" id="teamAccountTotpForm" role="dialog" aria-modal="true" aria-labelledby="teamAccountTotpTitle" aria-describedby="teamAccountTotpDescription">
       <h2 id="teamAccountTotpTitle">Owner doğrulaması</h2>
       <p id="teamAccountTotpDescription">Ekip hesabını kaydetmek için Owner doğrulayıcı uygulamasındaki 6 haneli kodu girin.</p>
-      <label for="teamAccountTotpCode">Owner doğrulama kodu<input id="teamAccountTotpCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="6 haneli kod" required></label>
+      <label id="teamAccountTotpLabel" for="teamAccountTotpCode">Owner doğrulama kodu<input id="teamAccountTotpCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="6 haneli kod" required></label>
       <div class="team-action-dialog-status" id="teamAccountTotpStatus" role="status" aria-live="polite"></div>
       <div class="team-action-dialog-actions"><button type="button" id="teamAccountTotpCancel">Vazgeç</button><button type="submit" class="primary" id="teamAccountTotpSubmit">Onayla ve kaydet</button></div>
     </form>
   </div>
-  <script src="team-accounts-data.js?v=20261120.1"></script>
+  <script src="team-accounts-data.js?v=20261120.2"></script>
 </body>
 </html>

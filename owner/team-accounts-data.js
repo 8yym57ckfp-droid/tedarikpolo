@@ -4,10 +4,11 @@
   const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const permissionLabels={transactions:'Talepler',reports:'Raporlar',wallets:'Cüzdanlar',support:'Destek'};
   const actionBackdrop=$('teamActionBackdrop'),actionTitle=$('teamActionTitle'),actionDescription=$('teamActionDescription'),actionTotp=$('teamActionTotpCode'),actionStatus=$('teamActionStatus'),actionSubmit=$('teamActionSubmit');
-  const accountTotpBackdrop=$('teamAccountTotpBackdrop'),accountTotpForm=$('teamAccountTotpForm'),accountTotpCode=$('teamAccountTotpCode'),accountTotpStatus=$('teamAccountTotpStatus'),accountTotpSubmit=$('teamAccountTotpSubmit');
+  const accountTotpBackdrop=$('teamAccountTotpBackdrop'),accountTotpForm=$('teamAccountTotpForm'),accountTotpTitle=$('teamAccountTotpTitle'),accountTotpDescription=$('teamAccountTotpDescription'),accountTotpLabel=$('teamAccountTotpLabel'),accountTotpCode=$('teamAccountTotpCode'),accountTotpStatus=$('teamAccountTotpStatus'),accountTotpSubmit=$('teamAccountTotpSubmit');
   let accounts=[];
   let pendingTeamAction=null;
   let pendingAccountSave=null;
+  let pendingTwoFactorVerification=null;
   function permissions(){return {dashboard:true,transactions:$('permTransactions').checked,reports:$('permReports').checked,wallets:$('permWallets').checked,support:$('permSupport').checked};}
   function setPermissions(value={}){$('permTransactions').checked=value.transactions!==false;$('permReports').checked=value.reports!==false;$('permWallets').checked=value.wallets!==false;$('permSupport').checked=value.support!==false;}
   function syncCollateralMode(){const paid=$('teamPaidChecksCapacity').checked,panel=$('teamCollateralSettings'),autoPauseSetting=$('teamCollateralAutoPauseSetting');if(panel)panel.hidden=paid;if(autoPauseSetting)autoPauseSetting.hidden=paid;if(paid)$('teamCollateralAutoPause').checked=false;}
@@ -17,11 +18,12 @@
   $('teamCollateralTotal').addEventListener('input',()=>{if(Number($('teamCollateralTotal').value)===0){$('teamPaidChecksCapacity').checked=true;syncCollateralMode();}});
   function syncSaveButton(){const id=$('teamAccountId').value,email=$('teamEmail').value.trim(),password=$('teamPassword').value;const ready=$('teamEmail').validity.valid&&(!!id||password.length>=12)&&(!password||password.length>=12);$('saveTeamAccount').classList.toggle('is-ready',ready);}
   ['teamEmail','teamPassword'].forEach(id=>{const field=$(id);field.addEventListener('input',syncSaveButton);field.addEventListener('change',syncSaveButton);});
-  function closeAccountTotp(){accountTotpBackdrop.hidden=true;pendingAccountSave=null;accountTotpCode.value='';accountTotpStatus.textContent='';accountTotpStatus.className='team-action-dialog-status';accountTotpSubmit.disabled=false;}
+  function closeAccountTotp(){accountTotpBackdrop.hidden=true;pendingAccountSave=null;pendingTwoFactorVerification=null;accountTotpCode.value='';accountTotpStatus.textContent='';accountTotpStatus.className='team-action-dialog-status';accountTotpSubmit.disabled=false;}
   $('teamAccountTotpCancel').addEventListener('click',closeAccountTotp);
   accountTotpBackdrop.addEventListener('click',event=>{if(event.target===accountTotpBackdrop)closeAccountTotp();});
   accountTotpBackdrop.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();closeAccountTotp();}});
-  accountTotpForm.addEventListener('submit',async event=>{event.preventDefault();if(!pendingAccountSave)return;const code=accountTotpCode.value.trim();if(!/^\d{6}$/.test(code)){accountTotpStatus.textContent='6 haneli Owner doğrulama kodunu gir.';accountTotpStatus.classList.add('is-error');accountTotpCode.focus();return;}accountTotpSubmit.disabled=true;accountTotpStatus.textContent='Sunucuya kaydediliyor…';accountTotpStatus.className='team-action-dialog-status';try{await pendingAccountSave(code);closeAccountTotp();}catch(error){accountTotpStatus.textContent=error.message||'Ekip hesabı kaydedilemedi.';accountTotpStatus.classList.add('is-error');accountTotpSubmit.disabled=false;}});
+  accountTotpForm.addEventListener('submit',async event=>{event.preventDefault();const code=accountTotpCode.value.trim();if(!/^\d{6}$/.test(code)){accountTotpStatus.textContent='6 haneli kodu gir.';accountTotpStatus.classList.add('is-error');accountTotpCode.focus();return;}accountTotpSubmit.disabled=true;accountTotpStatus.textContent='Sunucuya kaydediliyor…';accountTotpStatus.className='team-action-dialog-status';try{if(pendingAccountSave){await pendingAccountSave(code);closeAccountTotp();return;}if(pendingTwoFactorVerification){const state=pendingTwoFactorVerification;if(state.step==='team'){state.teamTotpCode=code;state.step='owner';accountTotpTitle.textContent='Owner doğrulaması';accountTotpDescription.textContent='Ekip doğrulayıcı kodu alındı. Şimdi Owner doğrulayıcı uygulamasındaki 6 haneli kodu girin.';accountTotpLabel.firstChild.textContent='Owner doğrulama kodu';accountTotpCode.value='';accountTotpStatus.textContent='';accountTotpSubmit.disabled=false;accountTotpCode.focus();return;}await request('/'+encodeURIComponent(state.id),{action:'verify_2fa',teamTotpCode:state.teamTotpCode,ownerTotpCode:code});await load();$('teamAccountMessage').textContent='Ekip 2FA kodu doğrulandı.';closeAccountTotp();}}catch(error){accountTotpStatus.textContent=error.message||'İşlem tamamlanamadı.';accountTotpStatus.classList.add('is-error');accountTotpSubmit.disabled=false;}});
+  function openTwoFactorVerification(id,step='team'){const account=accounts.find(item=>item.id===id);if(!account)return;pendingTwoFactorVerification={id,step,teamTotpCode:''};accountTotpTitle.textContent=step==='team'?'Ekip 2FA doğrulaması':'Owner doğrulaması';accountTotpDescription.textContent=step==='team'?`${account.email} için ekip doğrulayıcı uygulamasında görünen 6 haneli kodu girin.`:'Ekip doğrulayıcı kodu alındı. Şimdi Owner doğrulayıcı uygulamasındaki 6 haneli kodu girin.';accountTotpLabel.firstChild.textContent=step==='team'?'Ekip doğrulama kodu':'Owner doğrulama kodu';accountTotpCode.value='';accountTotpCode.setCustomValidity('');accountTotpCode.autocomplete='one-time-code';accountTotpStatus.textContent='';accountTotpStatus.className='team-action-dialog-status';accountTotpSubmit.disabled=false;accountTotpSubmit.textContent=step==='team'?'Devam et':'Doğrula ve tamamla';accountTotpBackdrop.hidden=false;accountTotpCode.focus();}
   async function request(url,body){
     const response=await fetch('../api/owner/team-accounts'+url,{method:body?'POST':'GET',credentials:'include',cache:'no-store',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
     const data=await response.json().catch(()=>({error:'invalid_response'}));
@@ -125,13 +127,7 @@
       catch(error){alert(error.message||'2FA kapatılamadı.');}
       return;
     }
-    if(account.twoFactorSetupPending){
-      const teamTotpCode=prompt('Ekibin paylaştığınız anahtarla ürettiği 6 haneli kodu girin:');if(!teamTotpCode)return;
-      const ownerTotpCode=prompt('İşlemi tamamlamak için Owner Google Authenticator kodunu girin:');if(!ownerTotpCode)return;
-      try{await request('/'+encodeURIComponent(id),{action:'verify_2fa',teamTotpCode,ownerTotpCode});await load();}
-      catch(error){alert(error.message||'Ekip 2FA kodu doğrulanamadı.');}
-      return;
-    }
+    if(account.twoFactorSetupPending){openTwoFactorVerification(id);return;}
     const ownerTotpCode=prompt('Owner Google Authenticator kodunu girin:');if(!ownerTotpCode)return;
     try{
       const setup=await request('/'+encodeURIComponent(id),{action:'begin_2fa',ownerTotpCode});
