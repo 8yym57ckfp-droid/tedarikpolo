@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="../assets/overview-finance.css?v=20261005.3">
   <script src="admin-api.js?v=20261009.2"></script>
   <script src="admin-store.js?v=20261005.5"></script>
-  <script src="admin.js?v=20261008.2"></script>
+  <script src="admin.js?v=20261120.1"></script>
   <script src="../assets/app.js?v=20261005.3"></script>
   <script src="../assets/maintenance.js?v=20261005.3"></script>
   <style>
@@ -88,7 +88,7 @@
         <article class="team-stat amber"><div class="team-stat-label">Bekleyen işlem</div><div class="team-stat-value" id="pendingCount">—</div><div class="team-stat-note" id="pendingNote">Yatırım ve çekim talepleri</div></article>
         <article class="team-stat green"><div class="team-stat-label">Bugün onaylanan işlem</div><div class="team-stat-value" id="approvedCount">—</div><div class="team-stat-note">Bugün tamamlanan yatırım ve çekim</div></article>
         <article class="team-stat purple"><div class="team-stat-label">Bugünkü komisyon</div><div class="team-stat-value" id="teamLifetimeCommission">—</div><div class="team-stat-note" id="teamCommissionRate">Bugün onaylanan yatırımların ekip payı</div></article>
-        <article class="team-stat blue"><div class="team-stat-label">Toplam teminat</div><div class="team-stat-value" id="teamCollateralTotal">—</div><div class="team-stat-note" id="teamCollateralNote">Kasa kullanım bilgisi yükleniyor</div></article>
+        <article class="team-stat blue"><div class="team-stat-label" id="teamCollateralTitle">Toplam teminat</div><div class="team-stat-value" id="teamCollateralTotal">—</div><div class="team-stat-note" id="teamCollateralNote">Kasa kullanım bilgisi yükleniyor</div></article>
       </section>
       <section class="finance-overview" id="financeOverview" aria-labelledby="financeTitle">
         <div class="finance-overview-head"><div><h2 id="financeTitle">Finansal görünüm</h2><p>Son yedi günün sunucudaki mutabakat ve onaylı işlem verileri.</p></div><span class="finance-overview-range" id="financePeriod">—</span></div>
@@ -133,7 +133,7 @@
       <div class="team-dialog-actions"><button type="button" id="teamDialogCancel">Vazgeç</button><button type="button" class="team-dialog-danger" id="teamDialogConfirm">Evet, pasife al</button></div>
     </section>
   </div>
-  <script src="team-dashboard-data.js?v=20261120.1"></script>
+  <script src="team-dashboard-data.js?v=20261120.2"></script>
   <script src="../assets/overview-finance.js?v=20261120.1"></script>
 </body>
 </html>
