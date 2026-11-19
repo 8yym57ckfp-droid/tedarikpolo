@@ -36,6 +36,8 @@
     .team-account-form-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
     .team-account-form-actions button,.team-row-action{padding:9px 12px;border:1px solid #58436f;border-radius:9px;background:#241630;color:#f4eaff;font-weight:800;cursor:pointer}
     .team-account-form-actions .primary{background:linear-gradient(135deg,#726085,#44364f);border-color:#89779a}
+    .team-account-form-actions .primary.is-ready{background:linear-gradient(135deg,#20a768,#087847);border-color:#38d98a;color:#fff;box-shadow:0 0 0 1px rgba(56,217,138,.18),0 6px 20px rgba(8,120,71,.22)}
+    .team-account-form-actions .primary:disabled{opacity:.62;cursor:wait}
     .team-row-action{padding:7px 9px;margin:2px;font-size:10px}
     .team-row-action.danger{border-color:#76424a;background:#351c23;color:#ffb6bd}
     .team-account-form-message{font-size:11px;color:#c4b3d4}
@@ -60,7 +62,7 @@
           <input id="teamAccountId" type="hidden">
           <div class="team-account-fields">
             <label for="teamEmail">Giriş e-postası<input id="teamEmail" type="email" required autocomplete="off"></label>
-            <label for="teamPassword">Yeni parola<input id="teamPassword" type="password" minlength="12" autocomplete="new-password" placeholder="Yeni hesapta zorunlu, düzenlemede isteğe bağlı"></label>
+              <label for="teamPassword">Yeni parola<input id="teamPassword" type="password" autocomplete="new-password" placeholder="Yeni hesapta en az 12 karakter; düzenlemede isteğe bağlı"></label>
             <label for="teamTotpSecret">Paylaşılacak 2FA anahtarı<input id="teamTotpSecret" type="text" inputmode="latin" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Boş bırak: otomatik oluşturulur"><small>Base32 anahtarını gir; aynı anahtarı ekiple paylaş. Boş bırakırsan sistem üretir.</small></label>
             <label for="teamWalletLimit">Cüzdan sınırı<input id="teamWalletLimit" type="number" min="0" max="5000" step="1" value="0"><small>0 = sınırsız</small></label>
             <label class="team-paid-check-capacity"><input id="teamPaidChecksCapacity" type="checkbox" checked> Teminatsız kullanıcı · yatırım limiti yalnızca ödediği çekler kadar olsun</label><div class="team-collateral-settings" id="teamCollateralSettings" hidden><label for="teamCollateralTotal">Toplam teminat (USDT)<input id="teamCollateralTotal" type="number" min="0" step="0.01" value="0"></label>
@@ -102,6 +104,15 @@
       <div class="team-action-dialog-actions"><button type="button" id="teamActionCancel">Vazgeç</button><button type="button" class="primary" id="teamActionSubmit">Yatırımı aç</button></div>
     </section>
   </div>
-  <script src="team-accounts-data.js?v=20261006.1"></script>
+  <div class="team-action-backdrop" id="teamAccountTotpBackdrop" hidden>
+    <form class="team-action-dialog" id="teamAccountTotpForm" role="dialog" aria-modal="true" aria-labelledby="teamAccountTotpTitle" aria-describedby="teamAccountTotpDescription">
+      <h2 id="teamAccountTotpTitle">Owner doğrulaması</h2>
+      <p id="teamAccountTotpDescription">Ekip hesabını kaydetmek için Owner doğrulayıcı uygulamasındaki 6 haneli kodu girin.</p>
+      <label for="teamAccountTotpCode">Owner doğrulama kodu<input id="teamAccountTotpCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="6 haneli kod" required></label>
+      <div class="team-action-dialog-status" id="teamAccountTotpStatus" role="status" aria-live="polite"></div>
+      <div class="team-action-dialog-actions"><button type="button" id="teamAccountTotpCancel">Vazgeç</button><button type="submit" class="primary" id="teamAccountTotpSubmit">Onayla ve kaydet</button></div>
+    </form>
+  </div>
+  <script src="team-accounts-data.js?v=20261120.1"></script>
 </body>
 </html>

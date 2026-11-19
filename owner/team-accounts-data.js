@@ -4,8 +4,10 @@
   const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const permissionLabels={transactions:'Talepler',reports:'Raporlar',wallets:'Cüzdanlar',support:'Destek'};
   const actionBackdrop=$('teamActionBackdrop'),actionTitle=$('teamActionTitle'),actionDescription=$('teamActionDescription'),actionTotp=$('teamActionTotpCode'),actionStatus=$('teamActionStatus'),actionSubmit=$('teamActionSubmit');
+  const accountTotpBackdrop=$('teamAccountTotpBackdrop'),accountTotpForm=$('teamAccountTotpForm'),accountTotpCode=$('teamAccountTotpCode'),accountTotpStatus=$('teamAccountTotpStatus'),accountTotpSubmit=$('teamAccountTotpSubmit');
   let accounts=[];
   let pendingTeamAction=null;
+  let pendingAccountSave=null;
   function permissions(){return {dashboard:true,transactions:$('permTransactions').checked,reports:$('permReports').checked,wallets:$('permWallets').checked,support:$('permSupport').checked};}
   function setPermissions(value={}){$('permTransactions').checked=value.transactions!==false;$('permReports').checked=value.reports!==false;$('permWallets').checked=value.wallets!==false;$('permSupport').checked=value.support!==false;}
   function syncCollateralMode(){const paid=$('teamPaidChecksCapacity').checked,panel=$('teamCollateralSettings'),autoPauseSetting=$('teamCollateralAutoPauseSetting');if(panel)panel.hidden=paid;if(autoPauseSetting)autoPauseSetting.hidden=paid;if(paid)$('teamCollateralAutoPause').checked=false;}
@@ -13,6 +15,13 @@
   function setControls(account={}){$('teamWalletLimit').value=Number(account.walletLimit||0);$('teamPaidChecksCapacity').checked=Number(account.collateralTotal||0)<=0;$('teamCollateralTotal').value=Number(account.collateralTotal||0);$('teamCollateralBalance').value=Number(account.collateralExposure||0);$('teamCommissionPercent').value=Number(account.commissionPercent??3);$('teamCollateralPausePercent').value=Number(account.collateralPausePercent??80);$('teamAllowSelfDisable').checked=!!account.allowSelfDisable;$('teamCollateralAutoPause').checked=!!account.collateralAutoPause;syncCollateralMode();}
   $('teamPaidChecksCapacity').addEventListener('change',syncCollateralMode);
   $('teamCollateralTotal').addEventListener('input',()=>{if(Number($('teamCollateralTotal').value)===0){$('teamPaidChecksCapacity').checked=true;syncCollateralMode();}});
+  function syncSaveButton(){const id=$('teamAccountId').value,email=$('teamEmail').value.trim(),password=$('teamPassword').value;const ready=$('teamEmail').validity.valid&&(!!id||password.length>=12)&&(!password||password.length>=12);$('saveTeamAccount').classList.toggle('is-ready',ready);}
+  ['teamEmail','teamPassword'].forEach(id=>{const field=$(id);field.addEventListener('input',syncSaveButton);field.addEventListener('change',syncSaveButton);});
+  function closeAccountTotp(){accountTotpBackdrop.hidden=true;pendingAccountSave=null;accountTotpCode.value='';accountTotpStatus.textContent='';accountTotpStatus.className='team-action-dialog-status';accountTotpSubmit.disabled=false;}
+  $('teamAccountTotpCancel').addEventListener('click',closeAccountTotp);
+  accountTotpBackdrop.addEventListener('click',event=>{if(event.target===accountTotpBackdrop)closeAccountTotp();});
+  accountTotpBackdrop.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();closeAccountTotp();}});
+  accountTotpForm.addEventListener('submit',async event=>{event.preventDefault();if(!pendingAccountSave)return;const code=accountTotpCode.value.trim();if(!/^\d{6}$/.test(code)){accountTotpStatus.textContent='6 haneli Owner doğrulama kodunu gir.';accountTotpStatus.classList.add('is-error');accountTotpCode.focus();return;}accountTotpSubmit.disabled=true;accountTotpStatus.textContent='Sunucuya kaydediliyor…';accountTotpStatus.className='team-action-dialog-status';try{await pendingAccountSave(code);closeAccountTotp();}catch(error){accountTotpStatus.textContent=error.message||'Ekip hesabı kaydedilemedi.';accountTotpStatus.classList.add('is-error');accountTotpSubmit.disabled=false;}});
   async function request(url,body){
     const response=await fetch('../api/owner/team-accounts'+url,{method:body?'POST':'GET',credentials:'include',cache:'no-store',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
     const data=await response.json().catch(()=>({error:'invalid_response'}));
@@ -82,12 +91,12 @@
   function resetForm({keepSetup=false}={}){
     $('teamAccountId').value='';$('teamEmail').value='';$('teamPassword').value='';$('teamEmail').readOnly=false;
     $('teamTotpSecret').value='';$('teamTotpSecret').disabled=false;if(!keepSetup)$('teamTwoFactorSetupPanel').hidden=true;$('teamTwoFactorCopyMessage').textContent='';
-    $('saveTeamAccount').textContent='Ekip hesabı ekle';$('cancelTeamEdit').hidden=true;setPermissions({});setControls({});$('teamAccountMessage').textContent='';
+    $('saveTeamAccount').textContent='Ekip hesabı ekle';$('cancelTeamEdit').hidden=true;setPermissions({});setControls({});$('teamAccountMessage').textContent='';syncSaveButton();
   }
   window.editTeamAccount=id=>{
     const account=accounts.find(item=>item.id===id);if(!account)return;
     $('teamAccountId').value=account.id;$('teamEmail').value=account.email;$('teamPassword').value='';$('teamEmail').readOnly=false;$('teamTotpSecret').value='';$('teamTotpSecret').disabled=true;$('teamTwoFactorSetupPanel').hidden=true;
-    setPermissions(account.permissions);setControls(account);$('saveTeamAccount').textContent='Değişiklikleri kaydet';$('cancelTeamEdit').hidden=false;
+    setPermissions(account.permissions);setControls(account);$('saveTeamAccount').textContent='Değişiklikleri kaydet';$('cancelTeamEdit').hidden=false;syncSaveButton();
     $('teamAccountMessage').textContent='Parolayı değiştirmeyeceksen boş bırak.';form.scrollIntoView({behavior:'smooth',block:'center'});
   };
   window.recordTeamRepayment=async id=>{
@@ -150,20 +159,20 @@
   form.addEventListener('submit',async event=>{
     event.preventDefault();const id=$('teamAccountId').value,email=$('teamEmail').value.trim(),password=$('teamPassword').value;
     if(!id&&password.length<12){$('teamAccountMessage').textContent='Yeni hesap parolası en az 12 karakter olmalı.';return;}
-    const ownerTotpCode=prompt('Kaydetmek için Owner Google Authenticator kodunu girin:');if(!ownerTotpCode)return;
-    const payload={email,permissions:permissions(),ownerTotpCode,...controls()};if(password)payload.password=password;if(!id&&$('teamTotpSecret').value.trim())payload.totpSecret=$('teamTotpSecret').value.trim();
-    $('saveTeamAccount').disabled=true;$('teamAccountMessage').textContent='Kaydediliyor…';
-    try{
+    if(!form.reportValidity())return;
+    pendingAccountSave=async ownerTotpCode=>{
+      const payload={email,permissions:permissions(),ownerTotpCode,...controls()};if(password)payload.password=password;if(!id&&$('teamTotpSecret').value.trim())payload.totpSecret=$('teamTotpSecret').value.trim();
+      $('saveTeamAccount').disabled=true;$('teamAccountMessage').textContent='Kaydediliyor…';
       let resultMessage='Ekip hesabı kaydedildi.';
       if(id){await request('/'+encodeURIComponent(id),{action:'update',...payload});$('teamAccountMessage').textContent='Ekip hesabı kaydedildi.';}
       else{
         const result=await request('',payload),setup=result.twoFactorSetup;showTwoFactorSetup(setup);
         if(setup)resultMessage='Hesap oluşturuldu. 2FA anahtarı aşağıda hazır; ekibe paylaşıp listeden “2FA doğrula” ile kurulumu tamamlayın. Doğrulanana kadar giriş kapalı.';
       }
-      resetForm({keepSetup:!id});$('teamAccountMessage').textContent=resultMessage;await load();
-    }
-    catch(error){$('teamAccountMessage').textContent=error.message||'Ekip hesabı kaydedilemedi.';}
-    finally{$('saveTeamAccount').disabled=false;}
+      resetForm({keepSetup:!id});$('teamAccountMessage').textContent=resultMessage;await load();$('saveTeamAccount').disabled=false;
+    };
+    accountTotpCode.value='';accountTotpStatus.textContent='';accountTotpStatus.className='team-action-dialog-status';accountTotpBackdrop.hidden=false;accountTotpCode.focus();
   });
+  syncSaveButton();
   load();
 })();
