@@ -157,9 +157,10 @@ function renderPaidWithdrawals(){
   body.innerHTML=paid.length?paid.map(x=>{const u=userCache[x.userId]||{},name=[u.firstName,u.lastName].filter(Boolean).join(' ').trim()||x.userId||'—',username=u.username?'@'+String(u.username).replace(/^@/,''):'—',teamLabel=x.teamName||x.teamEmail||x.teamAccountId||team.email||team.id||'—';return `<tr><td><span class="txid">${esc(x.id)}</span>${x.isTestData?'<small class="synthetic-test-chip">TEST</small>':''}</td><td><span class="userline"><b>${esc(name)}</b><small>${esc(username)}</small></span></td><td><span class="amount">${money(x.amount)}</span></td><td><span class="network ${/^TRC20$/.test(String(x.network||'').trim().toUpperCase())?'trc':'erc'}">${esc(x.network||'—')}</span></td><td><span class="hash">${esc(x.txHash||'—')}</span></td><td>${date(x.decisionAt||x.createdAt)}</td><td>${esc(teamLabel)}</td><td><button class="copy-info" type="button" onclick="copyRequestInfo('${esc(x.id)}')">İşlem özetini kopyala</button></td></tr>`;}).join(''):'<tr><td colspan="8" class="empty">Henüz ödenip onaylanmış çekim yok.</td></tr>';
 }
 function stats(){
-  const start=new Date();start.setHours(0,0,0,0);const end=new Date(start);end.setDate(end.getDate()+1);
+  const dayKey=value=>{const date=value instanceof Date?value:new Date(value);if(Number.isNaN(date.getTime()))return '';const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Istanbul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date),part=type=>parts.find(item=>item.type===type)?.value||'';return part('year')+'-'+part('month')+'-'+part('day');};
+  const today=dayKey(new Date());
   const decisionTime=x=>x.decisionAt||x.createdAt;
-  const todayApproved=all.filter(x=>x.status==='approved').filter(x=>{const d=new Date(decisionTime(x));return d>=start&&d<end;});
+  const todayApproved=all.filter(x=>x.status==='approved'&&dayKey(new Date(decisionTime(x)))===today);
   const dep=todayApproved.filter(x=>x.type==='deposit').reduce((a,x)=>a+Number(x.amount||0),0);
   const wd=todayApproved.filter(x=>x.type==='withdrawal').reduce((a,x)=>a+Number(x.amount||0),0);
   $('sDeposit').textContent=money(dep);$('sWithdraw').textContent=money(wd);
@@ -178,7 +179,7 @@ async function load(){
 }
 async function refreshTableOnly(){
   const openId=current&&current.id;
-  try{ const d=await adminFetch('/transactions'); all=d.transactions||[]; }catch(e){ return; }
+  try{ const d=await adminFetch('/transactions',{cache:'no-store'}); all=d.transactions||[];stats(); }catch(e){ return; }
   render();
   if(openId&&$('backdrop').classList.contains('open')){const fresh=all.find(x=>x.id===openId);if(fresh){current=fresh;$('dStatus').innerHTML=status(fresh.status);$('dExpiry').textContent=fresh.status==='pending'?date(fresh.expiresAt):(fresh.decisionAt?date(fresh.decisionAt):'—');$('decisionBox').style.display=fresh.status==='pending'?'block':'none';const required=fresh.chainVerificationRequired!==false,payoutRequired=fresh.payoutTxHashRequired!==undefined?fresh.payoutTxHashRequired!==false:required;$('backdrop').dataset.chainVerificationRequired=required?'true':'false';window.updateChainCheckPolicy?.(required,payoutRequired);}else closeDrawer();}
 }

@@ -14,11 +14,11 @@
   <script src="../admin/admin-api.js?v=20261009.2"></script>
   <script src="owner.js?v=20261005.7"></script>
   <style>
-    .owner-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:18px 0}
+    .owner-summary-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:13px;margin:18px 0}
     .owner-summary-card{padding:18px;border:1px solid #1d3550;border-radius:14px;background:#0b1b30}
     .owner-summary-card small{display:block;color:#9fb0c4;font-size:11px}
     .owner-summary-card strong{display:block;margin-top:8px;color:#f4f7fb;font-size:25px}
-    .owner-summary-card.users strong{color:#67a9ff}.owner-summary-card.pending strong{color:#ffd66a}.owner-summary-card.deposits strong{color:#5ee3aa}.owner-summary-card.withdrawals strong{color:#ff8893}
+    .owner-summary-card.users strong{color:#67a9ff}.owner-summary-card.pending strong{color:#ffd66a}.owner-summary-card.approved strong{color:#bd9bff}.owner-summary-card.deposits strong{color:#5ee3aa}.owner-summary-card.withdrawals strong{color:#ff8893}
     .owner-section-title{margin:24px 0 11px;color:#f4f7fb;font-size:16px}
     .owner-shortcuts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
     .owner-shortcut{display:block;padding:17px;border:1px solid #1d3550;border-radius:14px;background:#0b1b30;color:#e8eef7;text-decoration:none;transition:border-color .15s,transform .15s}
@@ -37,8 +37,9 @@
       <div class="owner-summary-grid">
         <section class="owner-summary-card users"><small>Toplam üye</small><strong id="ownerUsers">—</strong></section>
         <section class="owner-summary-card pending"><small>Bekleyen işlemler</small><strong id="ownerPending">—</strong></section>
-        <section class="owner-summary-card deposits"><small>Onaylı yatırımlar</small><strong id="ownerDeposits">—</strong></section>
-        <section class="owner-summary-card withdrawals"><small>Onaylı çekimler</small><strong id="ownerWithdrawals">—</strong></section>
+        <section class="owner-summary-card approved"><small>Bugün onaylanan işlem</small><strong id="ownerApprovedToday">—</strong></section>
+        <section class="owner-summary-card deposits"><small>Bugün onaylı yatırımlar</small><strong id="ownerDeposits">—</strong></section>
+        <section class="owner-summary-card withdrawals"><small>Bugün onaylı çekimler</small><strong id="ownerWithdrawals">—</strong></section>
       </div>
       <section class="finance-overview" id="financeOverview" aria-labelledby="financeTitle">
         <div class="finance-overview-head"><div><h2 id="financeTitle">Finansal görünüm</h2><p>Son yedi günün sunucudaki mutabakat ve onaylı işlem verileri.</p></div><span class="finance-overview-range" id="financePeriod">—</span></div>
@@ -73,14 +74,19 @@
   <script>
     (async function(){
       const fmt=n=>new Intl.NumberFormat('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(n||0))+' USDT';
-      try{
-        const d=await adminFetch('/stats');
-        document.getElementById('ownerUsers').textContent=String(d.users??0);
-        document.getElementById('ownerPending').textContent=String(d.pending??0);
-        document.getElementById('ownerDeposits').textContent=fmt(d.totalDeposits);
-        document.getElementById('ownerWithdrawals').textContent=fmt(d.totalWithdrawals);
-        document.getElementById('ownerStatsNote').textContent='Özet, sunucudaki kayıtlı üye ve admin onaylı işlemlerden alınır.';
-      }catch(e){document.getElementById('ownerStatsNote').textContent='Özet şu anda yüklenemedi. Sayfayı yenileyip tekrar dene.';}
+      async function refreshOwnerStats(){
+        try{
+          const d=await adminFetch('/stats',{cache:'no-store'});
+          document.getElementById('ownerUsers').textContent=String(d.users??0);
+          document.getElementById('ownerPending').textContent=String(d.pending??0);
+          document.getElementById('ownerApprovedToday').textContent=String(d.approvedToday??0);
+          document.getElementById('ownerDeposits').textContent=fmt(d.todayDeposits);
+          document.getElementById('ownerWithdrawals').textContent=fmt(d.todayWithdrawals);
+          document.getElementById('ownerStatsNote').textContent='Günlük onaylı tutarlar İstanbul saatiyle 00.00’da yenilenir; önceki günler Raporlar ve Mutabakat’ta saklanır.';
+        }catch(e){document.getElementById('ownerStatsNote').textContent='Özet şu anda yüklenemedi. Sayfayı yenileyip tekrar dene.';}
+      }
+      await refreshOwnerStats();
+      window.setInterval(refreshOwnerStats,30000);
     })();
   </script>
   <script src="../assets/overview-finance.js"></script>

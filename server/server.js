@@ -1460,7 +1460,7 @@ async function route(req,res){
     if(!admin)return json(res,401,{error:'unauthorized'}); const allUsers=await getUsers(),allTx=await getTransactions();
     const users=allUsers.filter(user=>requestedTestRunId?user.testRunId===requestedTestRunId:isProductionUser(user));
     const tx=allTx.filter(item=>requestedTestRunId?item.testRunId===requestedTestRunId:isProductionTransaction(item));
-    const sum=(arr)=>arr.reduce((a,x)=>a+Number(x.amount||0),0),stats={pending:tx.filter(x=>x.status==='pending').length,approved:tx.filter(x=>x.status==='approved').length,totalDeposits:sum(tx.filter(x=>x.type==='deposit'&&x.status==='approved')),totalWithdrawals:sum(tx.filter(x=>x.type==='withdrawal'&&x.status==='approved'))};
+    const sum=(arr)=>arr.reduce((a,x)=>a+Number(x.amount||0),0),approved=tx.filter(x=>x.status==='approved'),todayKey=financeDateKey(),approvedToday=approved.filter(x=>financeDateKey(x.decisionAt||x.createdAt)===todayKey),stats={pending:tx.filter(x=>x.status==='pending').length,approved:approved.length,approvedToday:approvedToday.length,todayDeposits:sum(approvedToday.filter(x=>x.type==='deposit')),todayWithdrawals:sum(approvedToday.filter(x=>x.type==='withdrawal')),totalDeposits:sum(tx.filter(x=>x.type==='deposit'&&x.status==='approved')),totalWithdrawals:sum(tx.filter(x=>x.type==='withdrawal'&&x.status==='approved'))};
     if(owner)Object.assign(stats,{users:users.length,kycPending:users.filter(x=>x.kycStatus==='pending').length});
     return json(res,200,stats);
   }
